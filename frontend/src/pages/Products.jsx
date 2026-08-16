@@ -99,18 +99,18 @@ export default function Products() {
     productId
   ) => {
     event.stopPropagation();
-
+  
     if (!token) {
       navigate("/login");
       return;
     }
-
+  
     const isFavorite = favorites.includes(productId);
-
+  
     try {
       if (isFavorite) {
         await removeFavorite(productId);
-
+      
         setFavorites((current) =>
           current.filter(
             (id) => id !== productId
@@ -118,11 +118,16 @@ export default function Products() {
         );
       } else {
         await addFavorite(productId);
-
+      
         setFavorites((current) => [
           ...current,
           productId,
         ]);
+      
+        // AVISAR AL NAVBAR
+        window.dispatchEvent(
+          new CustomEvent("favorite-added")
+        );
       }
     } catch (error) {
       console.error(

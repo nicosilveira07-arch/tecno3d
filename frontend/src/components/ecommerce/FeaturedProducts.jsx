@@ -96,39 +96,40 @@ export default function FeaturedProducts() {
     productId
   ) => {
     event.stopPropagation();
-
+  
     const token = localStorage.getItem("token");
-
+  
     if (!token) {
       navigate("/login");
       return;
     }
-
+  
     const isFavorite =
       favorites.has(productId);
-
+  
     try {
       if (isFavorite) {
         await removeFavorite(productId);
-
+      
         setFavorites((previous) => {
           const updated = new Set(previous);
-
+        
           updated.delete(productId);
-
+        
           return updated;
         });
       } else {
         await addFavorite(productId);
-
+      
         setFavorites((previous) => {
           const updated = new Set(previous);
-
+        
           updated.add(productId);
-
+        
           return updated;
         });
-
+      
+        // AVISAR AL NAVBAR QUE SE AGREGÓ UN FAVORITO
         window.dispatchEvent(
           new CustomEvent("favorite-added")
         );

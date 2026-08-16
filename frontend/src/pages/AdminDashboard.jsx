@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   DollarSign,
   ShoppingCart,
   Users,
   Package,
-  TrendingUp,
   AlertTriangle,
   CreditCard,
   Loader2,
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
 
       {/* KPIs */}
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
         {[
           {
             title: "Ventas totales",
@@ -252,6 +252,15 @@ export default function AdminDashboard() {
             icon: ShoppingCart,
             iconStyle:
               "bg-zinc-800 text-zinc-300",
+          },
+          {
+            title: "Pedidos cancelados",
+            value: formatNumber(
+              overview.cancelledOrders,
+            ),
+            icon: ShoppingCart,
+            iconStyle:
+              "bg-red-500/10 text-red-400",
           },
           {
             title: "Clientes registrados",
@@ -476,9 +485,12 @@ export default function AdminDashboard() {
               Pedidos recientes
             </h2>
 
-            <button className="text-sm font-semibold text-red-500 hover:text-red-400">
+            <Link
+              to="/admin/orders"
+              className="text-sm font-semibold text-red-500 hover:text-red-400"
+            >
               Ver todos
-            </button>
+            </Link>
           </div>
 
           <div className="space-y-4">
@@ -644,20 +656,29 @@ export default function AdminDashboard() {
         {/* STOCK */}
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-500">
-              <AlertTriangle size={19} />
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-500">
+                <AlertTriangle size={19} />
+              </div>
+
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  Stock bajo
+                </h2>
+
+                <p className="text-sm text-zinc-500">
+                  Productos que requieren reposición
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h2 className="text-lg font-bold text-white">
-                Stock bajo
-              </h2>
-
-              <p className="text-sm text-zinc-500">
-                Productos que requieren reposición
-              </p>
-            </div>
+            <Link
+              to="/admin/products"
+              className="whitespace-nowrap text-sm font-semibold text-red-500 hover:text-red-400"
+            >
+              Ver productos
+            </Link>
           </div>
 
           <div className="space-y-4">
@@ -700,3 +721,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

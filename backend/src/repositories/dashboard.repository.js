@@ -16,6 +16,7 @@ const getDashboardData = async ({
     totalCustomers,
     totalProducts,
     totalOrders,
+    cancelledOrders,
     paidOrders,
     recentOrders,
     paymentStats,
@@ -35,6 +36,14 @@ const getDashboardData = async ({
     // PEDIDOS
     prisma.order.count({
       where: dateFilter,
+    }),
+
+    // PEDIDOS CANCELADOS
+    prisma.order.count({
+      where: {
+        ...dateFilter,
+        status: "CANCELLED",
+      },
     }),
 
     // PEDIDOS PAGADOS
@@ -101,12 +110,7 @@ const getDashboardData = async ({
       _sum: {
         amount: true,
       },
-      where: {
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
+      where: {},
     }),
 
     // STOCK BAJO
@@ -176,7 +180,9 @@ const getDashboardData = async ({
   const salesByPeriod = {};
 
   for (const order of paidOrders) {
-    const date = order.createdAt.toISOString().split("T")[0];
+    const date = order.createdAt
+      .toISOString()
+      .split("T")[0];
 
     if (!salesByPeriod[date]) {
       salesByPeriod[date] = {
@@ -208,7 +214,8 @@ const getDashboardData = async ({
         productId: item.productId,
         name: item.product.name,
         image: item.product.image,
-        category: item.product.category?.name || null,
+        category:
+          item.product.category?.name || null,
         quantity: 0,
         sales: 0,
       });
@@ -263,8 +270,9 @@ const getDashboardData = async ({
   }
 
   const salesByCategory =
-    Array.from(categoriesMap.values())
-      .sort((a, b) => b.sales - a.sales);
+    Array.from(categoriesMap.values()).sort(
+      (a, b) => b.sales - a.sales,
+    );
 
   // =========================
   // TOTAL DE PRODUCTOS VENDIDOS
@@ -277,17 +285,42 @@ const getDashboardData = async ({
       0,
     );
 
+  // =========================
+  // ESTADO DE PAGOS
+  // =========================
+
+  const paymentStatusLabels = {
+    PENDING: "Pendientes",
+    PAID: "Pagados",
+    FAILED: "Fallidos",
+    REFUNDED: "Reembolsados",
+  };
+
+  const normalizedPaymentStats =
+    paymentStats.map((payment) => ({
+      status: payment.status,
+      label:
+        paymentStatusLabels[payment.status] ||
+        payment.status,
+      count: payment._count._all,
+      amount: payment._sum.amount || 0,
+    }));
+
+  // =========================
+  // RESPUESTA DASHBOARD
+  // =========================
+
   return {
     overview: {
       totalSales,
       totalOrders,
+      cancelledOrders,
       totalCustomers,
       totalProducts,
       totalProductsSold,
     },
 
-    salesByPeriod:
-      salesByPeriodResult,
+    salesByPeriod: salesByPeriodResult,
 
     salesByCategory,
 
@@ -295,7 +328,7 @@ const getDashboardData = async ({
 
     recentOrders,
 
-    paymentStats,
+    paymentStats: normalizedPaymentStats,
 
     lowStockProducts,
   };

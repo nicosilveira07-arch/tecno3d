@@ -15,7 +15,14 @@ export default function Brands() {
       try {
         const response = await getBrands();
 
-        setBrands(response.data || []);
+        const brandsData = response.data || [];
+
+        // Solo mostramos marcas destacadas en el inicio
+        setBrands(
+          brandsData.filter(
+            (brand) => brand.featured === true
+          )
+        );
       } catch (error) {
         console.error(
           "ERROR CARGANDO MARCAS:",
@@ -61,7 +68,7 @@ export default function Brands() {
           !error &&
           brands.length === 0 && (
             <p className="text-center text-zinc-500">
-              Todavía no hay marcas.
+              Todavía no hay marcas destacadas.
             </p>
           )}
 

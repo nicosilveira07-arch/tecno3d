@@ -105,7 +105,13 @@ export default function Categories() {
       try {
         const response = await getCategories();
 
-        setCategories(response.data || []);
+        const allCategories = response.data || [];
+
+        const featuredCategories = allCategories.filter(
+          (category) => category.featured === true
+        );
+
+        setCategories(featuredCategories);
       } catch (error) {
         console.error(
           "ERROR CARGANDO CATEGORÍAS:",
@@ -147,7 +153,7 @@ export default function Categories() {
           !error &&
           categories.length === 0 && (
             <p className="text-zinc-500">
-              Todavía no hay categorías.
+              Todavía no hay categorías destacadas.
             </p>
           )}
 

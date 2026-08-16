@@ -175,6 +175,8 @@ model Category {
 
   image String?
 
+  featured Boolean @default(false)
+
   products Product[]
 }
 
@@ -186,6 +188,8 @@ model Brand {
   slug String @unique
 
   image String?
+
+  featured Boolean @default(false)
 
   createdAt DateTime @default(now())
 

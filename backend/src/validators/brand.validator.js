@@ -17,7 +17,10 @@ export const createBrandSchema = z.object({
     .string()
     .url("La imagen debe ser una URL válida.")
     .optional()
-    .or(z.literal(""))
+    .or(z.literal("")),
+
+  featured: z.boolean().optional(),
 });
 
-export const updateBrandSchema = createBrandSchema.partial();
+export const updateBrandSchema =
+  createBrandSchema.partial();

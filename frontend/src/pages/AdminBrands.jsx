@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import {
   getBrands,
   createBrand,
+  updateBrand,
   deleteBrand,
 } from "@/services/brands.api";
 
@@ -12,6 +13,7 @@ export default function AdminBrands() {
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [featured, setFeatured] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,10 +74,12 @@ export default function AdminBrands() {
       await createBrand({
         name: name.trim(),
         slug: generateSlug(name),
+        featured,
       });
 
       setName("");
       setSlug("");
+      setFeatured(false);
 
       await loadBrands();
     } catch (error) {
@@ -90,6 +94,41 @@ export default function AdminBrands() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFeaturedChange = async (
+    brand
+  ) => {
+    try {
+      setError("");
+
+      const newFeatured = !brand.featured;
+
+      await updateBrand(brand.id, {
+        featured: newFeatured,
+      });
+
+      setBrands((current) =>
+        current.map((item) =>
+          item.id === brand.id
+            ? {
+                ...item,
+                featured: newFeatured,
+              }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error(
+        "ERROR ACTUALIZANDO MARCA:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "No se pudo actualizar la marca."
+      );
     }
   };
 
@@ -194,6 +233,35 @@ export default function AdminBrands() {
             </p>
           </div>
 
+          {/* MOSTRAR EN INICIO */}
+
+          <div className="md:col-span-2">
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-red-600">
+
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(event) =>
+                  setFeatured(event.target.checked)
+                }
+                className="h-5 w-5 accent-red-600"
+              />
+
+              <div>
+                <p className="font-semibold text-white">
+                  Mostrar en inicio
+                </p>
+
+                <p className="text-sm text-zinc-500">
+                  Esta marca aparecerá en la sección de marcas destacadas.
+                </p>
+              </div>
+
+            </label>
+
+          </div>
+
           {/* BOTÓN */}
 
           <div className="md:col-span-2">
@@ -238,7 +306,7 @@ export default function AdminBrands() {
             {brands.map((brand) => (
               <div
                 key={brand.id}
-                className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 p-4"
+                className="flex flex-col gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 md:flex-row md:items-center md:justify-between"
               >
 
                 <div>
@@ -251,15 +319,46 @@ export default function AdminBrands() {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleDelete(brand.id)
-                  }
-                  className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950 hover:text-red-500"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex items-center justify-between gap-4">
+
+                  {/* CHECKBOX */}
+
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+
+                    <input
+                      type="checkbox"
+                      checked={Boolean(
+                        brand.featured
+                      )}
+                      onChange={() =>
+                        handleFeaturedChange(
+                          brand
+                        )
+                      }
+                      className="h-5 w-5 accent-red-600"
+                    />
+
+                    <span>
+                      Mostrar en inicio
+                    </span>
+
+                  </label>
+
+                  {/* ELIMINAR */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDelete(
+                        brand.id
+                      )
+                    }
+                    className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-950 hover:text-red-500"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+                </div>
 
               </div>
             ))}
@@ -272,4 +371,3 @@ export default function AdminBrands() {
     </div>
   );
 }
-

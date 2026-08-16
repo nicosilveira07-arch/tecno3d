@@ -16,6 +16,7 @@ import { useState, useEffect, useRef } from "react";
 
 import { useCart } from "@/features/cart/cart.store";
 import { getCategories } from "@/services/categories.api";
+import { getFavorites } from "@/services/favorites.api";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -48,10 +49,23 @@ export default function Navbar() {
   const [showMobileCategories, setShowMobileCategories] =
     useState(false);
 
+  // =========================
+  // FAVORITOS
+  // =========================
+
+  const [favoriteCount, setFavoriteCount] =
+    useState(0);
+
   const [showFavoriteNotification, setShowFavoriteNotification] =
     useState(false);
 
+  const favoriteTimeoutRef = useRef(null);
+
   const categoriesRef = useRef(null);
+
+  // =========================
+  // CERRAR CATEGORÍAS
+  // =========================
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -77,6 +91,10 @@ export default function Navbar() {
     };
   }, []);
 
+  // =========================
+  // CARGAR CATEGORÍAS
+  // =========================
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -95,30 +113,102 @@ export default function Navbar() {
   }, []);
 
   // =========================
-  // NOTIFICACIÓN FAVORITO
+  // CARGAR FAVORITOS INICIALES
   // =========================
 
   useEffect(() => {
-    const handleFavoriteAdded = () => {
-      setShowFavoriteNotification(true);
+    const loadFavorites = async () => {
+      if (!token) {
+        setFavoriteCount(0);
+        return;
+      }
 
-      setTimeout(() => {
-        setShowFavoriteNotification(false);
-      }, 2500);
+      try {
+        const response = await getFavorites();
+
+        const favorites = response.data || [];
+
+        setFavoriteCount(favorites.length);
+      } catch (error) {
+        console.error(
+          "ERROR CARGANDO FAVORITOS DEL NAVBAR:",
+          error
+        );
+
+        setFavoriteCount(0);
+      }
+    };
+
+    loadFavorites();
+  }, [token]);
+
+  // =========================
+  // ACTUALIZAR FAVORITOS
+  // =========================
+
+  useEffect(() => {
+    const handleFavoriteUpdated = async () => {
+      try {
+        const response = await getFavorites();
+
+        const favorites = response.data || [];
+
+        // Cantidad REAL de favoritos
+        setFavoriteCount(favorites.length);
+
+        // Mostrar globito
+        setShowFavoriteNotification(true);
+
+        // Reiniciar temporizador
+        if (favoriteTimeoutRef.current) {
+          clearTimeout(
+            favoriteTimeoutRef.current
+          );
+        }
+
+        favoriteTimeoutRef.current = setTimeout(() => {
+          setShowFavoriteNotification(false);
+        }, 3000);
+      } catch (error) {
+        console.error(
+          "ERROR ACTUALIZANDO FAVORITOS DEL NAVBAR:",
+          error
+        );
+      }
     };
 
     window.addEventListener(
       "favorite-added",
-      handleFavoriteAdded
+      handleFavoriteUpdated
+    );
+
+    window.addEventListener(
+      "favorite-removed",
+      handleFavoriteUpdated
     );
 
     return () => {
       window.removeEventListener(
         "favorite-added",
-        handleFavoriteAdded
+        handleFavoriteUpdated
       );
+
+      window.removeEventListener(
+        "favorite-removed",
+        handleFavoriteUpdated
+      );
+
+      if (favoriteTimeoutRef.current) {
+        clearTimeout(
+          favoriteTimeoutRef.current
+        );
+      }
     };
   }, []);
+
+  // =========================
+  // LOGOUT
+  // =========================
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -127,6 +217,10 @@ export default function Navbar() {
     navigate("/");
     window.location.reload();
   };
+
+  // =========================
+  // BUSCADOR
+  // =========================
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -144,6 +238,10 @@ export default function Navbar() {
 
     setShowMobileMenu(false);
   };
+
+  // =========================
+  // CATEGORÍA
+  // =========================
 
   const handleCategorySearch = (category) => {
     setShowCategories(false);
@@ -230,7 +328,7 @@ export default function Navbar() {
 
             {showFavoriteNotification && (
               <span className="absolute -right-3 -top-3 flex h-5 min-w-5 animate-pulse items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold text-white">
-                1
+                {favoriteCount}
               </span>
             )}
           </Link>
@@ -507,11 +605,12 @@ export default function Navbar() {
               className="flex items-center gap-3 border-b border-zinc-800 py-4 text-zinc-300 transition hover:text-red-500"
             >
               <Heart size={20} />
+
               Favoritos
 
               {showFavoriteNotification && (
                 <span className="ml-auto flex h-5 min-w-5 animate-pulse items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold text-white">
-                  1
+                  {favoriteCount}
                 </span>
               )}
             </Link>
@@ -606,4 +705,3 @@ export default function Navbar() {
     </header>
   );
 }
-

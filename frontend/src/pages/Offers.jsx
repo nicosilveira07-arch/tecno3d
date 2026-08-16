@@ -96,6 +96,11 @@ export default function Offers() {
           ...current,
           productId,
         ]);
+
+        // AVISAR AL NAVBAR QUE SE AGREGÓ UN FAVORITO
+        window.dispatchEvent(
+          new CustomEvent("favorite-added")
+        );
       }
     } catch (error) {
       console.error(
@@ -326,4 +331,3 @@ export default function Offers() {
     </section>
   );
 }
-
