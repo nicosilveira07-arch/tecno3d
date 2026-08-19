@@ -9,6 +9,8 @@ import {
   createAddress,
 } from "@/services/addresses.api";
 
+import { validateCoupon } from "@/services/coupons.api";
+
 import {
   createOrder,
   createOrderPayment,
@@ -37,6 +39,11 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
   const [addressForm, setAddressForm] = useState({
     title: "",
     street: "",
@@ -48,9 +55,20 @@ export default function Checkout() {
     isDefault: false,
   });
 
-  const total = cart.reduce(
+  const subtotal = cart.reduce(
     (sum, item) =>
       sum + item.price * item.quantity,
+    0
+  );
+
+  const discount = coupon
+    ? coupon.type === "PERCENTAGE"
+      ? subtotal * (coupon.value / 100)
+      : coupon.value
+    : 0;
+
+  const finalTotal = Math.max(
+    subtotal - discount,
     0
   );
 
@@ -177,6 +195,47 @@ export default function Checkout() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError(
+        "Ingresá un código de cupón."
+      );
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      setCouponError("");
+
+      const response =
+        await validateCoupon(
+          couponCode.trim().toUpperCase()
+        );
+
+      setCoupon(response.data);
+    } catch (error) {
+      console.error(
+        "ERROR VALIDANDO CUPÓN:",
+        error
+      );
+
+      setCoupon(null);
+
+      setCouponError(
+        error.response?.data?.message ||
+          "El cupón no es válido."
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
+
   const handleCheckout = async () => {
     const token =
       localStorage.getItem("token");
@@ -206,17 +265,20 @@ export default function Checkout() {
             productId: item.productId,
             quantity: item.quantity,
           })),
-
+        
           deliveryMethod:
             deliveryMethod === "pickup"
               ? "PICKUP"
               : "SHIPPING",
-
+        
           addressId:
             deliveryMethod === "pickup"
               ? null
               : selectedAddress,
-        });
+        
+          couponCode:
+            coupon?.code || null,
+        })
 
       const orderId =
         orderResponse.data.id;
@@ -742,17 +804,113 @@ export default function Checkout() {
 
             </div>
 
-            {/* TOTAL */}
+            {/* CUPÓN */}
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
-              <span className="text-lg text-zinc-400">
-                Total
-              </span>
+              <p className="mb-3 text-sm font-semibold text-white">
+                Cupón de descuento
+              </p>
 
-              <span className="text-2xl font-black text-red-500">
-                UYU {total.toFixed(2)}
-              </span>
+              {!coupon ? (
+                <div className="flex gap-2">
+
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(event) => {
+                      setCouponCode(
+                        event.target.value
+                      );
+                      setCouponError("");
+                    }}
+                    placeholder="Ingresá tu cupón"
+                    className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white uppercase outline-none focus:border-red-600"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading}
+                    className="rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:bg-zinc-700"
+                  >
+                    {couponLoading
+                      ? "..."
+                      : "Agregar"}
+                  </button>
+
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-green-800 bg-green-950/30 p-3">
+
+                  <div>
+                    <p className="font-bold text-green-400">
+                      {coupon.code}
+                    </p>
+
+                    <p className="text-xs text-green-500">
+                      {coupon.type === "PERCENTAGE"
+                        ? `${coupon.value}% de descuento`
+                        : `UYU ${coupon.value.toFixed(2)} de descuento`}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-xs font-semibold text-zinc-400 transition hover:text-white"
+                  >
+                    Quitar
+                  </button>
+
+                </div>
+              )}
+
+              {couponError && (
+                <p className="mt-3 text-sm text-red-400">
+                  {couponError}
+                </p>
+              )}
+
+            </div>
+
+            {/* TOTALES */}
+
+            <div className="mt-6 space-y-3">
+
+              <div className="flex justify-between">
+                <span className="text-zinc-400">
+                  Subtotal
+                </span>
+
+                <span className="font-semibold text-white">
+                  UYU {subtotal.toFixed(2)}
+                </span>
+              </div>
+
+              {coupon && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">
+                    Descuento
+                  </span>
+
+                  <span className="font-semibold text-green-500">
+                    - UYU {discount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex justify-between border-t border-zinc-800 pt-4">
+
+                <span className="text-lg text-zinc-400">
+                  Total
+                </span>
+
+                <span className="text-2xl font-black text-red-500">
+                  UYU {finalTotal.toFixed(2)}
+                </span>
+
+              </div>
 
             </div>
 

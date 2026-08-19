@@ -26,6 +26,7 @@ import AdminProducts from "@/pages/AdminProducts";
 import AdminProductForm from "@/pages/AdminProductForm";
 import AdminOrders from "@/pages/AdminOrders";
 import AdminOrderDetail from "@/pages/AdminOrderDetail";
+import AdminCoupons from "@/pages/AdminCoupons";
 
 import Categories from "@/pages/Categories";
 import AdminBrands from "@/pages/AdminBrands";
@@ -105,6 +106,7 @@ export default function AppRouter() {
           path="/profile"
           element={<Perfil />}
         />
+
         <Route
           path="/favorites"
           element={<Favorites />}
@@ -178,12 +180,14 @@ export default function AppRouter() {
             element={<Categories />}
           />
 
+          {/* CUPONES */}
+
           <Route
             path="/admin/coupons"
-            element={
-              <AdminPlaceholder title="Cupones" />
-            }
+            element={<AdminCoupons />}
           />
+
+          {/* REPORTES */}
 
           <Route
             path="/admin/reports"
@@ -191,6 +195,8 @@ export default function AppRouter() {
               <AdminPlaceholder title="Reportes" />
             }
           />
+
+          {/* CONFIGURACIÓN */}
 
           <Route
             path="/admin/settings"
@@ -216,4 +222,3 @@ export default function AppRouter() {
     </Routes>
   );
 }
-

@@ -46,6 +46,11 @@ enum DeliveryMethod {
   PICKUP
 }
 
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
 model User {
   id String @id @default(cuid())
 
@@ -267,6 +272,10 @@ model Order {
 
   total Float
 
+  discount Float @default(0)
+
+  couponId String?
+
   status OrderStatus @default(PENDING)
 
   deliveryMethod DeliveryMethod @default(SHIPPING)
@@ -290,6 +299,8 @@ model Order {
   items OrderItem[]
 
   payment Payment?
+
+  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
 }
 
 model OrderItem {
@@ -326,6 +337,30 @@ model Payment {
   updatedAt DateTime @updatedAt
 
   order Order @relation(fields: [orderId], references: [id])
+}
+
+model Coupon {
+  id String @id @default(cuid())
+
+  code String @unique
+
+  type CouponType
+
+  value Float
+
+  maxUses Int?
+
+  usedCount Int @default(0)
+
+  expiresAt DateTime?
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
 }
 
 model Review {
