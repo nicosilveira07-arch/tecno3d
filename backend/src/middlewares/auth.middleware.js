@@ -21,7 +21,7 @@ export function authenticate(req, res, next) {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: "SU SECCIÓN HA ESPIRADO.",
+      message: "Su sesión ha expirado",
     });
   }
 }

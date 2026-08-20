@@ -24,6 +24,8 @@ import bannerRoutes from "./routes/banner.routes.js";
 
 import couponRoutes from "./routes/coupon.routes.js"
 
+import storeSettingsRoutes from "./routes/storeSettings.routes.js";
+
 const app = express();
 
 const allowedOrigins = [
@@ -68,6 +70,8 @@ app.use("/api/favorites", favoriteRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/settings", storeSettingsRoutes);
+
 
 app.use(errorMiddleware);
 

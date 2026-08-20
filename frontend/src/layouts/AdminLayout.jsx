@@ -82,12 +82,6 @@ export default function AdminLayout() {
       roles: ["ADMIN"],
     },
     {
-      label: "Reportes",
-      path: "/admin/reports",
-      icon: FileText,
-      roles: ["ADMIN"],
-    },
-    {
       label: "Configuración",
       path: "/admin/settings",
       icon: Settings,

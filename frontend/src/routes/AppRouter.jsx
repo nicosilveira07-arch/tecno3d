@@ -33,6 +33,7 @@ import AdminBrands from "@/pages/AdminBrands";
 import Favorites from "@/pages/Favorites";
 import AdminBanners from "@/pages/AdminBanners";
 import Offers from "@/pages/Offers";
+import AdminSettings from "@/pages/AdminSettings";
 
 function AdminPlaceholder({ title }) {
   return (
@@ -201,7 +202,7 @@ export default function AppRouter() {
           <Route
             path="/admin/settings"
             element={
-              <AdminPlaceholder title="Configuración" />
+              <AdminSettings />
             }
           />
 

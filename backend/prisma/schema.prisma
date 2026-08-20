@@ -401,3 +401,45 @@ model Favorite {
   @@unique([userId, productId])
 }
 
+model StoreSettings {
+  id String @id @default(cuid())
+
+  storeName String @default("TECNO 3D")
+
+  description String?
+
+  logo String?
+  logoPublicId String?
+
+  address String?
+  city String?
+  department String?
+  country String?
+
+  phone String?
+  email String?
+
+  whatsappNumber String?
+  whatsappMessage String?
+
+  instagram String?
+  facebook String?
+  tiktok String?
+  youtube String?
+
+  openingHours String?
+
+  // BANNER DE OFERTAS
+
+  offerEnabled Boolean @default(true)
+
+  offerEyebrow String?
+  offerTitle String?
+  offerDescription String?
+  offerButtonText String?
+  offerButtonUrl String? @default("/offers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
