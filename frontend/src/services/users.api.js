@@ -1,14 +1,11 @@
 import api from "./api";
 
-
-
 export async function getUsers({
   page = 1,
   limit = 20,
   search = "",
   role,
 } = {}) {
-
   const response = await api.get("/users", {
     params: {
       page,
@@ -18,12 +15,8 @@ export async function getUsers({
     },
   });
 
-
-
   return response.data;
 }
-
-
 
 export async function createUser(data) {
   const response = await api.post(
@@ -34,8 +27,6 @@ export async function createUser(data) {
   return response.data;
 }
 
-
-
 export async function updateUserRole(
   id,
   role
@@ -45,6 +36,14 @@ export async function updateUserRole(
     {
       role,
     }
+  );
+
+  return response.data;
+}
+
+export async function deleteUser(id) {
+  const response = await api.delete(
+    `/users/${id}`
   );
 
   return response.data;

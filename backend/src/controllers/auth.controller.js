@@ -6,6 +6,7 @@ import {
 
 import {
   registerSchema,
+  loginSchema,
   changePasswordSchema,
 } from "../validators/auth.validator.js";
 
@@ -32,9 +33,12 @@ export async function registerController(req, res) {
 // Login usuarios
 export async function loginController(req, res) {
   try {
-    const { email, password } = req.body;
+    const data = loginSchema.parse(req.body);
 
-    const result = await login(email, password);
+    const result = await login(
+      data.email,
+      data.password
+    );
 
     return res.status(200).json({
       success: true,
@@ -79,3 +83,4 @@ export async function changePasswordController(req, res) {
     });
   }
 }
+

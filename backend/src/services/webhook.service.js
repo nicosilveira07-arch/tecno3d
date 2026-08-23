@@ -1,4 +1,4 @@
-import { Payment, MerchantOrder } from "mercadopago";
+import { Payment } from "mercadopago";
 
 import client from "../integrations/mercadopago/mercadopago.client.js";
 
@@ -19,77 +19,95 @@ import {
 
 const paymentClient = new Payment(client);
 
-const merchantOrderClient = new MerchantOrder(client);
-
 
 
 export async function processMercadoPagoWebhookService(data) {
-
   console.log(
     "WEBHOOK MERCADO PAGO:",
     JSON.stringify(data, null, 2)
   );
 
 
-  let paymentId = data?.data?.id;
+  // =========================================================
+  // IDENTIFICAR TIPO DE NOTIFICACIÓN
+  // =========================================================
+
+  const topic =
+    data?.type ||
+    data?.topic;
 
 
+  // =========================================================
+  // MERCADO PAGO PUEDE ENVIAR MERCHANT_ORDER
+  // =========================================================
+  // Para Checkout Pro no necesitamos procesarlo.
+  // El evento PAYMENT contiene el ID real del pago y es
+  // suficiente para actualizar nuestro sistema.
+  //
+  // Lo ignoramos correctamente y respondemos 200 desde
+  // el controller para evitar reintentos innecesarios.
+  // =========================================================
 
-  // Mercado Pago primero puede enviar merchant_order
   if (
-    data?.topic === "merchant_order"
+    topic === "merchant_order"
   ) {
-
     console.log(
-      "Procesando merchant_order..."
+      "MERCHANT_ORDER RECIBIDO - SE IGNORA. ESPERAMOS PAYMENT."
     );
 
-
-    const merchantOrder =
-      await merchantOrderClient.get({
-        merchantOrderId: data.data.id,
-      });
-
-
-    const payment =
-      merchantOrder.payments?.[0];
-
-
-    if (!payment) {
-
-      throw new Error(
-        "Merchant order sin payment."
-      );
-
-    }
-
-
-    paymentId = payment.id;
-
-
-    console.log(
-      "PAYMENT ID OBTENIDO:",
-      paymentId
-    );
-
+    return true;
   }
 
+
+  // =========================================================
+  // SOLO PROCESAR PAYMENT
+  // =========================================================
+
+  if (
+    topic !== "payment"
+  ) {
+    console.log(
+      `WEBHOOK IGNORADO - TIPO NO SOPORTADO: ${topic}`
+    );
+
+    return true;
+  }
+
+
+  // =========================================================
+  // OBTENER ID DEL PAGO
+  // =========================================================
+
+  const paymentId =
+    data?.data?.id;
 
 
   if (!paymentId) {
-
-    throw new Error(
-      "No llegó ID de pago de Mercado Pago."
+    console.warn(
+      "WEBHOOK PAYMENT SIN data.id - SE IGNORA."
     );
 
+    return true;
   }
 
 
+  console.log(
+    "PAYMENT ID OBTENIDO:",
+    paymentId
+  );
 
-  const paymentMP = await paymentClient.get({
-    id: paymentId,
-  });
 
+  // =========================================================
+  // CONSULTAR PAGO DIRECTAMENTE EN MERCADO PAGO
+  // =========================================================
+  // Nunca confiamos en el estado enviado por el webhook.
+  // Consultamos el recurso directamente a Mercado Pago.
+  // =========================================================
+
+  const paymentMP =
+    await paymentClient.get({
+      id: paymentId,
+    });
 
 
   console.log(
@@ -98,9 +116,12 @@ export async function processMercadoPagoWebhookService(data) {
   );
 
 
+  // =========================================================
+  // OBTENER ORDER ID
+  // =========================================================
 
-  const orderId = paymentMP.external_reference;
-
+  const orderId =
+    paymentMP.external_reference;
 
 
   console.log(
@@ -109,117 +130,171 @@ export async function processMercadoPagoWebhookService(data) {
   );
 
 
-
   if (!orderId) {
-
-    throw new Error(
-      "El pago no tiene orderId."
+    console.warn(
+      "El pago de Mercado Pago no tiene external_reference."
     );
 
+    return true;
   }
 
 
+  // =========================================================
+  // BUSCAR PAGO INTERNO
+  // =========================================================
 
-  const payment = await findPaymentByOrderId(
-    orderId
-  );
-  
+  const payment =
+    await findPaymentByOrderId(
+      orderId
+    );
+
+
   console.log(
     "PAGO INTERNO ENCONTRADO:",
-    JSON.stringify(payment, null, 2)
+    JSON.stringify(
+      payment,
+      null,
+      2
+    )
   );
-  
+
+
   if (!payment) {
-    throw new Error(
+    console.warn(
       "Pago interno no encontrado."
     );
+
+    return true;
   }
-  
+
+
+  // =========================================================
+  // EVITAR PROCESAMIENTO DUPLICADO
+  // =========================================================
+
   if (
     payment.status === "PAID" &&
-    payment.transactionId === String(paymentMP.id)
+    payment.transactionId ===
+      String(paymentMP.id)
   ) {
     console.log(
       "WEBHOOK DUPLICADO: pago ya procesado."
     );
-  
+
     return true;
   }
-  
-  let paymentStatus = "PENDING";
 
+
+  // =========================================================
+  // DETERMINAR ESTADO INTERNO
+  // =========================================================
+
+  let paymentStatus =
+    "PENDING";
 
 
   if (
     paymentMP.status === "approved"
   ) {
-
-    paymentStatus = "PAID";
-
+    paymentStatus =
+      "PAID";
   }
-
 
 
   if (
     paymentMP.status === "rejected" ||
     paymentMP.status === "cancelled"
   ) {
-
-    paymentStatus = "FAILED";
-
+    paymentStatus =
+      "FAILED";
   }
 
 
+  // =========================================================
+  // ACTUALIZAR PAGO
+  // =========================================================
 
   await updatePayment(
     payment.id,
     {
       status: paymentStatus,
-      transactionId: String(paymentMP.id),
+
+      transactionId:
+        String(paymentMP.id),
     }
   );
 
 
+  // =========================================================
+  // PAGO APROBADO
+  // =========================================================
 
   if (
     paymentMP.status === "approved"
   ) {
-
-
     console.log(
       "ACTUALIZANDO PEDIDO A CONFIRMED"
     );
 
 
-
-    await updateOrderStatus(
-      orderId,
-      "CONFIRMED"
-    );
-
-
+    // =======================================================
+    // EVITAR VOLVER A CONFIRMAR EL PEDIDO
+    // =======================================================
 
     const order =
-      await getOrderById(orderId);
-
-
-
-    for (const item of order.items) {
-
-
-      await decreaseStock(
-        item.productId,
-        item.quantity
+      await getOrderById(
+        orderId
       );
 
 
+    if (!order) {
+      console.warn(
+        "Pedido no encontrado para el pago aprobado."
+      );
+
+      return true;
     }
 
 
+    if (
+      order.status !== "CONFIRMED"
+    ) {
+      await updateOrderStatus(
+        orderId,
+        "CONFIRMED"
+      );
+    }
+
+
+    // =======================================================
+    // DESCONTAR STOCK UNA SOLA VEZ
+    // =======================================================
+    // Si el pago ya estaba PAID antes de este webhook,
+    // no volvemos a descontar stock.
+    // =======================================================
+
+    const wasAlreadyPaid =
+      payment.status === "PAID";
+
+
+    if (!wasAlreadyPaid) {
+      for (
+        const item of order.items
+      ) {
+        await decreaseStock(
+          item.productId,
+          item.quantity
+        );
+      }
+    }
   }
 
 
+  console.log(
+    "WEBHOOK MERCADO PAGO PROCESADO CORRECTAMENTE."
+  );
+
 
   return true;
-
 }
+

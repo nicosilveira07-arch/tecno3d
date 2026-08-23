@@ -83,6 +83,12 @@ model User {
   reviews Review[]
 
   favorites Favorite[]
+
+  createdUsers User[] @relation("UserCreatedUsers")
+
+  createdById String?
+
+  createdBy User? @relation("UserCreatedUsers", fields: [createdById], references: [id], onDelete: SetNull)
 }
 
 model Banner {
@@ -230,7 +236,7 @@ model Product {
 
   brandId String?
 
-  ownerId String
+  ownerId String?
 
   createdAt DateTime @default(now())
 
@@ -240,7 +246,7 @@ model Product {
 
   brand Brand? @relation(fields: [brandId], references: [id])
 
-  owner User @relation(fields: [ownerId], references: [id])
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
 
   orderItems OrderItem[]
 
@@ -282,7 +288,7 @@ model Order {
 
   addressId String?
 
-  userId String
+  userId String?
 
   shippingCompany String?
 
@@ -292,7 +298,7 @@ model Order {
 
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
 
@@ -408,24 +414,24 @@ model StoreSettings {
 
   description String?
 
-  logo String?
+  logo         String?
   logoPublicId String?
 
-  address String?
-  city String?
+  address    String?
+  city       String?
   department String?
-  country String?
+  country    String?
 
   phone String?
   email String?
 
-  whatsappNumber String?
+  whatsappNumber  String?
   whatsappMessage String?
 
   instagram String?
-  facebook String?
-  tiktok String?
-  youtube String?
+  facebook  String?
+  tiktok    String?
+  youtube   String?
 
   openingHours String?
 
@@ -433,13 +439,12 @@ model StoreSettings {
 
   offerEnabled Boolean @default(true)
 
-  offerEyebrow String?
-  offerTitle String?
+  offerEyebrow     String?
+  offerTitle       String?
   offerDescription String?
-  offerButtonText String?
-  offerButtonUrl String? @default("/offers")
+  offerButtonText  String?
+  offerButtonUrl   String? @default("/offers")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-

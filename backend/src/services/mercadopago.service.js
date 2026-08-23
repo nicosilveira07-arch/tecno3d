@@ -18,7 +18,8 @@ export async function createOrderPaymentService(orderId) {
     throw new Error("Pedido no encontrado.");
   }
 
-  const existingPayment = await findPaymentByOrderId(orderId);
+  const existingPayment =
+    await findPaymentByOrderId(orderId);
 
   if (
     existingPayment &&
@@ -27,21 +28,38 @@ export async function createOrderPaymentService(orderId) {
     throw new Error("El pedido ya tiene un pago.");
   }
 
-  const items = order.items.map((item) => ({
-    title: item.product.name,
-    quantity: item.quantity,
-    unit_price: item.price,
-    currency_id: "UYU",
-  }));
+  /*
+   * IMPORTANTE:
+   *
+   * order.total ya contiene el descuento del cupón.
+   *
+   * Ejemplo:
+   *
+   * Subtotal: 49.99
+   * Descuento: 5.00
+   * Total: 44.99
+   *
+   * Mercado Pago debe recibir 44.99.
+   */
 
-  const preference = await createMercadoPagoPreference({
-    orderId,
-    items,
-  });
+  const items = [
+    {
+      title: `Pedido TECNO 3D #${order.id}`,
+      quantity: 1,
+      unit_price: Number(order.total),
+      currency_id: "UYU",
+    },
+  ];
+
+  const preference =
+    await createMercadoPagoPreference({
+      orderId,
+      items,
+    });
 
   const payment = await createPayment({
     orderId,
-    amount: order.total,
+    amount: Number(order.total),
     status: "PENDING",
     method: "MERCADO_PAGO",
   });
@@ -53,4 +71,3 @@ export async function createOrderPaymentService(orderId) {
     sandboxInitPoint: preference.sandbox_init_point,
   };
 }
-

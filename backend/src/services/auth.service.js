@@ -47,7 +47,7 @@ export async function login(email, password) {
   const user = await findByEmail(email);
 
   if (!user) {
-    throw new Error("Credenciales inválidas.");
+    throw new Error("Contraseña incorrecta");
   }
 
   const passwordMatch = await bcrypt.compare(
@@ -56,7 +56,7 @@ export async function login(email, password) {
   );
 
   if (!passwordMatch) {
-    throw new Error("Credenciales inválidas.");
+    throw new Error("Contraseña incorrecta");
   }
 
   const token = jwt.sign(

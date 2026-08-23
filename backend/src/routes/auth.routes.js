@@ -9,12 +9,17 @@ import {
 
 import { authenticate } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
+import { loginRateLimit } from "../middlewares/authRateLimit.middleware.js";
 
 const router = Router();
 
 router.post("/register", registerController);
 
-router.post("/login", loginController);
+router.post(
+  "/login",
+  loginRateLimit,
+  loginController
+);
 
 router.get(
   "/me",
@@ -43,3 +48,4 @@ router.get(
 );
 
 export default router;
+

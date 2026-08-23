@@ -4,10 +4,10 @@ import {
   getUsers,
   createUser,
   updateUserRole,
+  deleteUser,
 } from "@/services/users.api";
 
 export default function Users() {
-
   const [users, setUsers] = useState([]);
 
   const [loading, setLoading] =
@@ -15,8 +15,6 @@ export default function Users() {
 
   const [error, setError] =
     useState("");
-
-
 
   // PAGINACIÓN
 
@@ -29,8 +27,6 @@ export default function Users() {
   const [totalUsers, setTotalUsers] =
     useState(0);
 
-
-
   // FILTROS
 
   const [search, setSearch] =
@@ -38,8 +34,6 @@ export default function Users() {
 
   const [role, setRole] =
     useState("");
-
-
 
   // CREAR USUARIO
 
@@ -49,14 +43,15 @@ export default function Users() {
   const [creating, setCreating] =
     useState(false);
 
-
-
   // CAMBIAR ROL
 
   const [updatingRole, setUpdatingRole] =
     useState(null);
 
+  // ELIMINAR USUARIO
 
+  const [deletingUser, setDeletingUser] =
+    useState(null);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -67,18 +62,12 @@ export default function Users() {
     role: "EMPLOYEE",
   });
 
-
-
   // CARGAR USUARIOS
 
   const loadUsers = async () => {
-
     try {
-
       setLoading(true);
       setError("");
-
-
 
       const response = await getUsers({
         page,
@@ -87,26 +76,18 @@ export default function Users() {
         role,
       });
 
-
-
       setUsers(
         response.data?.users || []
       );
-
-
 
       setTotalUsers(
         response.data?.total || 0
       );
 
-
-
       setTotalPages(
         response.data?.totalPages || 1
       );
-
     } catch (error) {
-
       console.error(
         "ERROR CARGANDO USUARIOS:",
         error
@@ -116,79 +97,50 @@ export default function Users() {
         error.response?.data?.message ||
           "No se pudieron cargar los usuarios."
       );
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
-
-
   useEffect(() => {
-
     loadUsers();
-
   }, [page, role]);
-
-
 
   // BUSCADOR
 
   const handleSearch = (event) => {
-
     event.preventDefault();
 
     setPage(1);
-
     loadUsers();
-
   };
-
-
 
   // FORMULARIO
 
   const handleFormChange = (event) => {
-
     const {
       name,
       value,
     } = event.target;
 
-
-
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
-
   };
-
-
 
   // CREAR USUARIO
 
   const handleCreateUser = async (
     event
   ) => {
-
     event.preventDefault();
 
-
-
     try {
-
       setCreating(true);
       setError("");
 
-
-
       await createUser(form);
-
-
 
       setForm({
         firstName: "",
@@ -199,16 +151,11 @@ export default function Users() {
         role: "EMPLOYEE",
       });
 
-
-
       setShowCreateForm(false);
-
       setPage(1);
 
       await loadUsers();
-
     } catch (error) {
-
       console.error(
         "ERROR CREANDO USUARIO:",
         error
@@ -218,16 +165,10 @@ export default function Users() {
         error.response?.data?.message ||
           "No se pudo crear el usuario."
       );
-
     } finally {
-
       setCreating(false);
-
     }
-
   };
-
-
 
   // CAMBIAR ROL
 
@@ -235,21 +176,15 @@ export default function Users() {
     userId,
     newRole
   ) => {
-
     try {
-
       setUpdatingRole(userId);
       setError("");
-
-
 
       const response =
         await updateUserRole(
           userId,
           newRole
         );
-
-
 
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
@@ -263,9 +198,7 @@ export default function Users() {
             : user
         )
       );
-
     } catch (error) {
-
       console.error(
         "ERROR ACTUALIZANDO ROL:",
         error
@@ -275,29 +208,70 @@ export default function Users() {
         error.response?.data?.message ||
           "No se pudo actualizar el rol."
       );
-
     } finally {
-
       setUpdatingRole(null);
-
     }
-
   };
 
+  // ELIMINAR USUARIO
 
+  const handleDeleteUser = async (
+    userId
+  ) => {
+    const user = users.find(
+      (item) => item.id === userId
+    );
+
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Seguro que quieres eliminar al usuario ${user.firstName} ${user.lastName}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingUser(userId);
+      setError("");
+
+      await deleteUser(userId);
+
+      setUsers((prevUsers) =>
+        prevUsers.filter(
+          (user) => user.id !== userId
+        )
+      );
+
+      setTotalUsers((prev) =>
+        Math.max(prev - 1, 0)
+      );
+    } catch (error) {
+      console.error(
+        "ERROR ELIMINANDO USUARIO:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "No se pudo eliminar el usuario."
+      );
+    } finally {
+      setDeletingUser(null);
+    }
+  };
 
   return (
-
     <div className="space-y-6">
-
-
 
       {/* ENCABEZADO */}
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
         <div>
-
           <p className="mb-2 text-sm font-semibold text-red-500">
             Administración
           </p>
@@ -305,10 +279,7 @@ export default function Users() {
           <h1 className="text-3xl font-black text-white md:text-4xl">
             Usuarios
           </h1>
-
         </div>
-
-
 
         <button
           type="button"
@@ -325,8 +296,6 @@ export default function Users() {
         </button>
 
       </div>
-
-
 
       {/* BUSCADOR Y FILTROS */}
 
@@ -347,15 +316,11 @@ export default function Users() {
             className="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-red-600"
           />
 
-
-
           <select
             value={role}
             onChange={(event) => {
-
               setRole(event.target.value);
               setPage(1);
-
             }}
             className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none focus:border-red-600"
           >
@@ -378,8 +343,6 @@ export default function Users() {
 
           </select>
 
-
-
           <button
             type="submit"
             className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700"
@@ -391,19 +354,14 @@ export default function Users() {
 
       </div>
 
-
-
       {/* FORMULARIO CREAR */}
 
       {showCreateForm && (
-
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 md:p-8">
 
           <h2 className="mb-6 text-xl font-bold text-white">
             Crear usuario
           </h2>
-
-
 
           <form
             onSubmit={handleCreateUser}
@@ -411,7 +369,6 @@ export default function Users() {
           >
 
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Nombre
               </label>
@@ -424,13 +381,9 @@ export default function Users() {
                 required
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
               />
-
             </div>
 
-
-
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Apellido
               </label>
@@ -443,13 +396,9 @@ export default function Users() {
                 required
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
               />
-
             </div>
 
-
-
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Email
               </label>
@@ -462,13 +411,9 @@ export default function Users() {
                 required
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
               />
-
             </div>
 
-
-
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Teléfono
               </label>
@@ -480,13 +425,9 @@ export default function Users() {
                 onChange={handleFormChange}
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
               />
-
             </div>
 
-
-
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Contraseña
               </label>
@@ -500,13 +441,9 @@ export default function Users() {
                 minLength={8}
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
               />
-
             </div>
 
-
-
             <div>
-
               <label className="mb-2 block text-sm text-zinc-400">
                 Rol
               </label>
@@ -531,10 +468,7 @@ export default function Users() {
                 </option>
 
               </select>
-
             </div>
-
-
 
             <div className="md:col-span-2">
 
@@ -553,59 +487,43 @@ export default function Users() {
           </form>
 
         </div>
-
       )}
-
-
 
       {/* ERROR */}
 
       {error && (
-
         <div className="rounded-xl border border-red-800 bg-red-950/40 p-4 text-sm text-red-400">
           {error}
         </div>
-
       )}
-
-
 
       {/* TOTAL */}
 
       <div className="flex items-center justify-between">
 
         <p className="text-sm text-zinc-500">
-
           Total de usuarios:
 
           <span className="ml-2 font-bold text-white">
             {totalUsers}
           </span>
-
         </p>
 
         <p className="text-sm text-zinc-500">
-
           Página {page} de {totalPages}
-
         </p>
 
       </div>
-
-
 
       {/* TABLA */}
 
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
 
         {loading ? (
-
           <div className="p-8 text-center text-zinc-400">
             Cargando usuarios...
           </div>
-
         ) : (
-
           <div className="overflow-x-auto">
 
             <table className="w-full text-left">
@@ -634,31 +552,27 @@ export default function Users() {
                     Registro
                   </th>
 
+                  <th className="px-6 py-4 text-sm font-semibold text-zinc-400">
+                    Acciones
+                  </th>
+
                 </tr>
 
               </thead>
 
-
-
               <tbody>
 
                 {users.length === 0 ? (
-
                   <tr>
-
                     <td
-                      colSpan="5"
+                      colSpan="6"
                       className="px-6 py-12 text-center text-zinc-500"
                     >
                       No se encontraron usuarios.
                     </td>
-
                   </tr>
-
                 ) : (
-
                   users.map((user) => (
-
                     <tr
                       key={user.id}
                       className="border-b border-zinc-800 last:border-0"
@@ -677,20 +591,14 @@ export default function Users() {
 
                       </td>
 
-
-
                       <td className="px-6 py-5 text-sm text-zinc-300">
                         {user.email}
                       </td>
-
-
 
                       <td className="px-6 py-5 text-sm text-zinc-400">
                         {user.phone ||
                           "Sin teléfono"}
                       </td>
-
-
 
                       <td className="px-6 py-5">
 
@@ -732,8 +640,6 @@ export default function Users() {
 
                       </td>
 
-
-
                       <td className="px-6 py-5 text-sm text-zinc-400">
 
                         {new Date(
@@ -744,10 +650,31 @@ export default function Users() {
 
                       </td>
 
+                      <td className="px-6 py-5">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteUser(
+                              user.id
+                            )
+                          }
+                          disabled={
+                            deletingUser ===
+                            user.id
+                          }
+                          className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {deletingUser ===
+                          user.id
+                            ? "Eliminando..."
+                            : "Eliminar"}
+                        </button>
+
+                      </td>
+
                     </tr>
-
                   ))
-
                 )}
 
               </tbody>
@@ -755,18 +682,14 @@ export default function Users() {
             </table>
 
           </div>
-
         )}
 
       </div>
-
-
 
       {/* PAGINACIÓN */}
 
       {!loading &&
         totalPages > 1 && (
-
           <div className="flex items-center justify-center gap-3">
 
             <button
@@ -783,13 +706,9 @@ export default function Users() {
               ← Anterior
             </button>
 
-
-
             <span className="text-sm text-zinc-400">
               Página {page} de {totalPages}
             </span>
-
-
 
             <button
               type="button"
@@ -808,12 +727,9 @@ export default function Users() {
             </button>
 
           </div>
-
         )}
 
     </div>
-
   );
-
 }
 

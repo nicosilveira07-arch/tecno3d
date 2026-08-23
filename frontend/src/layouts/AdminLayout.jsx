@@ -6,10 +6,11 @@ import {
   Users,
   Tags,
   Ticket,
-  FileText,
   Settings,
   LogOut,
   Image,
+  Menu,
+  X,
 } from "lucide-react";
 
 import {
@@ -19,8 +20,13 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import { useState } from "react";
+
 export default function AdminLayout() {
   const navigate = useNavigate();
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
 
   const user = JSON.parse(
     localStorage.getItem("user") || "null"
@@ -31,7 +37,7 @@ export default function AdminLayout() {
       label: "Dashboard",
       path: "/admin",
       icon: Home,
-      roles: ["ADMIN", "EMPLOYEE"],
+      roles: ["ADMIN"],
     },
     {
       label: "Productos",
@@ -89,9 +95,10 @@ export default function AdminLayout() {
     },
   ];
 
-  const visibleMenuItems = menuItems.filter((item) =>
-    item.roles.includes(user?.role)
-  );
+  const visibleMenuItems =
+    menuItems.filter((item) =>
+      item.roles.includes(user?.role)
+    );
 
   const initials =
     user?.firstName?.charAt(0)?.toUpperCase() || "A";
@@ -104,34 +111,82 @@ export default function AdminLayout() {
     window.location.reload();
   };
 
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
+      {/* BOTÓN MENÚ MOBILE */}
+
+      <button
+        type="button"
+        onClick={() =>
+          setSidebarOpen(true)
+        }
+        className="fixed left-4 top-4 z-30 flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-white shadow-lg transition hover:bg-zinc-800 lg:hidden"
+        aria-label="Abrir menú"
+      >
+        <Menu size={22} />
+      </button>
+
+      {/* OVERLAY MOBILE */}
+
+      {sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={closeSidebar}
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+        />
+      )}
+
       {/* SIDEBAR */}
 
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-zinc-800 bg-black">
-        {/* LOGO */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-800 bg-black transition-transform duration-300 ${
+          sidebarOpen
+            ? "translate-x-0"
+            : "-translate-x-full"
+        } lg:w-64 lg:translate-x-0`}
+      >
+        {/* HEADER SIDEBAR */}
 
-        <div className="border-b border-zinc-800 p-6">
-          <Link
-            to="/"
-            className="flex items-center gap-3"
-          >
-            <img
-              src="/logo.png"
-              alt="Tecno3D"
-              className="h-14"
-            />
+        <div className="border-b border-zinc-800 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <Link
+              to="/"
+              onClick={closeSidebar}
+              className="flex min-w-0 items-center gap-3"
+            >
+              <img
+                src="/logo.png"
+                alt="Tecno3D"
+                className="h-12 w-auto sm:h-14"
+              />
 
-            <div>
-              <h1 className="text-xl font-bold text-white">
-                TECNO3D
-              </h1>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-white sm:text-xl">
+                  TECNO3D
+                </h1>
 
-              <p className="text-xs text-zinc-400">
-                Impresión 3D & Tecnología
-              </p>
-            </div>
-          </Link>
+                <p className="text-[10px] leading-tight text-zinc-400 sm:text-xs">
+                  Impresión 3D & Tecnología
+                </p>
+              </div>
+            </Link>
+
+            {/* CERRAR MOBILE */}
+
+            <button
+              type="button"
+              onClick={closeSidebar}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-900 hover:text-white lg:hidden"
+              aria-label="Cerrar menú"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
           <p className="mt-4 text-xs text-zinc-500">
             Administración
@@ -140,7 +195,7 @@ export default function AdminLayout() {
 
         {/* USUARIO */}
 
-        <div className="border-b border-zinc-800 p-5">
+        <div className="border-b border-zinc-800 p-4 sm:p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-600 font-bold">
               {initials}
@@ -149,12 +204,15 @@ export default function AdminLayout() {
             <div className="min-w-0">
               <p className="truncate font-semibold text-white">
                 {user?.firstName
-                  ? `${user.firstName} ${user.lastName || ""}`
+                  ? `${user.firstName} ${
+                      user.lastName || ""
+                    }`
                   : "Administrador"}
               </p>
 
               <p className="truncate text-xs text-zinc-500">
-                {user?.email || "admin@tecno3d.com"}
+                {user?.email ||
+                  "admin@tecno3d.com"}
               </p>
 
               <p
@@ -172,7 +230,7 @@ export default function AdminLayout() {
 
         {/* MENÚ */}
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3 sm:p-4">
           <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-zinc-600">
             Menú
           </p>
@@ -185,17 +243,21 @@ export default function AdminLayout() {
                 key={item.path}
                 to={item.path}
                 end={item.path === "/admin"}
+                onClick={closeSidebar}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                  `flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
                     isActive
                       ? "bg-red-600 text-white"
                       : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
                   }`
                 }
               >
-                <Icon size={18} />
+                <Icon
+                  size={19}
+                  className="shrink-0"
+                />
 
-                <span>
+                <span className="truncate">
                   {item.label}
                 </span>
               </NavLink>
@@ -205,13 +267,16 @@ export default function AdminLayout() {
 
         {/* CERRAR SESIÓN */}
 
-        <div className="border-t border-zinc-800 p-4">
+        <div className="border-t border-zinc-800 p-3 sm:p-4">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-zinc-400 transition hover:bg-zinc-900 hover:text-red-500"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-400 transition hover:bg-zinc-900 hover:text-red-500"
           >
-            <LogOut size={18} />
+            <LogOut
+              size={19}
+              className="shrink-0"
+            />
 
             <span>
               Cerrar sesión
@@ -222,11 +287,14 @@ export default function AdminLayout() {
 
       {/* CONTENIDO */}
 
-      <main className="ml-64 min-w-0">
-        <div className="p-6 md:p-8">
+      <main className="min-w-0 lg:ml-64">
+        {/* ESPACIO PARA BOTÓN MOBILE */}
+
+        <div className="p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8 lg:pt-8">
           <Outlet />
         </div>
       </main>
     </div>
   );
 }
+

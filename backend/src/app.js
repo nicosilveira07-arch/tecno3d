@@ -19,14 +19,13 @@ import webhookRoutes from "./routes/webhook.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import favoriteRoutes from "./routes/favorite.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
-
 import bannerRoutes from "./routes/banner.routes.js";
-
-import couponRoutes from "./routes/coupon.routes.js"
-
+import couponRoutes from "./routes/coupon.routes.js";
 import storeSettingsRoutes from "./routes/storeSettings.routes.js";
 
 const app = express();
+
+app.set("trust proxy", 1);
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -66,14 +65,18 @@ app.use("/api/mercadopago", mercadopagoRoutes);
 app.use("/api/webhook", webhookRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/favorites", favoriteRoutes);
-
 app.use("/api/banners", bannerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/settings", storeSettingsRoutes);
 
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Ruta no encontrada.",
+  });
+});
 
 app.use(errorMiddleware);
 
 export default app;
-

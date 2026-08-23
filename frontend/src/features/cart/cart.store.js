@@ -93,6 +93,21 @@ export function addToCart(product) {
   const productId =
     product.productId ?? product.id;
 
+  const originalPrice = Number(product.price);
+
+  const offerPrice =
+    product.offerActive &&
+    product.offerPrice != null
+      ? Number(product.offerPrice)
+      : null;
+
+  const effectivePrice =
+    offerPrice != null &&
+    offerPrice > 0 &&
+    offerPrice < originalPrice
+      ? offerPrice
+      : originalPrice;
+
   const existingProduct = cart.find(
     (item) => item.productId === productId
   );
@@ -103,6 +118,7 @@ export function addToCart(product) {
         ? {
             ...item,
             quantity: item.quantity + 1,
+            price: effectivePrice,
           }
         : item
     );
@@ -112,7 +128,7 @@ export function addToCart(product) {
       {
         productId,
         name: product.name,
-        price: product.price,
+        price: effectivePrice,
         image: product.image,
         quantity: 1,
       },

@@ -5,6 +5,9 @@ import client from "./mercadopago.client.js";
 const preference = new Preference(client);
 
 export async function createMercadoPagoPreference(data) {
+  const notificationUrl =
+    "https://esther-unentomological-maison.ngrok-free.dev/api/webhook/mercadopago";
+
   const body = {
     items: data.items,
 
@@ -21,11 +24,16 @@ export async function createMercadoPagoPreference(data) {
 
     auto_return: "approved",
 
-    notification_url:
-      "https://esther-unentomological-maison.ngrok-free.dev/api/mercadopago/webhook",
+    notification_url: notificationUrl,
 
     external_reference: data.orderId,
   };
+
+  console.log("==========================================");
+  console.log("CREANDO PREFERENCE MERCADO PAGO");
+  console.log("NOTIFICATION URL:");
+  console.log(notificationUrl);
+  console.log("==========================================");
 
   console.log(
     "PREFERENCE BODY:",
@@ -36,11 +44,14 @@ export async function createMercadoPagoPreference(data) {
     body,
   });
 
-  console.log(
-    "PREFERENCE RESPONSE:",
-    JSON.stringify(response, null, 2)
-  );
+  console.log("==========================================");
+  console.log("PREFERENCE CREADA");
+  console.log("ID:", response.id);
+  console.log("NOTIFICATION_URL DEVUELTA:", response.notification_url);
+  console.log("COLLECTOR ID:", response.collector_id);
+  console.log("CLIENT ID:", response.client_id);
+  console.log("EXTERNAL REFERENCE:", response.external_reference);
+  console.log("==========================================");
 
   return response;
 }
-
