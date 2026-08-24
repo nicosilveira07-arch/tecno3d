@@ -55,3 +55,6 @@ Nuevo Documento de texto.txt
 # Claves privadas
 
 *.pem
+# Archivos sensibles / respaldos de base de datos
+
+tecno3d.sql
