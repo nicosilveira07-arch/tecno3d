@@ -51,3 +51,7 @@ Nuevo Documento de texto.txt
 # Archivos de diseño / edición no necesarios para el repositorio
 
 *.odg
+
+# Claves privadas
+
+*.pem
