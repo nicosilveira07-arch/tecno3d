@@ -313,7 +313,7 @@ export default function Footer() {
         {/* COPYRIGHT */}
 
         <div className="mt-10 border-t border-zinc-800 pt-6 text-sm text-zinc-600">
-          © 2026 {storeName}. Todos los derechos reservados.
+          © 2026 {storeName}. Todos los derechos reservados MKXDNSM.
         </div>
 
       </div>
