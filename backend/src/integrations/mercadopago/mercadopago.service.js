@@ -6,20 +6,20 @@ const preference = new Preference(client);
 
 export async function createMercadoPagoPreference(data) {
   const notificationUrl =
-    "https://esther-unentomological-maison.ngrok-free.dev/api/webhook/mercadopago";
+    "https://www.tecno3d.net/api/webhook/mercadopago";
 
   const body = {
     items: data.items,
 
     back_urls: {
       success:
-        "https://c70pcrc5-5173.brs.devtunnels.ms/payment/success",
+        "https://www.tecno3d.net/payment/success",
 
       failure:
-        "https://c70pcrc5-5173.brs.devtunnels.ms/payment/failure",
+        "https://www.tecno3d.net/payment/failure",
 
       pending:
-        "https://c70pcrc5-5173.brs.devtunnels.ms/payment/pending",
+        "https://www.tecno3d.net/payment/pending",
     },
 
     auto_return: "approved",
@@ -55,3 +55,4 @@ export async function createMercadoPagoPreference(data) {
 
   return response;
 }
+

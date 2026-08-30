@@ -30,8 +30,11 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://c70pcrc5-5173.brs.devtunnels.ms",
+  "https://www.tecno3d.net",
+  "https://tecno3d.net",
 ];
+
+
 
 app.use(
   cors({
