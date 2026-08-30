@@ -87,6 +87,51 @@ const normalizeSearch = (search) => {
   return synonyms[value] || [value];
 };
 
+/**
+ * Genera un slug disponible manteniendo el slug original
+ * cuando todavía no existe.
+ *
+ * Ejemplo:
+ * notebook-asus-tuf-gamer-156
+ * notebook-asus-tuf-gamer-156-2
+ * notebook-asus-tuf-gamer-156-3
+ */
+const getUniqueSlug = async (tx, baseSlug) => {
+  const existingProduct = await tx.product.findUnique({
+    where: {
+      slug: baseSlug,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!existingProduct) {
+    return baseSlug;
+  }
+
+  let counter = 2;
+
+  while (true) {
+    const candidateSlug = `${baseSlug}-${counter}`;
+
+    const existingCandidate = await tx.product.findUnique({
+      where: {
+        slug: candidateSlug,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existingCandidate) {
+      return candidateSlug;
+    }
+
+    counter++;
+  }
+};
+
 const createProduct = async (data) => {
   const { images, ...productData } = data;
 
@@ -98,6 +143,11 @@ const createProduct = async (data) => {
   productData.image = mainImage;
 
   return await prisma.$transaction(async (tx) => {
+    productData.slug = await getUniqueSlug(
+      tx,
+      productData.slug
+    );
+
     const product = await tx.product.create({
       data: productData,
     });
