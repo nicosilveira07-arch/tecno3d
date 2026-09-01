@@ -11,9 +11,8 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  config.headers["ngrok-skip-browser-warning"] = "true";
-
   return config;
 });
 
 export default api;
+

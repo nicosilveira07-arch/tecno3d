@@ -6,8 +6,7 @@ const preference = new Preference(client);
 
 export async function createMercadoPagoPreference(data) {
   const notificationUrl =
-    "https://www.tecno3d.net/api/webhook/mercadopago";
-
+    "https://api.tecno3d.net/api/webhook/mercadopago";
   const body = {
     items: data.items,
 
@@ -22,7 +21,7 @@ export async function createMercadoPagoPreference(data) {
         "https://www.tecno3d.net/payment/pending",
     },
 
-    auto_return: "approved",
+     auto_return: "approved",
 
     notification_url: notificationUrl,
 
