@@ -22,7 +22,7 @@ jobs:
 
       - name: Deploy to EC2 via SSM
         run: |
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids "i-0cf5c7842decc394e" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy TECNO3D from GitHub Actions" \
@@ -30,6 +30,34 @@ jobs:
               "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d && git config --global --add safe.directory /home/ec2-user/tecno3d && git pull --ff-only origin master'\''",
               "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 restart tecno3d-api'\''",
               "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d/frontend && npm install && npm run build'\''",
+              "sudo rm -rf /var/www/tecno3d/*",
+              "sudo cp -r /home/ec2-user/tecno3d/frontend/dist/. /var/www/tecno3d/",
+              "sudo chown -R nginx:nginx /var/www/tecno3d",
               "sudo systemctl reload nginx"
             ]' \
+            --region sa-east-1 \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "i-0cf5c7842decc394e" \
             --region sa-east-1
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "i-0cf5c7842decc394e" \
+            --region sa-east-1 \
+            --query "Status" \
+            --output text)
+
+          echo "SSM Command Status: $STATUS"
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "ERROR: El deploy en EC2 fallo."
+            exit 1
+          fi
+
+          echo "Deploy TECNO 3D completado correctamente."
