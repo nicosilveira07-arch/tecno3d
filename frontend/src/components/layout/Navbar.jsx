@@ -30,9 +30,18 @@ export default function Navbar() {
 
   const token = localStorage.getItem("token");
 
-  const user = JSON.parse(
-    localStorage.getItem("user") || "null"
-  );
+  const storedUser = localStorage.getItem("user");
+
+  let user = null;
+
+  if (storedUser && storedUser !== "undefined") {
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem("user");
+      user = null;
+    }
+  }
 
   const isAdmin =
     user?.role === "ADMIN" ||
@@ -148,6 +157,14 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleFavoriteUpdated = async () => {
+      const currentToken =
+        localStorage.getItem("token");
+
+      if (!currentToken) {
+        setFavoriteCount(0);
+        return;
+      }
+
       try {
         const response = await getFavorites();
 

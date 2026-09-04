@@ -24,10 +24,7 @@ export default function Login() {
         password
       );
 
-      console.log(
-        "LOGIN RESPONSE:",
-        response
-      );
+  
 
       const { token, user } = response.data;
 

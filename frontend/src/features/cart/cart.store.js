@@ -7,11 +7,19 @@ let cart = [];
 const listeners = new Set();
 
 function getUserId() {
-  const user = JSON.parse(
-    localStorage.getItem("user") || "null"
-  );
+  const storedUser = localStorage.getItem("user");
 
-  return user?.id || null;
+  if (!storedUser || storedUser === "undefined") {
+    return null;
+  }
+
+  try {
+    const user = JSON.parse(storedUser);
+
+    return user?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 function getStorageKey() {

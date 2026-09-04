@@ -31,12 +31,12 @@ export default function Register() {
       setLoading(true);
       setError("");
 
-      const response = await register(
+      const response = await register({
         firstName,
         lastName,
         email,
-        password
-      );
+        password,
+      });
 
       console.log("REGISTER RESPONSE:", response);
 
@@ -270,3 +270,4 @@ export default function Register() {
     </section>
   );
 }
+
