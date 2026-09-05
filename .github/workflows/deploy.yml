@@ -27,9 +27,11 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --comment "Deploy TECNO3D from GitHub Actions" \
             --parameters 'commands=[
-              "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d && git config --global --add safe.directory /home/ec2-user/tecno3d && git pull --ff-only origin master'\''",
-              "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 restart tecno3d-api'\''",
-              "sudo -u ec2-user -H bash -c '\''cd /home/ec2-user/tecno3d/frontend && npm install && npm run build'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d && git config --global --add safe.directory /home/ec2-user/tecno3d && git pull --ff-only origin master'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 restart tecno3d-api'\''",
+              "sudo rm -rf /home/ec2-user/tecno3d/frontend/dist && sudo -u ec2-user mkdir -p /home/ec2-user/tecno3d/frontend/dist",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/frontend && npm install && npm run build'\''",
+              "sudo test -f /home/ec2-user/tecno3d/frontend/dist/index.html",
               "sudo rm -rf /var/www/tecno3d/*",
               "sudo cp -r /home/ec2-user/tecno3d/frontend/dist/. /var/www/tecno3d/",
               "sudo chown -R nginx:nginx /var/www/tecno3d",
@@ -61,3 +63,4 @@ jobs:
           fi
 
           echo "Deploy TECNO 3D completado correctamente."
+
