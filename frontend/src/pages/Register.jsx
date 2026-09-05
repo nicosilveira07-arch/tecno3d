@@ -38,7 +38,7 @@ export default function Register() {
         password,
       });
 
-      console.log("REGISTER RESPONSE:", response);
+      
 
       const { token, user } = response.data;
 
