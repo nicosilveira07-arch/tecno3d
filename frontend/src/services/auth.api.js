@@ -1,6 +1,7 @@
 import api from "./api";
 
 // LOGIN
+
 export async function login(email, password) {
   const response = await api.post("/auth/login", {
     email,
@@ -11,13 +12,23 @@ export async function login(email, password) {
 }
 
 // REGISTRO
+
 export async function register(data) {
-  const response = await api.post("/auth/register", data);
+  const response = await api.post(
+    "/auth/register",
+    JSON.stringify(data),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   return response.data;
 }
 
 // USUARIO AUTENTICADO
+
 export async function getMe() {
   const response = await api.get("/auth/me");
 
@@ -25,6 +36,7 @@ export async function getMe() {
 }
 
 // CAMBIAR CONTRASEÑA
+
 export async function changePassword(data) {
   const response = await api.patch(
     "/auth/change-password",
@@ -33,4 +45,3 @@ export async function changePassword(data) {
 
   return response.data;
 }
-
