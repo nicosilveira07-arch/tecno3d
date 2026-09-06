@@ -1,8 +1,8 @@
-# API — TECNO3D
+# API — TECNO 3D
 
 ## 1. Información general
 
-TECNO3D utiliza una API REST desarrollada con Node.js y Express.
+TECNO 3D utiliza una API REST desarrollada con **Node.js** y **Express**.
 
 La API permite gestionar:
 
@@ -25,17 +25,29 @@ La API permite gestionar:
 
 ### URL base
 
+#### Producción
+
 ```text
-/api
+https://api.tecno3d.net/api
 ```
 
-En desarrollo, el backend se ejecuta sobre el servidor configurado para el proyecto.
+#### Desarrollo
+
+En desarrollo, la API utiliza la configuración local definida para el proyecto.
+
+La aplicación Node.js escucha internamente en:
+
+```text
+127.0.0.1:5000
+```
+
+En producción, las solicitudes externas son recibidas mediante **Nginx** y posteriormente enviadas al backend.
 
 ---
 
-# 2. Autenticación
+# 2. Autenticación y autorización
 
-Las rutas protegidas utilizan autenticación mediante JWT.
+Las rutas protegidas utilizan autenticación mediante **JWT**.
 
 El token debe enviarse mediante el header:
 
@@ -45,11 +57,9 @@ Authorization: Bearer TOKEN
 
 El middleware de autenticación valida el token antes de permitir el acceso al recurso.
 
----
+La API utiliza control de acceso basado en roles.
 
-# 3. Roles
-
-La API utiliza los siguientes roles:
+Los roles disponibles son:
 
 ```text
 ADMIN
@@ -57,11 +67,11 @@ EMPLOYEE
 CUSTOMER
 ```
 
-Los endpoints administrativos utilizan middleware de autorización para limitar el acceso según el rol.
+Los endpoints administrativos utilizan middleware de autorización para limitar el acceso según el rol correspondiente.
 
 ---
 
-# 4. Autenticación
+# 3. Autenticación
 
 Base:
 
@@ -85,9 +95,25 @@ POST /api/auth/login
 
 Permite autenticar un usuario y obtener sus credenciales de acceso.
 
+### Usuario autenticado
+
+```http
+GET /api/auth/me
+```
+
+Permite obtener la información del usuario autenticado.
+
+### Cambio de contraseña
+
+```http
+PATCH /api/auth/change-password
+```
+
+Permite cambiar la contraseña del usuario autenticado.
+
 ---
 
-# 5. Productos
+# 4. Productos
 
 Base:
 
@@ -137,7 +163,7 @@ POST /api/products
 
 Permite crear un nuevo producto.
 
-Requiere permisos administrativos según la configuración de las rutas.
+Requiere los permisos correspondientes.
 
 ### Actualizar producto
 
@@ -153,11 +179,11 @@ Actualiza la información de un producto.
 DELETE /api/products/:id
 ```
 
-Elimina un producto.
+Elimina un producto según las reglas de negocio y permisos establecidos.
 
 ---
 
-# 6. Categorías
+# 5. Categorías
 
 Base:
 
@@ -165,7 +191,7 @@ Base:
 /api/categories
 ```
 
-Permite administrar las categorías de productos.
+Permite gestionar las categorías de productos.
 
 Operaciones principales:
 
@@ -180,7 +206,7 @@ Las operaciones de modificación requieren autorización administrativa.
 
 ---
 
-# 7. Marcas
+# 6. Marcas
 
 Base:
 
@@ -201,7 +227,7 @@ Las marcas permiten asociar productos con fabricantes o marcas comerciales.
 
 ---
 
-# 8. Usuarios
+# 7. Usuarios
 
 Base:
 
@@ -209,7 +235,7 @@ Base:
 /api/users
 ```
 
-Permite administrar usuarios de la plataforma.
+Permite administrar los usuarios de la plataforma.
 
 ### Obtener usuarios
 
@@ -244,7 +270,7 @@ PATCH /api/users/:id/role
 
 Permite modificar el rol de un usuario autorizado.
 
-Los roles disponibles son:
+Roles disponibles:
 
 ```text
 ADMIN
@@ -254,7 +280,7 @@ CUSTOMER
 
 ---
 
-# 9. Direcciones
+# 8. Direcciones
 
 Base:
 
@@ -264,7 +290,7 @@ Base:
 
 Permite administrar las direcciones asociadas a los usuarios.
 
-Operaciones disponibles según la configuración actual:
+Operaciones disponibles:
 
 ```http
 GET /api/addresses
@@ -277,7 +303,7 @@ Las direcciones están asociadas al usuario autenticado.
 
 ---
 
-# 10. Carrito
+# 9. Carrito
 
 Base:
 
@@ -295,7 +321,7 @@ Permite:
 * Eliminar productos.
 * Vaciar el carrito.
 
-Las rutas disponibles se encuentran definidas en:
+Las rutas se encuentran definidas en:
 
 ```text
 src/routes/cart.routes.js
@@ -303,7 +329,7 @@ src/routes/cart.routes.js
 
 ---
 
-# 11. Pedidos
+# 10. Pedidos
 
 Base:
 
@@ -319,7 +345,7 @@ POST /api/orders
 
 Permite crear un nuevo pedido.
 
-El backend valida:
+El backend valida, entre otros aspectos:
 
 * Productos.
 * Cantidades.
@@ -345,8 +371,8 @@ GET /api/orders
 Disponible para:
 
 ```text
-EMPLOYEE
 ADMIN
+EMPLOYEE
 ```
 
 ### Obtener pedido
@@ -368,13 +394,13 @@ PATCH /api/orders/:id/status
 Disponible para:
 
 ```text
-EMPLOYEE
 ADMIN
+EMPLOYEE
 ```
 
 Permite cambiar el estado del pedido respetando las transiciones definidas por la lógica de negocio.
 
-Estados:
+Estados disponibles:
 
 ```text
 PENDING
@@ -387,7 +413,7 @@ CANCELLED
 
 ---
 
-# 12. Pagos
+# 11. Pagos
 
 Base:
 
@@ -439,7 +465,7 @@ BANK_TRANSFER
 
 ---
 
-# 13. Checkout
+# 12. Checkout
 
 Base:
 
@@ -453,7 +479,7 @@ Permite preparar el proceso de creación del pedido y pago.
 
 ---
 
-# 14. Mercado Pago
+# 13. Mercado Pago
 
 Base:
 
@@ -461,13 +487,33 @@ Base:
 /api/mercadopago
 ```
 
-Este módulo integra la plataforma con Mercado Pago.
+Este módulo integra TECNO 3D con Mercado Pago.
 
-Se utiliza para gestionar las operaciones necesarias para procesar pagos mediante Mercado Pago.
+Se utiliza para las operaciones necesarias para procesar pagos mediante Mercado Pago.
+
+El flujo general es:
+
+```text
+Frontend
+   │
+   ▼
+Checkout
+   │
+   ▼
+Backend
+   │
+   ▼
+Mercado Pago
+   │
+   ▼
+Pago
+```
+
+La aplicación utiliza el resultado del proceso de pago para mantener actualizado el estado correspondiente del pedido.
 
 ---
 
-# 15. Webhooks
+# 14. Webhooks de Mercado Pago
 
 Base:
 
@@ -475,13 +521,38 @@ Base:
 /api/webhook
 ```
 
-Los webhooks permiten recibir notificaciones externas relacionadas con eventos de servicios de terceros.
+Los Webhooks permiten recibir notificaciones externas relacionadas con eventos de Mercado Pago.
 
-En particular, se utilizan para procesar eventos relacionados con pagos.
+Principalmente se utilizan para procesar eventos relacionados con pagos.
+
+El flujo es:
+
+```text
+Mercado Pago
+      │
+      ▼
+Webhook
+      │
+      ▼
+Backend TECNO 3D
+      │
+      ▼
+Validación del evento
+      │
+      ▼
+Actualización del pago
+      │
+      ▼
+Actualización del pedido
+```
+
+Los eventos recibidos se validan antes de actualizar información relacionada con los pagos.
+
+La integración utiliza validación de firma para proteger el endpoint frente a solicitudes no autorizadas.
 
 ---
 
-# 16. Reseñas
+# 15. Reseñas
 
 Base:
 
@@ -491,15 +562,15 @@ Base:
 
 Permite administrar las reseñas realizadas sobre productos.
 
-También se utiliza el endpoint:
+### Obtener reseñas de un producto
 
 ```http
 GET /api/reviews/product/:productId
 ```
 
-para consultar las reseñas correspondientes a un producto.
+Permite consultar las reseñas correspondientes a un producto.
 
-Las reseñas contienen:
+Las reseñas contienen información relacionada con:
 
 ```text
 rating
@@ -514,7 +585,7 @@ Un usuario no puede registrar más de una reseña para el mismo producto.
 
 ---
 
-# 17. Favoritos
+# 16. Favoritos
 
 Base:
 
@@ -524,11 +595,17 @@ Base:
 
 Permite administrar los productos favoritos de los usuarios.
 
-Las operaciones permiten agregar y eliminar productos de favoritos y consultar los favoritos del usuario autenticado.
+Las operaciones permiten:
+
+* Consultar favoritos.
+* Agregar productos a favoritos.
+* Eliminar productos de favoritos.
+
+Las operaciones están asociadas al usuario autenticado.
 
 ---
 
-# 18. Banners
+# 17. Banners
 
 Base:
 
@@ -538,7 +615,7 @@ Base:
 
 Permite administrar los banners utilizados en la plataforma.
 
-Los banners contienen información como:
+Los banners pueden contener información como:
 
 ```text
 title
@@ -554,7 +631,7 @@ Los usuarios administrativos pueden gestionar los banners utilizados por el fron
 
 ---
 
-# 19. Upload
+# 18. Upload
 
 Base:
 
@@ -562,7 +639,7 @@ Base:
 /api/upload
 ```
 
-Permite cargar imágenes.
+Permite cargar imágenes utilizadas por la aplicación.
 
 El sistema utiliza el servicio de almacenamiento configurado para el proyecto.
 
@@ -573,9 +650,11 @@ Las imágenes pueden utilizarse para:
 * Banners.
 * Otros recursos que requieran imágenes.
 
+Las credenciales del servicio de almacenamiento se mantienen fuera del código fuente.
+
 ---
 
-# 20. Respuestas de la API
+# 19. Respuestas de la API
 
 Las respuestas exitosas utilizan generalmente una estructura similar a:
 
@@ -596,13 +675,15 @@ Cuando corresponde, también se incluye un mensaje:
 }
 ```
 
+La estructura exacta puede variar según el endpoint y la operación realizada.
+
 ---
 
-# 21. Errores
+# 20. Errores
 
 Los errores son procesados mediante el middleware global de errores.
 
-Una respuesta de error puede tener una estructura similar a:
+Una respuesta de error puede utilizar una estructura similar a:
 
 ```json
 {
@@ -614,36 +695,71 @@ Una respuesta de error puede tener una estructura similar a:
 Códigos HTTP utilizados habitualmente:
 
 | Código | Significado                |
-| ------ | -------------------------- |
-| 200    | Operación exitosa          |
-| 201    | Recurso creado             |
-| 400    | Solicitud inválida         |
-| 401    | No autenticado             |
-| 403    | Sin permisos               |
-| 404    | Recurso no encontrado      |
-| 500    | Error interno del servidor |
+| -----: | -------------------------- |
+|    200 | Operación exitosa          |
+|    201 | Recurso creado             |
+|    400 | Solicitud inválida         |
+|    401 | No autenticado             |
+|    403 | Sin permisos               |
+|    404 | Recurso no encontrado      |
+|    500 | Error interno del servidor |
+
+Las respuestas públicas no deben exponer información sensible ni detalles internos de la aplicación.
 
 ---
 
-# 22. Seguridad
+# 21. Seguridad
 
-Las rutas protegidas utilizan autenticación mediante JWT.
+La API utiliza diferentes mecanismos de seguridad.
 
-El backend también utiliza:
+### Autenticación
 
-* CORS.
-* Helmet.
+* JWT.
+* Bearer Token.
 * Middleware de autenticación.
-* Middleware de autorización por roles.
-* Validación de datos.
-* Hash de contraseñas mediante bcrypt.
-* Control de acceso a recursos.
+
+### Autorización
+
+* Control de acceso mediante roles.
+* Roles `ADMIN`, `EMPLOYEE` y `CUSTOMER`.
+
+### Protección de autenticación
+
+Las rutas de autenticación utilizan rate limiting para reducir intentos abusivos.
+
+### Validación
+
+Los datos recibidos son validados antes de ser procesados.
+
+### Contraseñas
+
+Las contraseñas se almacenan utilizando hashing mediante bcrypt.
+
+### CORS
+
+El acceso CORS se encuentra restringido al frontend autorizado de producción.
+
+### Webhooks
+
+Los Webhooks de Mercado Pago utilizan validación de firma.
+
+### Producción
+
+El backend no se encuentra expuesto directamente a Internet.
+
+Internamente escucha en:
+
+```text
+127.0.0.1:5000
+```
+
+El tráfico externo es gestionado por Nginx mediante HTTPS.
 
 ---
 
-# 23. Arquitectura de la API
+# 22. Arquitectura de la API
 
-La API está organizada utilizando separación de responsabilidades.
+La API utiliza separación de responsabilidades:
 
 ```text
 Route
@@ -673,7 +789,7 @@ Contienen la lógica de negocio.
 
 ### Repositories
 
-Gestionan el acceso a la base de datos.
+Gestionan el acceso a los datos.
 
 ### Prisma
 
@@ -683,14 +799,17 @@ Actúa como ORM para PostgreSQL.
 
 Almacena la información persistente de la aplicación.
 
+En producción, PostgreSQL se encuentra alojado en Amazon RDS.
+
 ---
 
-# 24. Estructura de rutas
+# 23. Estructura de rutas
 
-Actualmente la API se encuentra organizada mediante:
+La API se encuentra organizada mediante:
 
 ```text
 src/routes/
+
 ├── auth.routes.js
 ├── product.routes.js
 ├── category.routes.js
@@ -711,43 +830,79 @@ src/routes/
 
 ---
 
-# 25. Integración con el frontend
+# 24. Integración con el frontend
 
 El frontend consume la API mediante Axios.
 
-La configuración del cliente HTTP se encuentra en:
+El cliente HTTP centralizado permite configurar:
 
-```text
-src/api/api.js
-```
+* URL base.
+* Headers.
+* Token de autenticación.
+* Manejo de respuestas.
+* Manejo de errores.
 
 Los servicios del frontend encapsulan las llamadas a los endpoints correspondientes.
 
-Por ejemplo:
-
-```text
-src/services/
-```
-
-permite separar la lógica de comunicación con la API de los componentes visuales.
+La separación permite mantener la lógica de comunicación con la API fuera de los componentes visuales.
 
 ---
 
-# 26. Estado actual
+# 25. Base de datos
 
-La API constituye la capa de comunicación entre el frontend de TECNO3D y el backend.
+La API utiliza Prisma como ORM para comunicarse con PostgreSQL.
 
-La arquitectura permite continuar agregando funcionalidades sin modificar innecesariamente los módulos existentes.
-
-Las nuevas funcionalidades deben respetar la arquitectura establecida:
+En producción, la base de datos se encuentra alojada en:
 
 ```text
-Route
-→ Controller
-→ Service
-→ Repository
-→ Prisma
-→ PostgreSQL
+Amazon RDS for PostgreSQL
+```
+
+La conexión entre el backend y RDS está restringida mediante la configuración de red de AWS.
+
+Las credenciales de producción no forman parte del repositorio.
+
+---
+
+# 26. Producción
+
+La API de producción se encuentra disponible mediante:
+
+```text
+https://api.tecno3d.net/api
+```
+
+Arquitectura de acceso:
+
+```text
+Internet
+   │
+   ▼
+HTTPS
+   │
+   ▼
+Nginx
+   │
+   ▼
+127.0.0.1:5000
+   │
+   ▼
+Node.js / Express
+   │
+   ▼
+Prisma
+   │
+   ▼
+Amazon RDS PostgreSQL
+```
+
+La infraestructura productiva se encuentra alojada en AWS.
+
+La documentación detallada de infraestructura, despliegue, monitoreo y seguridad se encuentra en:
+
+```text
+ARQUITECTURA.md
+DOCUMENTACION_TECNO3D.md
 ```
 
 ---
@@ -763,34 +918,57 @@ Antes de modificar un endpoint existente se debe verificar:
 5. Modelo Prisma relacionado.
 6. Permisos requeridos.
 7. Frontend que consume el endpoint.
-8. Funcionalidades que dependen de él.
+8. Funcionalidades que dependen del endpoint.
 
 No se deben modificar contratos existentes sin verificar previamente sus dependencias.
+
+Los cambios deben probarse antes de ser desplegados en producción.
 
 ---
 
 # 28. Documentación relacionada
 
-Para comprender completamente la plataforma consultar:
+La documentación del proyecto se encuentra organizada en:
 
 ```text
 docs/
-├── DOCUMENTACION_TECNO3D.md
+
+├── Api.md
 ├── ARQUITECTURA.md
 ├── BASE_DE_DATOS.md
-├── API.md
+├── DOCUMENTACION_TECNO3D.md
 └── MANUAL_USUARIO.md
 ```
 
 Cada documento describe una parte específica del sistema.
 
+### Api.md
+
+Documentación de los endpoints y comportamiento de la API.
+
+### ARQUITECTURA.md
+
+Arquitectura técnica de la aplicación e infraestructura.
+
+### BASE_DE_DATOS.md
+
+Modelo de datos, relaciones y persistencia.
+
+### DOCUMENTACION_TECNO3D.md
+
+Documentación general y técnica del proyecto.
+
+### MANUAL_USUARIO.md
+
+Guía de utilización de la plataforma.
+
 ---
 
 # 29. Resumen
 
-La API de TECNO3D proporciona los servicios necesarios para operar una plataforma de comercio electrónico completa.
+La API de TECNO 3D proporciona los servicios necesarios para operar una plataforma de comercio electrónico completa.
 
-Su diseño permite separar:
+Su arquitectura permite separar:
 
 * Presentación.
 * Comunicación HTTP.
@@ -798,4 +976,6 @@ Su diseño permite separar:
 * Persistencia.
 * Base de datos.
 
-Esta separación facilita el mantenimiento, las pruebas, la escalabilidad y la incorporación de nuevas funcionalidades.
+La API se encuentra integrada con el frontend, Mercado Pago y Amazon RDS, y utiliza mecanismos de autenticación, autorización, validación y protección de infraestructura para operar en producción.
+
+La arquitectura establecida permite continuar incorporando funcionalidades manteniendo una separación clara de responsabilidades y facilitando el mantenimiento del sistema.

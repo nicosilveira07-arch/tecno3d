@@ -1,166 +1,124 @@
-# TECNO3D
+# TECNO 3D
 
-## Documentación General del Proyecto
+## Documentación de Base de Datos
 
-**Proyecto:** TECNO3D
+**Proyecto:** TECNO 3D
 **Tipo:** E-commerce profesional
-**Versión:** 1.0
-**Estado:** En desarrollo
-**Tecnologías principales:** React, Vite, Tailwind CSS, Node.js, Express, Prisma y PostgreSQL.
+**Motor de base de datos:** PostgreSQL
+**ORM:** Prisma
+**Esquema:** `prisma/schema.prisma`
 
 ---
 
 # 1. Introducción
 
-TECNO3D es una plataforma de comercio electrónico orientada a la comercialización de productos tecnológicos, impresión 3D, filamentos, resinas, accesorios, repuestos y productos relacionados.
+TECNO 3D utiliza **PostgreSQL** como sistema gestor de base de datos y **Prisma ORM** como capa de acceso y definición del modelo de datos.
 
-El sistema está diseñado con una arquitectura moderna y escalable, separando claramente el frontend, backend, lógica de negocio y persistencia de datos.
+La estructura de la base de datos está diseñada para soportar las principales operaciones de la plataforma:
 
-El objetivo es disponer de una plataforma profesional que permita administrar productos, usuarios, pedidos, pagos, categorías, marcas, favoritos, reseñas, carrito de compras y demás funcionalidades propias de un e-commerce moderno.
+* Usuarios y roles.
+* Productos.
+* Categorías.
+* Marcas.
+* Imágenes.
+* Carrito de compras.
+* Pedidos.
+* Pagos.
+* Cupones.
+* Direcciones.
+* Reseñas.
+* Favoritos.
+* Banners.
+* Configuración general de la tienda.
 
----
-
-# 2. Objetivos del proyecto
-
-## 2.1 Objetivo general
-
-Desarrollar una plataforma de comercio electrónico profesional, segura, escalable y preparada para un entorno de producción.
-
-## 2.2 Objetivos específicos
-
-* Permitir el registro y autenticación de usuarios.
-* Administrar diferentes roles de usuario.
-* Mostrar un catálogo de productos.
-* Permitir búsquedas y filtros.
-* Administrar categorías y marcas.
-* Gestionar imágenes de productos.
-* Implementar carrito de compras.
-* Permitir la creación y gestión de pedidos.
-* Gestionar diferentes métodos de entrega.
-* Integrar métodos de pago.
-* Gestionar estados de pedidos.
-* Permitir seguimiento de envíos.
-* Permitir valoraciones y reseñas.
-* Implementar favoritos.
-* Administrar direcciones de los clientes.
-* Disponer de un panel administrativo.
-* Mostrar métricas reales del negocio.
-* Controlar stock.
-* Mantener una arquitectura preparada para futuras ampliaciones.
-
----
-
-# 3. Arquitectura general
-
-El proyecto está dividido principalmente en dos aplicaciones:
+La definición de entidades, relaciones, restricciones y valores predeterminados se encuentra centralizada en:
 
 ```text
-TECNO3D
-│
-├── frontend/
-│
-└── backend/
+backend/prisma/schema.prisma
 ```
-
-## Frontend
-
-El frontend es responsable de la interfaz gráfica y de la interacción con el usuario.
-
-Tecnologías principales:
-
-* React
-* Vite
-* Tailwind CSS
-* Axios
-* React Router
-* React Query
-* React Hook Form
-* Zod
-* Lucide React
-* Framer Motion
-* Sonner
-
-## Backend
-
-El backend contiene la API, reglas de negocio, autenticación, autorización y comunicación con la base de datos.
-
-Tecnologías principales:
-
-* Node.js
-* Express
-* Prisma ORM
-* PostgreSQL
-* JWT
-* Zod
-* bcrypt
-* Helmet
-* CORS
-* Cloudinary
 
 ---
 
-# 4. Arquitectura del Backend
+# 2. Tecnología de persistencia
 
-El backend utiliza una separación por responsabilidades.
+## PostgreSQL
+
+PostgreSQL es el sistema gestor de base de datos utilizado por TECNO 3D.
+
+En producción, la base de datos se encuentra alojada en **Amazon RDS for PostgreSQL**.
+
+## Prisma ORM
+
+Prisma se utiliza para:
+
+* Definir el modelo de datos.
+* Gestionar relaciones entre entidades.
+* Generar el cliente de acceso a datos.
+* Ejecutar consultas desde el backend.
+* Gestionar migraciones.
+* Mantener sincronizado el modelo de aplicación con la base de datos.
+
+La conexión utiliza una variable de entorno:
 
 ```text
-backend/
-│
-├── prisma/
-│   └── schema.prisma
-│
-└── src/
-    │
-    ├── controllers/
-    ├── services/
-    ├── repositories/
-    ├── routes/
-    ├── validators/
-    ├── middlewares/
-    ├── lib/
-    ├── app.js
-    └── server.js
+DATABASE_URL
 ```
 
-### Controllers
-
-Reciben las solicitudes HTTP y devuelven las respuestas correspondientes.
-
-### Services
-
-Contienen las reglas y lógica de negocio.
-
-### Repositories
-
-Se encargan del acceso y comunicación con la base de datos mediante Prisma.
-
-### Routes
-
-Definen los endpoints disponibles en la API.
-
-### Validators
-
-Validan los datos recibidos desde el cliente.
-
-### Middlewares
-
-Implementan funcionalidades transversales como:
-
-* Autenticación.
-* Autorización.
-* Manejo de errores.
-* Seguridad.
-* Validaciones.
-
-### Prisma
-
-Se utiliza como ORM para interactuar con PostgreSQL.
+El valor de esta variable no forma parte del repositorio.
 
 ---
 
-# 5. Roles del sistema
+# 3. Estructura general
 
-El sistema utiliza tres roles principales:
+El esquema actual contiene:
+
+```text
+17 modelos
+6 enums
+```
+
+### Modelos
+
+```text
+User
+Banner
+Cart
+CartItem
+Address
+Category
+Brand
+Product
+ProductImage
+Order
+OrderItem
+Payment
+Coupon
+Review
+Favorite
+StoreSettings
+```
+
+### Enums
+
+```text
+Role
+ProductStatus
+OrderStatus
+PaymentStatus
+PaymentMethod
+DeliveryMethod
+CouponType
+```
+
+> Nota: el esquema contiene **7 enums**, correspondientes a los tipos enumerados definidos en `schema.prisma`.
+
+---
+
+# 4. Enumeraciones
+
+## 4.1 Role
+
+Define los roles disponibles para los usuarios.
 
 ```text
 ADMIN
@@ -168,207 +126,40 @@ EMPLOYEE
 CUSTOMER
 ```
 
-## ADMIN
+### ADMIN
 
-El administrador posee acceso a las funciones administrativas y de gestión general del sistema.
+Usuario con permisos administrativos.
 
-Entre sus responsabilidades se encuentran:
+### EMPLOYEE
 
-* Administrar usuarios.
-* Administrar productos.
-* Administrar categorías.
-* Administrar marcas.
-* Administrar pedidos.
-* Gestionar estados de pedidos.
-* Consultar métricas.
-* Gestionar banners.
-* Supervisar operaciones generales.
+Usuario destinado a tareas operativas según los permisos implementados por la aplicación.
 
-## EMPLOYEE
+### CUSTOMER
 
-El empleado posee permisos operativos para determinadas funciones administrativas.
-
-Puede, dependiendo de los permisos establecidos:
-
-* Consultar pedidos.
-* Gestionar pedidos.
-* Actualizar estados.
-* Consultar información del catálogo.
-* Realizar tareas operativas.
-
-## CUSTOMER
-
-Es el usuario final de la plataforma.
-
-Puede:
-
-* Registrarse.
-* Iniciar sesión.
-* Consultar productos.
-* Buscar productos.
-* Agregar productos al carrito.
-* Crear pedidos.
-* Gestionar direcciones.
-* Consultar sus pedidos.
-* Consultar pagos.
-* Agregar favoritos.
-* Crear reseñas.
+Usuario final de la plataforma.
 
 ---
 
-# 6. Autenticación y seguridad
+## 4.2 ProductStatus
 
-TECNO3D utiliza autenticación mediante JWT.
-
-El flujo general es:
+Define el estado de disponibilidad lógica de un producto.
 
 ```text
-Usuario
-   ↓
-Login
-   ↓
-Backend
-   ↓
-Validación de credenciales
-   ↓
-JWT
-   ↓
-Frontend
-   ↓
-Token almacenado
-   ↓
-Requests autenticadas
+ACTIVE
+INACTIVE
 ```
 
-Las contraseñas son almacenadas utilizando hashing mediante `bcrypt`.
-
-Las rutas protegidas utilizan middleware de autenticación.
-
-Además, el backend incorpora medidas de seguridad mediante:
-
-* Helmet.
-* CORS.
-* JWT.
-* Control de roles.
-* Validación de datos.
-* Separación de responsabilidades.
-* Manejo centralizado de errores.
-
----
-
-# 7. Gestión de productos
-
-El sistema permite administrar productos mediante operaciones CRUD.
-
-Cada producto puede contener información como:
-
-* Nombre.
-* Descripción.
-* Precio.
-* Precio de oferta.
-* Porcentaje de descuento.
-* Estado.
-* Stock.
-* Categoría.
-* Marca.
-* Imagen principal.
-* Galería de imágenes.
-* Propietario.
-* Fecha de creación.
-* Fecha de actualización.
-
-Los productos pueden tener múltiples imágenes almacenadas mediante `ProductImage`.
-
-Las imágenes pueden gestionarse mediante Cloudinary.
-
----
-
-# 8. Catálogo y búsqueda
-
-El catálogo permite consultar productos utilizando diferentes criterios.
-
-Entre ellos:
-
-* Búsqueda por nombre.
-* Búsqueda por descripción.
-* Búsqueda por slug.
-* Búsqueda por categoría.
-* Búsqueda por marca.
-* Filtros.
-* Ordenamiento por precio.
-* Ordenamiento por fecha.
-* Productos en oferta.
-* Paginación.
-
-También se implementaron términos equivalentes para mejorar la experiencia de búsqueda.
-
-Por ejemplo:
+El valor predeterminado es:
 
 ```text
-mouse → mouse / mouses
-notebook → notebook / laptop
-impresora → impresora / impresora 3d
-filamento → filamento / filamentos
-resina → resina / resinas
+ACTIVE
 ```
 
 ---
 
-# 9. Carrito de compras
+## 4.3 OrderStatus
 
-Cada cliente puede disponer de un carrito asociado a su usuario.
-
-El carrito permite:
-
-* Agregar productos.
-* Modificar cantidades.
-* Eliminar productos.
-* Consultar productos agregados.
-* Preparar el pedido para checkout.
-
-La relación entre carrito y producto utiliza restricciones para evitar duplicaciones del mismo producto dentro del carrito.
-
----
-
-# 10. Pedidos
-
-El sistema permite crear y administrar pedidos.
-
-Los pedidos pueden contener:
-
-* Usuario.
-* Productos.
-* Cantidades.
-* Precios.
-* Total.
-* Dirección.
-* Método de entrega.
-* Estado.
-* Empresa de envío.
-* Número de seguimiento.
-* Fecha de creación.
-* Fecha de actualización.
-
-Los métodos de entrega disponibles son:
-
-```text
-SHIPPING
-PICKUP
-```
-
-### SHIPPING
-
-Requiere una dirección válida perteneciente al usuario.
-
-### PICKUP
-
-Permite retirar el pedido en el local y no requiere dirección de envío.
-
----
-
-# 11. Estados de pedidos
-
-Los pedidos utilizan los siguientes estados:
+Define los estados posibles de un pedido.
 
 ```text
 PENDING
@@ -379,7 +170,11 @@ DELIVERED
 CANCELLED
 ```
 
-El sistema controla las transiciones permitidas.
+El valor predeterminado es:
+
+```text
+PENDING
+```
 
 Flujo principal:
 
@@ -395,26 +190,13 @@ SHIPPED
 DELIVERED
 ```
 
-También se contempla la cancelación cuando corresponde.
-
-No se permite cambiar arbitrariamente un pedido de cualquier estado a otro.
+También puede producirse una cancelación cuando corresponde según las reglas de negocio.
 
 ---
 
-# 12. Sistema de pagos
+## 4.4 PaymentStatus
 
-TECNO3D posee una estructura específica para gestionar los pagos asociados a los pedidos.
-
-Métodos contemplados:
-
-```text
-MERCADO_PAGO
-PAYPAL
-CASH
-BANK_TRANSFER
-```
-
-Estados de pago:
+Define el estado del pago asociado a un pedido.
 
 ```text
 PENDING
@@ -423,394 +205,1356 @@ FAILED
 REFUNDED
 ```
 
-La relación entre pedido y pago es de uno a uno.
+El valor predeterminado es:
 
-Además, el sistema valida que un pedido tenga el pago correspondiente antes de avanzar a determinadas etapas del procesamiento.
-
----
-
-# 13. Envíos
-
-Los pedidos enviados pueden almacenar información relacionada con el transporte:
-
-* Empresa de envío.
-* Número de seguimiento.
-
-Un pedido solamente puede pasar a `SHIPPED` cuando se proporciona la información requerida para el envío.
-
-Esto evita que un pedido sea marcado como enviado sin datos de seguimiento.
+```text
+PENDING
+```
 
 ---
 
-# 14. Usuarios y direcciones
+## 4.5 PaymentMethod
 
-Los usuarios poseen información básica de identificación y contacto.
+Define los métodos de pago contemplados por el sistema.
 
-El sistema permite administrar:
-
-* Nombre.
-* Apellido.
-* Email.
-* Teléfono.
-* Avatar.
-* Rol.
-* Direcciones.
-
-Las direcciones pueden contener:
-
-* Título.
-* Calle.
-* Número.
-* Ciudad.
-* Departamento/estado.
-* País.
-* Código postal.
-* Dirección predeterminada.
-
-Las direcciones están asociadas directamente al usuario propietario.
+```text
+MERCADO_PAGO
+PAYPAL
+CASH
+BANK_TRANSFER
+```
 
 ---
 
-# 15. Categorías y marcas
+## 4.6 DeliveryMethod
 
-El catálogo se organiza mediante categorías y marcas.
+Define los métodos de entrega.
 
-## Categorías
+```text
+SHIPPING
+PICKUP
+```
 
-Permiten clasificar los productos.
+El valor predeterminado es:
 
-Cada categoría posee:
+```text
+SHIPPING
+```
 
-* Nombre.
-* Slug.
-* Imagen.
+### SHIPPING
 
-## Marcas
+Entrega mediante envío.
 
-Cada marca posee:
+### PICKUP
 
-* Nombre.
-* Slug.
-* Imagen.
-* Fecha de creación.
-* Fecha de actualización.
-
-Los productos pueden estar asociados a una categoría y opcionalmente a una marca.
+Retiro del pedido en el local.
 
 ---
 
-# 16. Favoritos
+## 4.7 CouponType
 
-Los usuarios pueden guardar productos como favoritos.
+Define el tipo de descuento de un cupón.
 
-La relación entre usuario y producto posee una restricción única para evitar que el mismo producto sea agregado varias veces a favoritos por el mismo usuario.
+```text
+PERCENTAGE
+FIXED
+```
 
----
+### PERCENTAGE
 
-# 17. Reseñas
+El valor representa un porcentaje de descuento.
 
-Los clientes pueden valorar productos mediante reseñas.
+### FIXED
 
-Cada reseña puede contener:
-
-* Usuario.
-* Producto.
-* Calificación.
-* Comentario.
-* Fecha de creación.
-* Fecha de actualización.
-
-El sistema evita que un mismo usuario genere múltiples reseñas para el mismo producto.
+El valor representa un importe fijo de descuento.
 
 ---
 
-# 18. Banners
+# 5. Modelo User
 
-El sistema dispone de banners administrables para contenido promocional.
-
-Los banners pueden contener:
-
-* Título.
-* Descripción.
-* Texto del botón.
-* Enlace.
-* Imagen.
-* Identificador público de Cloudinary.
-* Estado activo/inactivo.
-* Fecha de creación.
-* Fecha de actualización.
-
----
-
-# 19. Dashboard administrativo
-
-El panel administrativo está diseñado para mostrar información real obtenida desde PostgreSQL mediante Prisma.
-
-Las métricas principales incluyen:
-
-1. Ventas totales.
-2. Pedidos totales.
-3. Cantidad de clientes.
-4. Cantidad de productos.
-5. Ventas por período.
-6. Ventas por categoría.
-7. Productos más vendidos.
-8. Pedidos recientes.
-9. Estado de pagos.
-10. Stock y productos con poco stock.
-
-El objetivo del dashboard es proporcionar una visión general del estado del negocio y evitar depender de información estática o hardcodeada.
-
----
-
-# 20. Base de datos
-
-La aplicación utiliza PostgreSQL como sistema gestor de base de datos.
-
-Prisma ORM se utiliza como capa de acceso a datos y definición del modelo.
-
-Las principales entidades del sistema son:
+Representa a los usuarios de la plataforma.
 
 ```text
 User
+```
+
+## Campos
+
+| Campo         | Tipo     | Obligatorio | Default / Restricción |
+| ------------- | -------- | ----------: | --------------------- |
+| `id`          | String   |          Sí | `cuid()` / PK         |
+| `firstName`   | String   |          Sí | —                     |
+| `lastName`    | String   |          Sí | —                     |
+| `email`       | String   |          Sí | `@unique`             |
+| `password`    | String   |          Sí | —                     |
+| `phone`       | String   |          No | —                     |
+| `avatar`      | String   |          No | —                     |
+| `role`        | Role     |          Sí | `CUSTOMER`            |
+| `createdAt`   | DateTime |          Sí | `now()`               |
+| `updatedAt`   | DateTime |          Sí | `@updatedAt`          |
+| `createdById` | String   |          No | —                     |
+
+## Relaciones
+
+Un usuario puede tener:
+
+* Muchos productos.
+* Muchos pedidos.
+* Muchas direcciones.
+* Un carrito como máximo.
+* Muchas reseñas.
+* Muchos favoritos.
+* Muchos usuarios creados mediante la relación administrativa `createdBy`.
+
+Relación jerárquica:
+
+```text
+User
+ ├── createdUsers[]
+ └── createdBy?
+```
+
+La relación utiliza:
+
+```text
+"UserCreatedUsers"
+```
+
+Cuando se elimina el usuario creador, `createdById` se establece en `NULL`.
+
+---
+
+# 6. Modelo Banner
+
+Representa los banners promocionales de la plataforma.
+
+```text
 Banner
+```
+
+## Campos
+
+| Campo         | Tipo     | Obligatorio | Default           |
+| ------------- | -------- | ----------: | ----------------- |
+| `id`          | String   |          Sí | `cuid()` / PK     |
+| `title`       | String   |          Sí | —                 |
+| `description` | String   |          No | —                 |
+| `buttonText`  | String   |          Sí | `"Comprar ahora"` |
+| `link`        | String   |          Sí | —                 |
+| `image`       | String   |          Sí | —                 |
+| `publicId`    | String   |          No | —                 |
+| `active`      | Boolean  |          Sí | `true`            |
+| `createdAt`   | DateTime |          Sí | `now()`           |
+| `updatedAt`   | DateTime |          Sí | `@updatedAt`      |
+
+El campo `publicId` permite almacenar el identificador asociado al recurso gestionado en Cloudinary.
+
+---
+
+# 7. Modelo Cart
+
+Representa el carrito de compras de un usuario.
+
+```text
 Cart
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio | Restricción   |
+| ----------- | -------- | ----------: | ------------- |
+| `id`        | String   |          Sí | `cuid()` / PK |
+| `userId`    | String   |          Sí | `@unique`     |
+| `createdAt` | DateTime |          Sí | `now()`       |
+| `updatedAt` | DateTime |          Sí | `@updatedAt`  |
+
+## Relaciones
+
+```text
+Cart
+ ├── User
+ └── CartItem[]
+```
+
+Un usuario puede tener como máximo un carrito.
+
+Un carrito puede contener múltiples elementos `CartItem`.
+
+---
+
+# 8. Modelo CartItem
+
+Representa un producto dentro de un carrito.
+
+```text
 CartItem
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio | Restricción   |
+| ----------- | -------- | ----------: | ------------- |
+| `id`        | String   |          Sí | `cuid()` / PK |
+| `cartId`    | String   |          Sí | FK            |
+| `productId` | String   |          Sí | FK            |
+| `quantity`  | Int      |          Sí | —             |
+| `createdAt` | DateTime |          Sí | `now()`       |
+| `updatedAt` | DateTime |          Sí | `@updatedAt`  |
+
+## Restricción única
+
+```text
+@@unique([cartId, productId])
+```
+
+Esto impide que un mismo producto aparezca duplicado dentro del mismo carrito.
+
+La cantidad se mantiene en el campo:
+
+```text
+quantity
+```
+
+---
+
+# 9. Modelo Address
+
+Representa las direcciones pertenecientes a los usuarios.
+
+```text
 Address
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio | Default       |
+| ----------- | -------- | ----------: | ------------- |
+| `id`        | String   |          Sí | `cuid()` / PK |
+| `userId`    | String   |          Sí | FK            |
+| `title`     | String   |          Sí | —             |
+| `street`    | String   |          Sí | —             |
+| `number`    | String   |          Sí | —             |
+| `city`      | String   |          Sí | —             |
+| `state`     | String   |          Sí | —             |
+| `country`   | String   |          Sí | —             |
+| `zipCode`   | String   |          Sí | —             |
+| `isDefault` | Boolean  |          Sí | `false`       |
+| `createdAt` | DateTime |          Sí | `now()`       |
+| `updatedAt` | DateTime |          Sí | `@updatedAt`  |
+
+## Relaciones
+
+```text
+User
+  │
+  └── Address[]
+```
+
+Una dirección pertenece a un usuario.
+
+Una dirección también puede estar asociada a múltiples pedidos mediante:
+
+```text
+orders Order[]
+```
+
+---
+
+# 10. Modelo Category
+
+Representa las categorías de productos.
+
+```text
+Category
+```
+
+## Campos
+
+| Campo      | Tipo    | Obligatorio | Restricción / Default |
+| ---------- | ------- | ----------: | --------------------- |
+| `id`       | String  |          Sí | `cuid()` / PK         |
+| `name`     | String  |          Sí | —                     |
+| `slug`     | String  |          Sí | `@unique`             |
+| `image`    | String  |          No | —                     |
+| `featured` | Boolean |          Sí | `false`               |
+
+## Relaciones
+
+Una categoría puede contener múltiples productos:
+
+```text
+Category
+   │
+   └── Product[]
+```
+
+---
+
+# 11. Modelo Brand
+
+Representa las marcas asociadas al catálogo.
+
+```text
+Brand
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio | Restricción / Default |
+| ----------- | -------- | ----------: | --------------------- |
+| `id`        | String   |          Sí | `cuid()` / PK         |
+| `name`      | String   |          Sí | `@unique`             |
+| `slug`      | String   |          Sí | `@unique`             |
+| `image`     | String   |          No | —                     |
+| `featured`  | Boolean  |          Sí | `false`               |
+| `createdAt` | DateTime |          Sí | `now()`               |
+| `updatedAt` | DateTime |          Sí | `@updatedAt`          |
+
+## Relaciones
+
+Una marca puede estar asociada a múltiples productos.
+
+La relación desde `Product` hacia `Brand` es opcional.
+
+---
+
+# 12. Modelo Product
+
+Representa los productos comercializados por TECNO 3D.
+
+```text
+Product
+```
+
+## Campos
+
+| Campo             | Tipo          | Obligatorio | Restricción / Default |
+| ----------------- | ------------- | ----------: | --------------------- |
+| `id`              | String        |          Sí | `cuid()` / PK         |
+| `name`            | String        |          Sí | —                     |
+| `slug`            | String        |          Sí | `@unique`             |
+| `description`     | String        |          Sí | —                     |
+| `price`           | Float         |          Sí | —                     |
+| `offerPrice`      | Float         |          No | —                     |
+| `offerPercentage` | Int           |          No | —                     |
+| `offerActive`     | Boolean       |          Sí | `false`               |
+| `stock`           | Int           |          Sí | —                     |
+| `image`           | String        |          No | —                     |
+| `status`          | ProductStatus |          Sí | `ACTIVE`              |
+| `categoryId`      | String        |          Sí | FK                    |
+| `brandId`         | String        |          No | FK                    |
+| `ownerId`         | String        |          No | FK                    |
+| `createdAt`       | DateTime      |          Sí | `now()`               |
+| `updatedAt`       | DateTime      |          Sí | `@updatedAt`          |
+
+## Relaciones
+
+Cada producto pertenece obligatoriamente a una categoría:
+
+```text
+Product → Category
+```
+
+La marca es opcional:
+
+```text
+Product → Brand?
+```
+
+El propietario también es opcional:
+
+```text
+Product → User?
+```
+
+Además, un producto puede tener:
+
+* Muchos elementos de pedido.
+* Muchos elementos de carrito.
+* Muchas reseñas.
+* Muchas imágenes.
+* Muchos favoritos.
+
+## Eliminación del propietario
+
+La relación con `User` utiliza:
+
+```text
+onDelete: SetNull
+```
+
+Por lo tanto, eliminar al propietario no elimina el producto; el campo `ownerId` pasa a `NULL`.
+
+---
+
+# 13. Modelo ProductImage
+
+Representa las imágenes adicionales de un producto.
+
+```text
+ProductImage
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio | Restricción   |
+| ----------- | -------- | ----------: | ------------- |
+| `id`        | String   |          Sí | `cuid()` / PK |
+| `url`       | String   |          Sí | —             |
+| `publicId`  | String   |          Sí | —             |
+| `productId` | String   |          Sí | FK            |
+| `createdAt` | DateTime |          Sí | `now()`       |
+
+## Relación
+
+```text
+Product
+   │
+   └── ProductImage[]
+```
+
+Un producto puede tener múltiples imágenes.
+
+## Eliminación
+
+La relación utiliza:
+
+```text
+onDelete: Cascade
+```
+
+Si se elimina el producto, sus imágenes asociadas también se eliminan de la base de datos.
+
+---
+
+# 14. Modelo Order
+
+Representa los pedidos realizados en la plataforma.
+
+```text
+Order
+```
+
+## Campos
+
+| Campo             | Tipo           | Obligatorio | Default       |
+| ----------------- | -------------- | ----------: | ------------- |
+| `id`              | String         |          Sí | `cuid()` / PK |
+| `total`           | Float          |          Sí | —             |
+| `discount`        | Float          |          Sí | `0`           |
+| `couponId`        | String         |          No | FK            |
+| `status`          | OrderStatus    |          Sí | `PENDING`     |
+| `deliveryMethod`  | DeliveryMethod |          Sí | `SHIPPING`    |
+| `addressId`       | String         |          No | FK            |
+| `userId`          | String         |          No | FK            |
+| `shippingCompany` | String         |          No | —             |
+| `trackingNumber`  | String         |          No | —             |
+| `createdAt`       | DateTime       |          Sí | `now()`       |
+| `updatedAt`       | DateTime       |          Sí | `@updatedAt`  |
+
+## Relaciones
+
+Un pedido puede estar asociado a:
+
+* Un usuario.
+* Una dirección.
+* Un cupón.
+* Un pago.
+* Muchos elementos `OrderItem`.
+
+Las relaciones con usuario y dirección son opcionales.
+
+## Usuario
+
+```text
+Order → User?
+```
+
+Utiliza:
+
+```text
+onDelete: SetNull
+```
+
+Si el usuario es eliminado, el pedido permanece almacenado y `userId` pasa a `NULL`.
+
+## Dirección
+
+```text
+Order → Address?
+```
+
+También utiliza:
+
+```text
+onDelete: SetNull
+```
+
+Si la dirección es eliminada, el pedido permanece almacenado y `addressId` pasa a `NULL`.
+
+## Cupón
+
+```text
+Order → Coupon?
+```
+
+También utiliza:
+
+```text
+onDelete: SetNull
+```
+
+La eliminación del cupón no elimina los pedidos asociados.
+
+---
+
+# 15. Modelo OrderItem
+
+Representa cada producto incluido en un pedido.
+
+```text
+OrderItem
+```
+
+## Campos
+
+| Campo       | Tipo   | Obligatorio |
+| ----------- | ------ | ----------: |
+| `id`        | String |          Sí |
+| `quantity`  | Int    |          Sí |
+| `price`     | Float  |          Sí |
+| `orderId`   | String |          Sí |
+| `productId` | String |          Sí |
+
+El identificador utiliza:
+
+```text
+cuid()
+```
+
+como valor predeterminado.
+
+## Relaciones
+
+```text
+Order
+   │
+   └── OrderItem[]
+
+Product
+   │
+   └── OrderItem[]
+```
+
+Cada `OrderItem` pertenece a un pedido y a un producto.
+
+El campo `price` permite almacenar el precio correspondiente al elemento del pedido independientemente del precio actual del producto.
+
+---
+
+# 16. Modelo Payment
+
+Representa el pago asociado a un pedido.
+
+```text
+Payment
+```
+
+## Campos
+
+| Campo           | Tipo          | Obligatorio | Restricción / Default |
+| --------------- | ------------- | ----------: | --------------------- |
+| `id`            | String        |          Sí | `cuid()` / PK         |
+| `orderId`       | String        |          Sí | `@unique` / FK        |
+| `amount`        | Float         |          Sí | —                     |
+| `status`        | PaymentStatus |          Sí | `PENDING`             |
+| `method`        | PaymentMethod |          Sí | —                     |
+| `transactionId` | String        |          No | —                     |
+| `createdAt`     | DateTime      |          Sí | `now()`               |
+| `updatedAt`     | DateTime      |          Sí | `@updatedAt`          |
+
+## Relación
+
+```text
+Order
+  │
+  └── Payment?
+```
+
+La relación es uno a uno debido a:
+
+```text
+orderId @unique
+```
+
+Esto permite que un pedido tenga como máximo un registro de pago.
+
+---
+
+# 17. Modelo Coupon
+
+Representa los cupones de descuento.
+
+```text
+Coupon
+```
+
+## Campos
+
+| Campo       | Tipo       | Obligatorio | Restricción / Default |
+| ----------- | ---------- | ----------: | --------------------- |
+| `id`        | String     |          Sí | `cuid()` / PK         |
+| `code`      | String     |          Sí | `@unique`             |
+| `type`      | CouponType |          Sí | —                     |
+| `value`     | Float      |          Sí | —                     |
+| `maxUses`   | Int        |          No | —                     |
+| `usedCount` | Int        |          Sí | `0`                   |
+| `expiresAt` | DateTime   |          No | —                     |
+| `active`    | Boolean    |          Sí | `true`                |
+| `createdAt` | DateTime   |          Sí | `now()`               |
+| `updatedAt` | DateTime   |          Sí | `@updatedAt`          |
+
+## Relaciones
+
+Un cupón puede estar asociado a múltiples pedidos:
+
+```text
+Coupon
+   │
+   └── Order[]
+```
+
+## Control de utilización
+
+El modelo contempla:
+
+```text
+maxUses
+usedCount
+```
+
+Esto permite gestionar límites de utilización.
+
+La fecha de expiración es opcional mediante:
+
+```text
+expiresAt
+```
+
+El estado activo/inactivo se controla mediante:
+
+```text
+active
+```
+
+---
+
+# 18. Modelo Review
+
+Representa las reseñas realizadas por usuarios sobre productos.
+
+```text
+Review
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio |
+| ----------- | -------- | ----------: |
+| `id`        | String   |          Sí |
+| `rating`    | Int      |          Sí |
+| `comment`   | String   |          No |
+| `userId`    | String   |          Sí |
+| `productId` | String   |          Sí |
+| `createdAt` | DateTime |          Sí |
+| `updatedAt` | DateTime |          Sí |
+
+El identificador utiliza:
+
+```text
+cuid()
+```
+
+El campo `createdAt` utiliza:
+
+```text
+now()
+```
+
+El campo `updatedAt` utiliza:
+
+```text
+@updatedAt
+```
+
+## Restricción única
+
+```text
+@@unique([userId, productId])
+```
+
+Esta restricción impide que un mismo usuario tenga más de una reseña para el mismo producto.
+
+## Eliminación
+
+Las relaciones con usuario y producto utilizan:
+
+```text
+onDelete: Cascade
+```
+
+Por lo tanto, la eliminación del usuario o del producto elimina sus reseñas relacionadas.
+
+---
+
+# 19. Modelo Favorite
+
+Representa los productos guardados como favoritos.
+
+```text
+Favorite
+```
+
+## Campos
+
+| Campo       | Tipo     | Obligatorio |
+| ----------- | -------- | ----------: |
+| `id`        | String   |          Sí |
+| `userId`    | String   |          Sí |
+| `productId` | String   |          Sí |
+| `createdAt` | DateTime |          Sí |
+
+El identificador utiliza:
+
+```text
+cuid()
+```
+
+El campo `createdAt` utiliza:
+
+```text
+now()
+```
+
+## Restricción única
+
+```text
+@@unique([userId, productId])
+```
+
+Esto evita que un mismo usuario agregue varias veces el mismo producto a favoritos.
+
+## Eliminación
+
+Las relaciones utilizan:
+
+```text
+onDelete: Cascade
+```
+
+Si se elimina el usuario o el producto, los favoritos asociados se eliminan automáticamente.
+
+---
+
+# 20. Modelo StoreSettings
+
+Representa la configuración general de la tienda.
+
+```text
+StoreSettings
+```
+
+## Campos
+
+| Campo              | Tipo     | Obligatorio | Default       |
+| ------------------ | -------- | ----------: | ------------- |
+| `id`               | String   |          Sí | `cuid()` / PK |
+| `storeName`        | String   |          Sí | `"TECNO 3D"`  |
+| `description`      | String   |          No | —             |
+| `logo`             | String   |          No | —             |
+| `logoPublicId`     | String   |          No | —             |
+| `address`          | String   |          No | —             |
+| `city`             | String   |          No | —             |
+| `department`       | String   |          No | —             |
+| `country`          | String   |          No | —             |
+| `phone`            | String   |          No | —             |
+| `email`            | String   |          No | —             |
+| `whatsappNumber`   | String   |          No | —             |
+| `whatsappMessage`  | String   |          No | —             |
+| `instagram`        | String   |          No | —             |
+| `facebook`         | String   |          No | —             |
+| `tiktok`           | String   |          No | —             |
+| `youtube`          | String   |          No | —             |
+| `openingHours`     | String   |          No | —             |
+| `offerEnabled`     | Boolean  |          Sí | `true`        |
+| `offerEyebrow`     | String   |          No | —             |
+| `offerTitle`       | String   |          No | —             |
+| `offerDescription` | String   |          No | —             |
+| `offerButtonText`  | String   |          No | —             |
+| `offerButtonUrl`   | String   |          No | `"/offers"`   |
+| `createdAt`        | DateTime |          Sí | `now()`       |
+| `updatedAt`        | DateTime |          Sí | `@updatedAt`  |
+
+## Relaciones
+
+Actualmente `StoreSettings` no posee relaciones declaradas con otros modelos del esquema.
+
+## Configuración de ofertas
+
+El modelo incluye campos específicos para administrar el banner/sección de ofertas:
+
+```text
+offerEnabled
+offerEyebrow
+offerTitle
+offerDescription
+offerButtonText
+offerButtonUrl
+```
+
+---
+
+# 21. Relaciones principales
+
+La estructura relacional principal puede representarse de la siguiente manera:
+
+```text
+User
+ │
+ ├── Product[]
+ ├── Order[]
+ ├── Address[]
+ ├── Cart?
+ ├── Review[]
+ ├── Favorite[]
+ └── createdUsers[]
+
+Category
+ │
+ └── Product[]
+
+Brand
+ │
+ └── Product[]
+
+Product
+ │
+ ├── OrderItem[]
+ ├── CartItem[]
+ ├── Review[]
+ ├── ProductImage[]
+ └── Favorite[]
+
+Cart
+ │
+ └── CartItem[]
+
+Order
+ │
+ ├── OrderItem[]
+ ├── Payment?
+ ├── Address?
+ ├── User?
+ └── Coupon?
+
+Coupon
+ │
+ └── Order[]
+
+StoreSettings
+ └── Sin relaciones declaradas
+```
+
+---
+
+# 22. Cardinalidades principales
+
+| Relación                  | Cardinalidad |
+| ------------------------- | ------------ |
+| User → Product            | 1:N          |
+| User → Order              | 1:N          |
+| User → Address            | 1:N          |
+| User → Cart               | 1:0..1       |
+| User → Review             | 1:N          |
+| User → Favorite           | 1:N          |
+| User → User (`createdBy`) | 1:N          |
+| Category → Product        | 1:N          |
+| Brand → Product           | 1:N          |
+| Product → ProductImage    | 1:N          |
+| Product → OrderItem       | 1:N          |
+| Product → CartItem        | 1:N          |
+| Product → Review          | 1:N          |
+| Product → Favorite        | 1:N          |
+| Cart → CartItem           | 1:N          |
+| Order → OrderItem         | 1:N          |
+| Order → Payment           | 1:0..1       |
+| Order → Address           | 1:0..1       |
+| Order → User              | 1:0..1       |
+| Order → Coupon            | 1:0..1       |
+| Coupon → Order            | 1:N          |
+
+---
+
+# 23. Restricciones de integridad
+
+El esquema utiliza diferentes restricciones para mantener la integridad de los datos.
+
+## Claves primarias
+
+Todos los modelos utilizan:
+
+```text
+id String @id @default(cuid())
+```
+
+como identificador principal.
+
+## Campos únicos
+
+Los siguientes campos poseen restricciones únicas:
+
+```text
+User.email
+Cart.userId
+Category.slug
+Brand.name
+Brand.slug
+Product.slug
+Order.payment.orderId
+Coupon.code
+```
+
+Además existen restricciones compuestas:
+
+```text
+CartItem(cartId, productId)
+Review(userId, productId)
+Favorite(userId, productId)
+```
+
+---
+
+# 24. Comportamiento de eliminación
+
+El esquema utiliza diferentes estrategias de eliminación según la relación.
+
+## SetNull
+
+Se utiliza cuando la entidad relacionada puede desaparecer sin eliminar el registro principal.
+
+### User → Product
+
+```text
+ownerId → NULL
+```
+
+### User → Order
+
+```text
+userId → NULL
+```
+
+### Address → Order
+
+```text
+addressId → NULL
+```
+
+### Coupon → Order
+
+```text
+couponId → NULL
+```
+
+### User → createdUsers
+
+```text
+createdById → NULL
+```
+
+---
+
+## Cascade
+
+Se utiliza cuando el registro dependiente debe eliminarse junto con su entidad principal.
+
+### Product → ProductImage
+
+Al eliminar un producto se eliminan sus imágenes relacionadas.
+
+### User → Review
+
+Al eliminar un usuario se eliminan sus reseñas.
+
+### Product → Review
+
+Al eliminar un producto se eliminan sus reseñas.
+
+### User → Favorite
+
+Al eliminar un usuario se eliminan sus favoritos.
+
+### Product → Favorite
+
+Al eliminar un producto se eliminan sus favoritos.
+
+---
+
+# 25. Integridad del carrito
+
+La restricción:
+
+```text
+@@unique([cartId, productId])
+```
+
+garantiza que un mismo producto no pueda aparecer múltiples veces como registros independientes dentro del mismo carrito.
+
+La cantidad se controla mediante:
+
+```text
+quantity
+```
+
+Por lo tanto, para aumentar unidades de un mismo producto se modifica la cantidad existente.
+
+---
+
+# 26. Integridad de favoritos
+
+La restricción:
+
+```text
+@@unique([userId, productId])
+```
+
+garantiza una única relación entre un usuario y un producto.
+
+Esto evita duplicaciones de favoritos.
+
+---
+
+# 27. Integridad de reseñas
+
+Las reseñas también utilizan:
+
+```text
+@@unique([userId, productId])
+```
+
+Esto garantiza que un usuario solamente pueda tener una reseña asociada a un producto dentro de la base de datos.
+
+---
+
+# 28. Integridad de pagos
+
+El modelo `Payment` utiliza:
+
+```text
+orderId String @unique
+```
+
+Esto establece una relación uno a uno entre pedido y pago.
+
+Un mismo pedido no puede tener múltiples registros `Payment` asociados mediante `orderId`.
+
+---
+
+# 29. Gestión de descuentos y cupones
+
+Los pedidos almacenan directamente el descuento aplicado:
+
+```text
+discount Float @default(0)
+```
+
+Además pueden mantener una referencia al cupón utilizado:
+
+```text
+couponId String?
+```
+
+Los cupones almacenan:
+
+```text
+type
+value
+maxUses
+usedCount
+expiresAt
+active
+```
+
+Esto permite representar tanto descuentos porcentuales como descuentos de importe fijo.
+
+---
+
+# 30. Gestión de ofertas de productos
+
+El modelo `Product` dispone de:
+
+```text
+price
+offerPrice
+offerPercentage
+offerActive
+```
+
+La combinación de estos campos permite representar productos con precio normal y productos que poseen una oferta activa.
+
+El estado de la oferta se controla mediante:
+
+```text
+offerActive
+```
+
+cuyo valor predeterminado es:
+
+```text
+false
+```
+
+---
+
+# 31. Gestión de stock
+
+El stock de cada producto se almacena directamente mediante:
+
+```text
+stock Int
+```
+
+El modelo no utiliza una tabla independiente de movimientos de inventario en el esquema actual.
+
+El control y actualización del stock forman parte de la lógica de negocio implementada por el backend.
+
+---
+
+# 32. Fechas de auditoría
+
+Los principales modelos incluyen:
+
+```text
+createdAt
+updatedAt
+```
+
+Los campos `createdAt` utilizan:
+
+```text
+@default(now())
+```
+
+Los campos `updatedAt` utilizan:
+
+```text
+@updatedAt
+```
+
+Esto permite registrar automáticamente la creación y última modificación de los registros.
+
+---
+
+# 33. Identificadores
+
+Los modelos utilizan identificadores de tipo:
+
+```text
+String
+```
+
+con generación automática mediante:
+
+```text
+cuid()
+```
+
+Esto evita depender de identificadores numéricos incrementales.
+
+---
+
+# 34. Resumen del modelo
+
+La base de datos actual puede resumirse en los siguientes dominios:
+
+### Usuarios
+
+```text
+User
+Address
+```
+
+### Catálogo
+
+```text
+Product
 Category
 Brand
-Product
 ProductImage
+```
+
+### Compra
+
+```text
+Cart
+CartItem
 Order
 OrderItem
+```
+
+### Pagos
+
+```text
 Payment
+```
+
+### Promociones
+
+```text
+Coupon
+```
+
+### Interacción
+
+```text
 Review
 Favorite
 ```
 
-La documentación detallada del modelo de datos se encuentra en:
+### Contenido
 
 ```text
-docs/BASE_DE_DATOS.md
+Banner
+StoreSettings
 ```
 
 ---
 
-# 21. API
+# 35. Arquitectura de persistencia
 
-El backend expone una API REST organizada por recursos.
-
-Principales grupos de endpoints:
+El acceso a los datos sigue la arquitectura definida en el backend:
 
 ```text
-/api/auth
-/api/products
-/api/categories
-/api/brands
-/api/orders
-/api/addresses
-/api/users
-/api/upload
-/api/cart
-/api/checkout
-/api/payments
-/api/mercadopago
-/api/webhook
-/api/reviews
-/api/favorites
-/api/banners
+HTTP Request
+     ↓
+Routes
+     ↓
+Middlewares
+     ↓
+Controllers
+     ↓
+Services
+     ↓
+Repositories
+     ↓
+Prisma Client
+     ↓
+PostgreSQL
 ```
 
-La documentación detallada de los endpoints se encuentra en:
+Los repositories son responsables de encapsular las operaciones de persistencia, mientras que los services contienen las reglas de negocio.
+
+Prisma actúa como intermediario entre la aplicación y PostgreSQL.
+
+---
+
+# 36. Producción
+
+En el entorno productivo, PostgreSQL se ejecuta mediante:
 
 ```text
-docs/API.md
+AWS RDS for PostgreSQL
 ```
 
----
+La aplicación backend desplegada en AWS EC2 se conecta a la instancia RDS mediante la configuración de producción.
 
-# 22. Frontend
+La base de datos no se expone directamente a Internet.
 
-El frontend está desarrollado utilizando React y Vite.
-
-La interfaz utiliza Tailwind CSS para los estilos y componentes reutilizables.
-
-La comunicación con el backend se realiza mediante Axios.
-
-La estructura busca mantener separadas:
-
-* Páginas.
-* Componentes.
-* Servicios/API.
-* Configuración HTTP.
-* Estado de la aplicación.
-* Formularios.
+El acceso se controla mediante las reglas de red y seguridad configuradas en AWS.
 
 ---
 
-# 23. Gestión de imágenes
+# 37. Migraciones
 
-Las imágenes de productos y otros recursos multimedia pueden gestionarse mediante Cloudinary.
+Las modificaciones estructurales de la base de datos se gestionan mediante Prisma Migrate.
 
-El backend recibe los archivos mediante endpoints específicos de subida.
-
-El sistema almacena:
-
-* URL pública.
-* Public ID.
-* Relación con el recurso correspondiente.
-
-Esto permite administrar galerías de imágenes sin almacenar físicamente los archivos dentro del servidor.
-
----
-
-# 24. Principios de desarrollo
-
-Durante el desarrollo del proyecto se mantienen los siguientes principios:
-
-### Separación de responsabilidades
-
-Cada capa posee una responsabilidad específica.
-
-### Reutilización
-
-Se evita duplicar lógica cuando puede ser centralizada.
-
-### Seguridad
-
-Las rutas y recursos sensibles están protegidos mediante autenticación y autorización.
-
-### Validación
-
-Los datos recibidos desde el cliente deben validarse antes de ser procesados.
-
-### Escalabilidad
-
-La arquitectura permite agregar nuevos módulos sin modificar innecesariamente los existentes.
-
-### Mantenibilidad
-
-El código se organiza para facilitar futuras modificaciones y mantenimiento.
-
----
-
-# 25. Metodología de desarrollo
-
-El desarrollo del proyecto se realiza de forma incremental.
-
-Cada funcionalidad se implementa siguiendo un proceso controlado:
+El flujo utilizado durante el despliegue es:
 
 ```text
-1. Analizar requerimiento
+Cambio en schema.prisma
         ↓
-2. Diseñar solución
+Prisma Migration
         ↓
-3. Implementar backend
+Base de datos PostgreSQL
         ↓
-4. Probar endpoint
-        ↓
-5. Implementar frontend
-        ↓
-6. Probar integración
-        ↓
-7. Corregir errores
-        ↓
-8. Confirmar funcionamiento
-        ↓
-9. Continuar con la siguiente funcionalidad
+Prisma Client
 ```
 
-Se prioriza mantener las funcionalidades existentes funcionando antes de incorporar nuevos cambios.
+En producción se ejecuta el proceso de migración correspondiente como parte del flujo automatizado de despliegue.
 
 ---
 
-# 26. Estado actual del proyecto
+# 38. Fuente de verdad
 
-El proyecto cuenta actualmente con una arquitectura funcional para:
+La fuente principal para la definición estructural de la base de datos es:
 
-* Autenticación.
-* Usuarios.
-* Roles.
-* Productos.
+```text
+backend/prisma/schema.prisma
+```
+
+Este archivo define:
+
+* Modelos.
+* Campos.
+* Tipos.
+* Relaciones.
+* Claves primarias.
+* Restricciones únicas.
+* Valores predeterminados.
+* Enumeraciones.
+* Comportamientos `onDelete`.
+
+Esta documentación debe mantenerse sincronizada con dicho esquema cuando se produzcan modificaciones estructurales.
+
+---
+
+# 39. Estado actual
+
+La base de datos de TECNO 3D se encuentra implementada sobre PostgreSQL y utiliza Prisma como ORM.
+
+La arquitectura actual permite soportar:
+
+* Gestión de usuarios.
+* Control de roles.
+* Catálogo.
 * Categorías.
 * Marcas.
+* Imágenes.
 * Carrito.
 * Pedidos.
-* Direcciones.
 * Pagos.
-* Checkout.
-* Mercado Pago.
-* Webhooks.
+* Cupones.
+* Descuentos.
+* Envíos.
+* Direcciones.
 * Reseñas.
 * Favoritos.
 * Banners.
-* Gestión de imágenes.
-* Dashboard administrativo.
+* Configuración de tienda.
+* Persistencia en entorno productivo mediante Amazon RDS.
 
-El desarrollo continúa orientado a completar y mejorar la plataforma para alcanzar un producto final profesional y preparado para producción.
-
----
-
-# 27. Documentación complementaria
-
-La documentación del proyecto se divide en varios documentos especializados:
-
-```text
-docs/
-│
-├── DOCUMENTACION_TECNO3D.md
-├── ARQUITECTURA.md
-├── BASE_DE_DATOS.md
-├── API.md
-└── MANUAL_USUARIO.md
-```
-
-## DOCUMENTACION_TECNO3D.md
-
-Documento general del proyecto, objetivos, funcionalidades y visión general.
-
-## ARQUITECTURA.md
-
-Describe detalladamente la arquitectura técnica y organización del código.
-
-## BASE_DE_DATOS.md
-
-Describe las tablas, modelos, relaciones, enums y reglas de la base de datos.
-
-## API.md
-
-Documenta los endpoints, métodos HTTP, autenticación, parámetros, respuestas y errores.
-
-## MANUAL_USUARIO.md
-
-Explica cómo utilizar la plataforma desde el punto de vista del usuario final y del administrador.
+La estructura está preparada para continuar evolucionando mediante nuevas migraciones controladas sin modificar innecesariamente los componentes existentes.
 
 ---
 
-# 28. Objetivo final
+# 40. Conclusión
 
-El objetivo final de TECNO3D es disponer de una plataforma de e-commerce profesional que pueda ser utilizada como producto real y como proyecto de portfolio profesional.
+La base de datos de TECNO 3D utiliza una estructura relacional basada en PostgreSQL y administrada mediante Prisma ORM.
 
-La plataforma debe ofrecer:
+El modelo separa las principales áreas funcionales del e-commerce y utiliza relaciones, restricciones únicas y estrategias de eliminación para mantener la integridad de los datos.
 
-* Buena experiencia de usuario.
-* Diseño moderno.
-* Seguridad.
-* Escalabilidad.
-* Código mantenible.
-* Arquitectura organizada.
-* Integración entre frontend y backend.
-* Persistencia real de datos.
-* Gestión completa del ciclo de compra.
-* Herramientas administrativas.
-* Preparación para servicios externos de pago y almacenamiento.
+La utilización de Prisma permite mantener una definición centralizada del modelo y facilita las migraciones y operaciones de persistencia desde el backend.
 
----
+En producción, la base de datos se encuentra desplegada en Amazon RDS, proporcionando una infraestructura administrada y separada del servidor de aplicación.
 
-# 29. Conclusión
-
-TECNO3D representa una aplicación web full-stack desarrollada con tecnologías modernas y una arquitectura orientada a la separación de responsabilidades.
-
-El proyecto integra frontend, backend, base de datos, autenticación, gestión de productos, pedidos, pagos, usuarios y herramientas administrativas dentro de una misma plataforma.
-
-La estructura utilizada permite continuar incorporando funcionalidades y evolucionar el sistema hacia una aplicación de comercio electrónico completa y preparada para un entorno de producción.
+El esquema actual constituye la fuente de verdad para la estructura de persistencia de TECNO 3D y debe utilizarse como referencia principal para futuras modificaciones de la base de datos.

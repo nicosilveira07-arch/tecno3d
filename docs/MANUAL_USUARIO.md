@@ -1,20 +1,24 @@
-# MANUAL DE USUARIO — TECNO3D
+# MANUAL DE USUARIO — TECNO 3D
 
 ## 1. Introducción
 
-TECNO3D es una plataforma de comercio electrónico orientada a la venta de productos tecnológicos, impresión 3D, filamentos, resinas, accesorios y productos relacionados.
+TECNO 3D es una plataforma de comercio electrónico orientada a la venta de productos tecnológicos, impresión 3D, filamentos, resinas, accesorios y productos relacionados.
 
-El sistema permite a los clientes consultar productos, administrar su carrito, realizar pedidos, seleccionar métodos de entrega y consultar el estado de sus compras.
+El sistema permite a los clientes consultar productos, utilizar herramientas de búsqueda y filtrado, administrar su carrito, aplicar descuentos, realizar pedidos, seleccionar métodos de entrega, efectuar pagos y consultar el estado de sus compras.
 
-Además, dispone de un área administrativa para la gestión de productos, usuarios, pedidos, pagos, stock y demás funcionalidades internas de la plataforma.
+Además, dispone de un área administrativa para la gestión de productos, categorías, marcas, pedidos, stock, usuarios, banners, cupones y demás funcionalidades internas de la plataforma.
+
+La plataforma se encuentra desplegada y operativa en producción.
 
 ---
 
 # 2. Acceso al sistema
 
-Para utilizar TECNO3D, el usuario debe ingresar a la plataforma desde un navegador web compatible.
+Para utilizar TECNO 3D, el usuario debe ingresar a la plataforma desde un navegador web compatible.
 
 La pantalla inicial permite acceder al catálogo de productos y a las funcionalidades disponibles para clientes.
+
+---
 
 ## 2.1 Registro
 
@@ -30,6 +34,8 @@ Los datos registrados permiten:
 * Realizar reseñas de productos.
 * Administrar el carrito de compras.
 
+Una vez completado el registro, el usuario puede iniciar sesión utilizando sus credenciales.
+
 ---
 
 # 3. Inicio de sesión
@@ -38,11 +44,13 @@ El usuario debe ingresar sus credenciales registradas.
 
 Una vez autenticado, el sistema identifica automáticamente el rol correspondiente y habilita las funcionalidades disponibles para dicho usuario.
 
-Los roles definidos en TECNO3D son:
+Los roles definidos en TECNO 3D son:
 
-* `CUSTOMER`
-* `EMPLOYEE`
-* `ADMIN`
+```text
+CUSTOMER
+EMPLOYEE
+ADMIN
+```
 
 Cada rol posee diferentes niveles de acceso.
 
@@ -65,7 +73,7 @@ Cada producto puede mostrar información como:
 * Imágenes.
 * Valoraciones de clientes.
 
-El usuario puede utilizar las herramientas de búsqueda y filtrado para encontrar productos específicos.
+El usuario puede utilizar las herramientas de búsqueda, filtrado y ordenamiento para encontrar productos específicos.
 
 ---
 
@@ -75,18 +83,22 @@ El sistema permite buscar productos mediante texto.
 
 La búsqueda contempla diferentes términos relacionados y variantes de determinados productos para facilitar la localización.
 
-Por ejemplo, búsquedas como:
+Por ejemplo:
 
-* Mouse.
-* Maus.
-* Notebook.
-* Laptop.
-* Impresora.
-* Impresora 3D.
-* Filamento.
-* Resina.
-* Monitor.
-* Accesorios.
+```text
+Mouse
+Maus
+Notebook
+Laptop
+Impresora
+Impresora 3D
+Filamento
+Filamentos
+Resina
+Resinas
+Monitor
+Accesorios
+```
 
 El sistema normaliza determinados términos para mejorar los resultados obtenidos.
 
@@ -105,7 +117,7 @@ Entre ellos:
 * Precio descendente.
 * Productos más recientes.
 
-Esto permite al usuario reducir los resultados y encontrar rápidamente el producto deseado.
+Estas herramientas permiten reducir los resultados y encontrar rápidamente el producto deseado.
 
 ---
 
@@ -113,9 +125,20 @@ Esto permite al usuario reducir los resultados y encontrar rápidamente el produ
 
 Al seleccionar un producto, el usuario puede acceder a su información detallada.
 
-La vista del producto permite consultar sus características, imágenes, precio, disponibilidad y valoraciones.
+La vista del producto permite consultar:
 
-También puede agregarse el producto al carrito o utilizar las funcionalidades disponibles para favoritos.
+* Características.
+* Descripción.
+* Imágenes.
+* Precio.
+* Precio de oferta cuando corresponde.
+* Descuento cuando corresponde.
+* Disponibilidad.
+* Categoría.
+* Marca.
+* Valoraciones.
+
+Desde esta sección el usuario puede agregar el producto al carrito o utilizar la funcionalidad de favoritos.
 
 ---
 
@@ -131,7 +154,9 @@ El usuario puede:
 * Consultar subtotales.
 * Consultar el total de la compra.
 
-El sistema mantiene una relación entre el carrito y el usuario autenticado.
+El carrito se encuentra asociado al usuario autenticado.
+
+El sistema evita duplicar el mismo producto dentro del carrito y mantiene las cantidades correspondientes.
 
 ---
 
@@ -146,32 +171,73 @@ Durante este proceso se validan:
 * Stock disponible.
 * Método de entrega.
 * Dirección de envío cuando corresponde.
+* Propiedad de la dirección.
+* Cupones aplicables.
+* Descuentos.
+* Total final del pedido.
 
-El sistema calcula automáticamente el importe total del pedido.
+El cálculo final del pedido se realiza en el backend.
+
+El frontend no constituye la fuente de verdad para el importe final de la compra.
 
 ---
 
-# 10. Métodos de entrega
+# 10. Cupones y descuentos
 
-TECNO3D contempla dos métodos principales de entrega:
+TECNO 3D permite aplicar promociones mediante cupones cuando se encuentran disponibles y cumplen las condiciones configuradas.
 
-### Envío
+Los cupones pueden utilizar diferentes tipos de descuento:
 
-El pedido requiere una dirección de entrega.
+```text
+PERCENTAGE
+FIXED
+```
 
-El usuario debe seleccionar una dirección previamente registrada.
+Los descuentos pueden estar sujetos a:
 
-### Retiro en local
+* Código del cupón.
+* Estado activo.
+* Fecha de vencimiento.
+* Cantidad máxima de usos.
+* Cantidad de usos realizados.
+
+Cuando un cupón es válido, el sistema calcula el descuento correspondiente y actualiza el total del pedido.
+
+El total utilizado para el pago es el total calculado por el backend después de aplicar el descuento correspondiente.
+
+---
+
+# 11. Métodos de entrega
+
+TECNO 3D contempla dos métodos principales de entrega:
+
+```text
+SHIPPING
+PICKUP
+```
+
+## 11.1 Envío
+
+El pedido requiere una dirección de entrega válida.
+
+El usuario debe seleccionar una dirección asociada a su propia cuenta.
+
+Cuando corresponde, el pedido puede incorporar:
+
+* Empresa de envío.
+* Número de seguimiento.
+
+## 11.2 Retiro en local
 
 El cliente puede seleccionar el retiro en el local.
 
 En este caso no se utiliza una dirección de envío.
 
-El sistema valida que cada método de entrega sea utilizado correctamente.
+El sistema adapta el proceso del pedido al método de entrega seleccionado.
 
 ---
 
-# 11. Direcciones
+# 12. Direcciones
 
 Los usuarios pueden administrar sus direcciones de envío.
 
@@ -192,11 +258,11 @@ El sistema valida que un usuario no pueda utilizar una dirección perteneciente 
 
 ---
 
-# 12. Pedidos
+# 13. Creación del pedido
 
-Una vez confirmado el checkout, el sistema genera un pedido.
+Una vez completado el checkout, el sistema genera el pedido correspondiente.
 
-Cada pedido contiene:
+Cada pedido puede contener:
 
 * Identificador.
 * Usuario.
@@ -204,15 +270,23 @@ Cada pedido contiene:
 * Cantidades.
 * Precio de cada producto.
 * Total.
+* Descuento.
+* Cupón aplicado cuando corresponde.
 * Método de entrega.
 * Dirección cuando corresponde.
 * Estado.
 * Información de envío cuando corresponde.
 * Información de pago.
 
+El pedido comienza normalmente en estado:
+
+```text
+PENDING
+```
+
 ---
 
-# 13. Estados de los pedidos
+# 14. Estados de los pedidos
 
 Los pedidos utilizan los siguientes estados:
 
@@ -224,8 +298,6 @@ SHIPPED
 DELIVERED
 CANCELLED
 ```
-
-Las transiciones están controladas por el backend para evitar cambios de estado inválidos.
 
 El flujo principal es:
 
@@ -241,22 +313,28 @@ SHIPPED
 DELIVERED
 ```
 
-Un pedido también puede ser cancelado desde los estados permitidos por las reglas del sistema.
+Un pedido también puede pasar a `CANCELLED` cuando las reglas del sistema permiten su cancelación.
+
+Las transiciones son controladas por el backend para evitar modificaciones de estado inválidas.
 
 ---
 
-# 14. Pagos
+# 15. Pagos
 
-Los pedidos pueden asociarse a un registro de pago.
+TECNO 3D integra Mercado Pago como plataforma de procesamiento de pagos utilizada en el flujo de compra.
 
-Los métodos de pago soportados por el sistema son:
+El modelo de datos contempla diferentes métodos de pago:
 
-* Mercado Pago.
-* PayPal.
-* Efectivo.
-* Transferencia bancaria.
+```text
+MERCADO_PAGO
+PAYPAL
+CASH
+BANK_TRANSFER
+```
 
-Los estados de pago disponibles son:
+Sin embargo, la integración de pago implementada y probada en producción corresponde a **Mercado Pago**.
+
+Los estados de pago disponibles en el modelo son:
 
 ```text
 PENDING
@@ -265,24 +343,118 @@ FAILED
 REFUNDED
 ```
 
-El sistema relaciona cada pago con un pedido específico.
+Cada registro de pago se encuentra asociado a un pedido específico.
 
 ---
 
-# 15. Preparación y envío
+# 16. Pago mediante Mercado Pago
 
-Antes de pasar un pedido a `PROCESSING`, el sistema verifica que el pago correspondiente se encuentre confirmado.
+El flujo de pago mediante Mercado Pago es:
 
-Para pasar un pedido de `PROCESSING` a `SHIPPED`, cuando el método seleccionado es envío, se requiere:
+```text
+Carrito
+   ↓
+Checkout
+   ↓
+Validaciones
+   ↓
+Aplicación de descuento
+   ↓
+Creación del pedido
+   ↓
+Creación del pago
+   ↓
+Mercado Pago
+   ↓
+Pago del cliente
+   ↓
+Webhook
+   ↓
+Backend
+   ↓
+Actualización del pago
+   ↓
+Actualización del pedido
+```
+
+El importe enviado a Mercado Pago corresponde al total calculado por el sistema después de aplicar los descuentos correspondientes.
+
+La integración fue probada en el entorno de producción.
+
+Las credenciales y secretos utilizados para la integración no se almacenan en el código fuente ni se incluyen en esta documentación.
+
+---
+
+# 17. Confirmación de pagos
+
+El estado definitivo del pago es procesado por el backend a partir de las notificaciones correspondientes de Mercado Pago.
+
+Cuando el pago es confirmado, el sistema actualiza la información asociada al pedido.
+
+El proceso permite mantener sincronizados:
+
+```text
+Pago
+   ↓
+Pedido
+```
+
+De esta forma, la confirmación del pago no depende únicamente de la información presentada en el navegador del cliente.
+
+---
+
+# 18. Preparación y envío
+
+Una vez confirmado el pedido, puede avanzar hacia su procesamiento de acuerdo con las reglas de negocio.
+
+Cuando el pedido utiliza:
+
+```text
+SHIPPING
+```
+
+puede incorporar información de envío como:
 
 * Empresa de envío.
-* Número de rastreo.
+* Número de seguimiento.
 
-Estos datos quedan asociados al pedido.
+Estos datos quedan asociados al pedido para permitir su consulta y seguimiento.
+
+Cuando se utiliza:
+
+```text
+PICKUP
+```
+
+el pedido se adapta al retiro en local y no requiere información de envío.
 
 ---
 
-# 16. Favoritos
+# 19. Consulta de pedidos
+
+Los clientes autenticados pueden consultar sus propios pedidos.
+
+La información puede incluir:
+
+* Identificador del pedido.
+* Productos.
+* Cantidades.
+* Precios.
+* Total.
+* Descuento.
+* Método de entrega.
+* Dirección cuando corresponde.
+* Estado del pedido.
+* Estado del pago.
+* Empresa de envío cuando corresponde.
+* Número de seguimiento cuando corresponde.
+* Fecha del pedido.
+
+Los clientes solamente pueden acceder a los pedidos correspondientes a su propia cuenta.
+
+---
+
+# 20. Favoritos
 
 Los usuarios autenticados pueden guardar productos como favoritos.
 
@@ -294,9 +466,11 @@ La funcionalidad permite:
 
 Cada favorito pertenece a un usuario y a un producto.
 
+El sistema evita duplicar el mismo producto dentro de los favoritos de un usuario.
+
 ---
 
-# 17. Reseñas
+# 21. Reseñas
 
 Los clientes pueden valorar productos mediante reseñas.
 
@@ -306,17 +480,24 @@ Una reseña puede contener:
 * Comentario.
 * Usuario.
 * Producto.
-* Fecha.
+* Fecha de creación.
+* Fecha de actualización.
 
 El sistema evita que un mismo usuario registre múltiples reseñas para el mismo producto.
 
 ---
 
-# 18. Roles de usuario
+# 22. Roles de usuario
 
-TECNO3D utiliza tres niveles principales de acceso.
+TECNO 3D utiliza tres niveles principales de acceso:
 
-## CUSTOMER
+```text
+CUSTOMER
+EMPLOYEE
+ADMIN
+```
+
+## 22.1 CUSTOMER
 
 Es el usuario final de la plataforma.
 
@@ -328,32 +509,27 @@ Puede:
 * Crear pedidos.
 * Administrar direcciones.
 * Consultar sus pedidos.
-* Consultar sus pagos.
+* Consultar información de pagos.
 * Gestionar favoritos.
 * Realizar reseñas.
 
 ---
 
-## EMPLOYEE
+## 22.2 EMPLOYEE
 
-Dispone de permisos administrativos y operativos superiores a un cliente.
+Dispone de permisos operativos superiores a un cliente.
 
-Puede acceder a funcionalidades relacionadas con:
+Puede acceder a funcionalidades administrativas y operativas autorizadas por el sistema, principalmente relacionadas con la gestión de pedidos y operaciones internas.
 
-* Gestión de pedidos.
-* Actualización de estados.
-* Gestión operativa definida por el sistema.
-* Consulta de información administrativa autorizada.
+Los permisos efectivos se encuentran controlados por el backend.
 
 ---
 
-## ADMIN
+## 22.3 ADMIN
 
 Es el nivel de mayor privilegio dentro de la plataforma.
 
-Puede acceder a las funcionalidades administrativas y de gestión general del sistema.
-
-Entre ellas:
+Puede acceder a las funcionalidades administrativas autorizadas por el sistema, incluyendo:
 
 * Gestión de usuarios.
 * Gestión de productos.
@@ -362,15 +538,22 @@ Entre ellas:
 * Gestión de pedidos.
 * Gestión de pagos.
 * Gestión de stock.
-* Administración del dashboard.
 * Gestión de banners.
+* Gestión de promociones y cupones.
+* Administración del dashboard.
 * Administración general de la plataforma.
 
 ---
 
-# 19. Dashboard administrativo
+# 23. Dashboard administrativo
 
-El dashboard proporciona una visión general del funcionamiento comercial de TECNO3D.
+El dashboard proporciona una visión general del funcionamiento comercial de TECNO 3D.
+
+El acceso al dashboard administrativo corresponde al rol:
+
+```text
+ADMIN
+```
 
 Las métricas principales incluyen:
 
@@ -385,15 +568,15 @@ Las métricas principales incluyen:
 * Estado de pagos.
 * Productos con bajo stock.
 
-Las métricas son obtenidas desde la información almacenada en la base de datos PostgreSQL mediante Prisma.
+Las métricas se obtienen a partir de la información almacenada en PostgreSQL mediante Prisma.
 
 ---
 
-# 20. Gestión de productos
+# 24. Gestión de productos
 
 Los usuarios autorizados pueden administrar el catálogo.
 
-Las operaciones disponibles incluyen:
+Las operaciones incluyen:
 
 * Crear productos.
 * Consultar productos.
@@ -406,55 +589,108 @@ Las operaciones disponibles incluyen:
 * Administrar ofertas.
 * Administrar imágenes.
 
-Los productos pueden tener múltiples imágenes.
+Los productos pueden tener una imagen principal y múltiples imágenes adicionales.
 
-Las imágenes pueden almacenarse mediante el sistema de almacenamiento configurado para la plataforma.
+Las imágenes son gestionadas mediante el sistema de almacenamiento configurado para la plataforma.
 
 ---
 
-# 21. Gestión de categorías
+# 25. Gestión de ofertas
+
+Los productos pueden disponer de precios promocionales.
+
+Las ofertas pueden utilizar:
+
+* Precio original.
+* Precio de oferta.
+* Porcentaje de descuento.
+* Estado de oferta.
+
+Cuando una oferta se encuentra activa, el sistema muestra el precio promocional correspondiente.
+
+El cálculo utilizado durante una compra se realiza en el backend.
+
+---
+
+# 26. Gestión de categorías
 
 Las categorías permiten organizar los productos del catálogo.
 
-Cada categoría puede contener:
+Una categoría puede contener:
 
 * Nombre.
 * Slug.
 * Imagen.
 * Productos asociados.
 
-La categorización facilita la navegación y búsqueda dentro del catálogo.
+La categorización facilita la navegación, búsqueda y filtrado dentro del catálogo.
 
 ---
 
-# 22. Gestión de marcas
+# 27. Gestión de marcas
 
 Las marcas permiten asociar productos con su fabricante o marca correspondiente.
 
-Cada marca puede contener:
+Una marca puede contener:
 
 * Nombre.
 * Slug.
 * Imagen.
 * Productos asociados.
 
+Los productos pueden tener una marca asociada o no tenerla cuando el sistema lo permite.
+
 ---
 
-# 23. Gestión de stock
+# 28. Gestión de stock
 
 El stock representa la cantidad disponible de cada producto.
 
-Durante la creación de pedidos el sistema verifica que exista stock suficiente.
+Durante el proceso de compra el sistema verifica que exista stock suficiente.
 
-Cuando corresponde, el stock puede disminuir según las cantidades adquiridas.
+Las cantidades adquiridas se tienen en cuenta para actualizar la disponibilidad correspondiente.
 
-El dashboard administrativo también permite identificar productos con niveles bajos de stock.
+El dashboard administrativo permite identificar productos con niveles bajos de stock.
 
 ---
 
-# 24. Seguridad
+# 29. Gestión de banners
 
-TECNO3D utiliza mecanismos de seguridad para proteger el acceso a sus funcionalidades.
+Los usuarios administrativos autorizados pueden gestionar banners promocionales.
+
+Un banner puede contener:
+
+* Título.
+* Descripción.
+* Texto del botón.
+* Enlace.
+* Imagen.
+* Estado activo/inactivo.
+
+Las imágenes de los banners son gestionadas mediante el almacenamiento configurado para la plataforma.
+
+---
+
+# 30. Gestión de imágenes
+
+TECNO 3D utiliza Cloudinary para gestionar imágenes.
+
+Puede utilizarse para:
+
+* Imágenes de productos.
+* Galerías de productos.
+* Banners.
+* Otros recursos multimedia configurados por la plataforma.
+
+El sistema almacena las referencias necesarias para utilizar posteriormente los recursos.
+
+Los archivos multimedia no se almacenan directamente dentro del servidor de aplicación.
+
+---
+
+# 31. Seguridad
+
+TECNO 3D incorpora diferentes mecanismos de seguridad para proteger las cuentas, los datos y las funcionalidades administrativas.
 
 Entre ellos:
 
@@ -462,18 +698,21 @@ Entre ellos:
 * Middleware de autenticación.
 * Control de roles.
 * Validación de permisos.
-* Contraseñas almacenadas mediante hash.
+* Contraseñas almacenadas mediante hashing con bcrypt.
 * Validaciones en backend.
-* Protección mediante Helmet.
-* Configuración CORS.
-* Validación de datos.
-* Control de acceso a recursos asociados a usuarios.
+* Helmet.
+* CORS restringido.
+* Rate limiting en rutas sensibles.
+* Control de acceso a recursos.
+* Validación de propiedad de recursos.
+* Protección de webhooks.
+* HTTPS.
 
-Las funcionalidades administrativas no deben estar disponibles para usuarios sin los permisos correspondientes.
+Las funcionalidades administrativas no deben estar disponibles para usuarios que no posean los permisos correspondientes.
 
 ---
 
-# 25. Recomendaciones de uso
+# 32. Recomendaciones de uso
 
 Para utilizar correctamente la plataforma se recomienda:
 
@@ -481,13 +720,16 @@ Para utilizar correctamente la plataforma se recomienda:
 2. Verificar el stock antes de confirmar una compra.
 3. Revisar la dirección de envío antes de confirmar el pedido.
 4. Seleccionar correctamente el método de entrega.
-5. Verificar los datos del pedido antes de finalizar la compra.
-6. Conservar la información de rastreo cuando corresponda.
-7. No compartir las credenciales de acceso.
+5. Verificar los productos y cantidades antes de finalizar la compra.
+6. Revisar los descuentos aplicados.
+7. Verificar el total final antes de realizar el pago.
+8. Conservar la información de seguimiento cuando corresponda.
+9. No compartir las credenciales de acceso.
+10. Utilizar contraseñas seguras.
 
 ---
 
-# 26. Flujo general de compra
+# 33. Flujo general de compra
 
 El flujo principal para un cliente es:
 
@@ -504,30 +746,91 @@ Registro / Inicio de sesión
           ↓
        Checkout
           ↓
-Seleccionar entrega
+   Aplicar cupón
+          ↓
+  Calcular descuento
+          ↓
+ Seleccionar entrega
           ↓
 Seleccionar dirección
           ↓
-      Crear pedido
+    Crear pedido
           ↓
-       Realizar pago
+   Mercado Pago
           ↓
-      Pago confirmado
+     Realizar pago
           ↓
-       Procesamiento
+      Webhook
           ↓
-        Envío
+   Pago confirmado
           ↓
-       Entregado
+     Processing
+          ↓
+       Envío
+          ↓
+      Entregado
 ```
 
-Cuando el usuario selecciona retiro en local, el flujo de envío se adapta al método `PICKUP`.
+Cuando el usuario selecciona:
+
+```text
+PICKUP
+```
+
+el flujo se adapta al retiro en local y no requiere una dirección de envío ni información de empresa de transporte.
 
 ---
 
-# 27. Soporte y mantenimiento
+# 34. Flujo administrativo
 
-La plataforma está diseñada siguiendo una arquitectura separada entre frontend y backend.
+El flujo general de operación administrativa puede representarse como:
+
+```text
+ADMIN
+  ↓
+Panel administrativo
+  ↓
+Gestión de catálogo
+  ↓
+Productos / Categorías / Marcas
+  ↓
+Gestión de pedidos
+  ↓
+Verificación de pago
+  ↓
+Procesamiento
+  ↓
+Preparación del pedido
+  ↓
+Envío / Retiro
+  ↓
+Finalización
+```
+
+Las operaciones disponibles dependen del rol y de los permisos definidos por el sistema.
+
+---
+
+# 35. Protección de datos y credenciales
+
+Las credenciales y secretos de producción no forman parte del código fuente público.
+
+El sistema mantiene separadas las configuraciones sensibles de la aplicación.
+
+Los usuarios no deben compartir:
+
+* Contraseñas.
+* Tokens.
+* Credenciales.
+* Información sensible de acceso.
+
+La comunicación pública de la plataforma utiliza HTTPS.
+
+---
+
+# 36. Soporte y mantenimiento
+
+TECNO 3D está diseñada con una arquitectura separada entre frontend y backend.
 
 El frontend proporciona la interfaz de usuario y consume la API REST.
 
@@ -538,19 +841,81 @@ El backend administra:
 * Lógica de negocio.
 * Validaciones.
 * Persistencia.
-* Pedidos.
-* Pagos.
 * Productos.
 * Usuarios.
+* Pedidos.
+* Pagos.
+* Promociones.
+* Carrito.
 
 La información persistente se almacena en PostgreSQL mediante Prisma ORM.
 
+La infraestructura de producción utiliza AWS y mecanismos de monitoreo y despliegue automatizado.
+
 ---
 
-# 28. Conclusión
+# 37. Estado actual de la plataforma
 
-TECNO3D integra las principales funcionalidades necesarias para una plataforma de comercio electrónico profesional.
+TECNO 3D se encuentra desplegada y operativa en producción.
 
-El sistema permite administrar el ciclo completo de una compra, desde la consulta del catálogo hasta la entrega del pedido, manteniendo separación de responsabilidades, control de acceso, validaciones y persistencia de información.
+Las funcionalidades principales incluyen:
 
-La plataforma está preparada para continuar incorporando funcionalidades y mejoras sin alterar la arquitectura principal del sistema.
+* Autenticación.
+* Registro.
+* Usuarios.
+* Roles.
+* Productos.
+* Categorías.
+* Marcas.
+* Ofertas.
+* Imágenes.
+* Carrito.
+* Checkout.
+* Direcciones.
+* Pedidos.
+* Estados de pedidos.
+* Pagos.
+* Mercado Pago.
+* Webhooks.
+* Cupones.
+* Descuentos.
+* Favoritos.
+* Reseñas.
+* Banners.
+* Dashboard administrativo.
+* Gestión de stock.
+* Empresa de envío.
+* Número de seguimiento.
+
+Las funcionalidades principales fueron integradas y probadas entre frontend, backend, base de datos e integraciones externas.
+
+---
+
+# 38. Conclusión
+
+TECNO 3D integra las principales funcionalidades necesarias para una plataforma de comercio electrónico profesional.
+
+El sistema permite administrar el ciclo completo de una compra, desde la consulta del catálogo hasta la entrega o retiro del pedido.
+
+La plataforma incorpora:
+
+* Catálogo.
+* Búsqueda y filtros.
+* Carrito.
+* Checkout.
+* Descuentos.
+* Cupones.
+* Pedidos.
+* Pagos.
+* Mercado Pago.
+* Webhooks.
+* Seguimiento de envíos.
+* Favoritos.
+* Reseñas.
+* Gestión administrativa.
+* Seguridad.
+* Persistencia de datos.
+
+El sistema se encuentra desplegado y operativo en producción, manteniendo separación de responsabilidades, control de acceso, validaciones y mecanismos de seguridad.
+
+La arquitectura permite continuar incorporando nuevas funcionalidades y mejoras sin alterar innecesariamente la estructura principal del sistema.

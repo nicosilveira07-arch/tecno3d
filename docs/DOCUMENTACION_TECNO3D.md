@@ -1,22 +1,36 @@
 # TECNO 3D
+
 ## Documentación General del Proyecto
 
 ---
 
 ## 1. Información del proyecto
 
-**Nombre:** TECNO 3D  
-**Tipo:** Plataforma e-commerce  
-**Estado:** En desarrollo  
-**Arquitectura:** Cliente-Servidor  
-**Base de datos:** PostgreSQL  
-**ORM:** Prisma ORM  
+**Nombre:** TECNO 3D
 
-TECNO 3D es una plataforma de comercio electrónico desarrollada para la gestión y comercialización de productos tecnológicos, incluyendo impresoras 3D, filamentos, resinas, accesorios y otros productos relacionados.
+**Tipo:** Plataforma e-commerce
 
-El sistema está diseñado con una arquitectura moderna, modular y escalable, separando claramente el frontend, backend, lógica de negocio, persistencia de datos y servicios externos.
+**Versión:** 1.0
 
-El objetivo es obtener una aplicación profesional, segura, mantenible y preparada para un entorno real de producción.
+**Estado:** Producción
+
+**Arquitectura:** Cliente-Servidor
+
+**Frontend:** React + Vite
+
+**Backend:** Node.js + Express
+
+**ORM:** Prisma ORM
+
+**Base de datos:** PostgreSQL
+
+**Infraestructura:** Amazon Web Services (AWS)
+
+TECNO 3D es una plataforma de comercio electrónico orientada a la comercialización de productos tecnológicos, impresión 3D, filamentos, resinas, accesorios, repuestos y productos relacionados.
+
+El sistema integra frontend, backend, base de datos, autenticación, gestión de productos, carrito, pedidos, pagos, promociones, usuarios y herramientas administrativas.
+
+La plataforma se encuentra desplegada en un entorno de producción y cuenta con mecanismos de seguridad, monitoreo y despliegue automatizado.
 
 ---
 
@@ -24,198 +38,254 @@ El objetivo es obtener una aplicación profesional, segura, mantenible y prepara
 
 Los principales objetivos de TECNO 3D son:
 
-- Permitir a los clientes consultar el catálogo de productos.
-- Permitir búsquedas y filtros de productos.
-- Gestionar categorías y marcas.
-- Permitir registro e inicio de sesión de usuarios.
-- Gestionar diferentes roles de usuario.
-- Permitir agregar productos al carrito.
-- Permitir gestionar favoritos.
-- Permitir gestionar direcciones de envío.
-- Permitir realizar pedidos.
-- Permitir seleccionar diferentes métodos de entrega.
-- Gestionar pagos.
-- Integrar medios de pago externos.
-- Gestionar estados de pedidos.
-- Gestionar stock de productos.
-- Permitir publicar reseñas de productos.
-- Gestionar banners promocionales.
-- Proporcionar un panel administrativo.
-- Proporcionar métricas y estadísticas de ventas.
-- Permitir la administración de productos, usuarios y pedidos.
+* Permitir a los clientes consultar el catálogo de productos.
+* Permitir búsquedas y filtros de productos.
+* Gestionar categorías y marcas.
+* Permitir registro e inicio de sesión de usuarios.
+* Gestionar diferentes roles de usuario.
+* Permitir agregar productos al carrito.
+* Gestionar favoritos.
+* Gestionar direcciones de los clientes.
+* Permitir realizar pedidos.
+* Permitir seleccionar métodos de entrega.
+* Gestionar pagos.
+* Integrar Mercado Pago.
+* Gestionar estados de pedidos.
+* Gestionar stock.
+* Permitir publicar reseñas.
+* Gestionar banners promocionales.
+* Gestionar cupones y descuentos.
+* Proporcionar un panel administrativo.
+* Proporcionar métricas del negocio.
+* Mantener una arquitectura organizada y mantenible.
+* Disponer de un sistema preparado para futuras ampliaciones.
 
 ---
 
 # 3. Arquitectura general
 
-TECNO 3D utiliza una arquitectura de tipo cliente-servidor.
+TECNO 3D utiliza una arquitectura cliente-servidor con separación entre frontend, backend, persistencia y servicios externos.
 
-La aplicación está dividida principalmente en:
+```text
+                         INTERNET
+                            │
+                            ▼
+                     HTTPS / Dominio
+                            │
+                            ▼
+                          Nginx
+                            │
+             ┌──────────────┴──────────────┐
+             │                             │
+             ▼                             ▼
+        Frontend                       Backend API
+     React + Vite                    Node.js + Express
+                                           │
+                                           ▼
+                                         PM2
+                                           │
+                                           ▼
+                                        Prisma
+                                           │
+                                           ▼
+                                  PostgreSQL / RDS
+```
+
+Servicios externos:
 
 ```text
 TECNO 3D
-│
-├── Frontend
-│   ├── React
-│   ├── Vite
-│   ├── Tailwind CSS
-│   └── Axios
-│
-├── Backend
-│   ├── Node.js
-│   ├── Express
-│   ├── Prisma ORM
-│   └── PostgreSQL
-│
-└── Servicios externos
-    ├── Cloudinary
-    └── Mercado Pago
+   │
+   ├── Mercado Pago
+   │
+   └── Cloudinary
+```
 
-Esta separación permite que frontend y backend evolucionen de manera independiente.
+Esta separación permite mantener independientes la interfaz, la lógica de negocio y la persistencia de datos.
 
-4. Tecnologías utilizadas
-4.1 Frontend
+---
 
-El frontend está desarrollado utilizando:
+# 4. Tecnologías utilizadas
 
-React
-Vite
-Tailwind CSS
-Axios
-React Router
-React Query
-React Hook Form
-Zod
-Lucide React
-Framer Motion
-Sonner
-Responsabilidad
+## 4.1 Frontend
+
+El frontend utiliza:
+
+* React.
+* Vite.
+* Tailwind CSS.
+* Axios.
+* React Router.
+* React Query.
+* React Hook Form.
+* Zod.
+* Lucide React.
+* Framer Motion.
+* Sonner.
+
+### Responsabilidades
 
 El frontend se encarga principalmente de:
 
-Interfaz gráfica.
-Navegación.
-Formularios.
-Validaciones del lado del cliente.
-Consumo de la API.
-Gestión de sesión.
-Visualización de productos.
-Carrito.
-Checkout.
-Panel administrativo.
-5. Backend
+* Interfaz gráfica.
+* Navegación.
+* Formularios.
+* Validaciones del lado del cliente.
+* Consumo de la API.
+* Gestión de sesión.
+* Catálogo.
+* Carrito.
+* Checkout.
+* Favoritos.
+* Pedidos.
+* Panel administrativo.
 
-El backend está desarrollado utilizando:
+---
 
-Node.js
-Express
-Prisma ORM
-PostgreSQL
-JWT
-Zod
-bcrypt
-Helmet
-CORS
-Responsabilidad
+# 5. Backend
 
-El backend se encarga de:
+El backend utiliza:
 
-Autenticación.
-Autorización.
-Reglas de negocio.
-Gestión de usuarios.
-Gestión de productos.
-Gestión de categorías.
-Gestión de marcas.
-Gestión de pedidos.
-Gestión de pagos.
-Gestión del carrito.
-Gestión de favoritos.
-Gestión de reseñas.
-Gestión de banners.
-Gestión de imágenes.
-Acceso a la base de datos.
-6. Base de datos
+* Node.js.
+* Express.
+* Prisma ORM.
+* PostgreSQL.
+* JWT.
+* Zod.
+* bcrypt.
+* Helmet.
+* CORS.
+
+### Responsabilidades
+
+El backend administra:
+
+* Autenticación.
+* Autorización.
+* Usuarios.
+* Roles.
+* Productos.
+* Categorías.
+* Marcas.
+* Carrito.
+* Pedidos.
+* Pagos.
+* Checkout.
+* Cupones.
+* Favoritos.
+* Reseñas.
+* Banners.
+* Imágenes.
+* Dashboard.
+* Comunicación con servicios externos.
+
+La lógica de negocio se mantiene principalmente en el backend para evitar depender de validaciones realizadas únicamente en el frontend.
+
+---
+
+# 6. Base de datos
 
 TECNO 3D utiliza PostgreSQL como sistema gestor de base de datos.
 
-Prisma ORM se utiliza como capa de acceso y abstracción de datos.
+Prisma ORM actúa como capa de acceso y definición del modelo de datos.
 
-Entre las principales entidades del sistema se encuentran:
+Las principales entidades incluyen:
 
+```text
 User
-Product
-Category
-Brand
-ProductImage
+Banner
 Cart
 CartItem
 Address
+Category
+Brand
+Product
+ProductImage
 Order
 OrderItem
 Payment
 Review
 Favorite
-Banner
+```
 
-La estructura completa de la base de datos se encuentra documentada en:
+En producción, PostgreSQL se ejecuta mediante **Amazon RDS**.
 
+La base de datos de producción se encuentra aislada de Internet y solamente permite las conexiones autorizadas desde la infraestructura correspondiente.
+
+La documentación detallada del modelo se encuentra en:
+
+```text
 docs/BASE_DE_DATOS.md
-7. Roles del sistema
+```
 
-El sistema utiliza tres roles principales:
+---
 
+# 7. Roles del sistema
+
+TECNO 3D utiliza tres roles principales:
+
+```text
 ADMIN
 EMPLOYEE
 CUSTOMER
-ADMIN
+```
 
-El administrador posee acceso a las funciones administrativas del sistema.
+## ADMIN
 
-Entre ellas:
+Posee el mayor nivel de privilegios administrativos.
 
-Gestión de usuarios.
-Gestión de productos.
-Gestión de categorías.
-Gestión de marcas.
-Gestión de pedidos.
-Gestión de pagos.
-Gestión de banners.
-Visualización del dashboard.
-Gestión general de la plataforma.
-EMPLOYEE
+Puede realizar las operaciones administrativas permitidas por el sistema, incluyendo:
 
-El empleado posee permisos operativos sobre determinadas funciones administrativas.
+* Gestión de usuarios.
+* Gestión de productos.
+* Gestión de categorías.
+* Gestión de marcas.
+* Gestión de pedidos.
+* Gestión de estados.
+* Gestión de banners.
+* Gestión de stock.
+* Gestión de promociones.
+* Visualización del dashboard.
+* Administración general.
 
-Puede acceder, según los permisos definidos por el sistema, a:
+## EMPLOYEE
 
-Pedidos.
-Productos.
-Gestión operativa.
-Estados de pedidos.
-Información necesaria para la operación comercial.
-CUSTOMER
+Posee permisos operativos definidos por el sistema.
 
-El cliente representa al usuario final de la plataforma.
+Puede acceder a funcionalidades relacionadas con:
+
+* Pedidos.
+* Estados de pedidos.
+* Operaciones administrativas autorizadas.
+* Información necesaria para la operación comercial.
+
+## CUSTOMER
+
+Representa al cliente final.
 
 Puede:
 
-Consultar productos.
-Buscar productos.
-Filtrar productos.
-Agregar productos al carrito.
-Gestionar favoritos.
-Gestionar direcciones.
-Crear pedidos.
-Consultar sus pedidos.
-Consultar pagos.
-Publicar reseñas.
-8. Autenticación y seguridad
+* Registrarse.
+* Iniciar sesión.
+* Consultar productos.
+* Buscar y filtrar productos.
+* Administrar el carrito.
+* Realizar compras.
+* Administrar direcciones.
+* Consultar sus pedidos.
+* Consultar información de pagos.
+* Gestionar favoritos.
+* Publicar reseñas.
 
-La autenticación del sistema utiliza JSON Web Tokens (JWT).
+---
 
-El flujo general es:
+# 8. Autenticación y seguridad
 
+La autenticación utiliza JSON Web Tokens (JWT).
+
+Flujo general:
+
+```text
 Usuario
    │
    ▼
@@ -224,114 +294,199 @@ Login
    ▼
 Backend
    │
-   ├── Verificación de credenciales
-   ├── Validación de contraseña
+   ├── Validación de credenciales
+   ├── Verificación de contraseña
    └── Generación de JWT
    │
    ▼
 Frontend
    │
    ▼
-Token almacenado
+Token
    │
    ▼
 Requests autenticadas
+```
 
-Las contraseñas son almacenadas utilizando hashing mediante bcrypt.
+Las contraseñas se almacenan utilizando hashing mediante bcrypt.
 
 El backend utiliza middleware para:
 
-Verificar autenticación.
-Validar tokens.
-Identificar al usuario.
-Controlar roles.
-Proteger endpoints.
-9. Productos
+* Verificar autenticación.
+* Validar tokens.
+* Identificar al usuario.
+* Controlar roles.
+* Proteger endpoints.
+* Aplicar restricciones de acceso.
 
-El sistema permite gestionar productos con información como:
+La API también utiliza mecanismos de protección como:
 
-Nombre.
-Slug.
-Descripción.
-Precio.
-Precio de oferta.
-Porcentaje de descuento.
-Estado de oferta.
-Stock.
-Imagen principal.
-Imágenes adicionales.
-Categoría.
-Marca.
-Propietario.
-Fecha de creación.
-Fecha de actualización.
+* Helmet.
+* CORS.
+* Rate limiting en rutas sensibles.
+* Validación de datos.
+* Control de acceso.
+* Manejo centralizado de errores.
+* HTTPS.
 
-Los productos pueden encontrarse mediante:
+---
 
-Búsqueda.
-Categoría.
-Marca.
-Oferta.
-Orden por precio.
-Orden por fecha.
+# 9. Gestión de productos
 
-El sistema también contempla normalización de términos de búsqueda para mejorar la experiencia del usuario.
+El sistema permite administrar productos mediante operaciones CRUD.
 
-10. Carrito de compras
+Los productos pueden contener:
 
-Cada usuario puede disponer de un carrito asociado a su cuenta.
+* Nombre.
+* Slug.
+* Descripción.
+* Precio.
+* Precio de oferta.
+* Porcentaje de descuento.
+* Estado.
+* Stock.
+* Categoría.
+* Marca.
+* Imagen principal.
+* Galería de imágenes.
+* Propietario.
+* Fecha de creación.
+* Fecha de actualización.
+
+Los productos pueden consultarse mediante:
+
+* Búsqueda.
+* Categoría.
+* Marca.
+* Oferta.
+* Ordenamiento por precio.
+* Ordenamiento por fecha.
+* Paginación.
+
+---
+
+# 10. Búsqueda y catálogo
+
+El catálogo incorpora herramientas de búsqueda, filtrado y ordenamiento.
+
+El sistema contempla términos equivalentes para mejorar la experiencia del usuario.
+
+Ejemplos:
+
+```text
+mouse → mouse / mouses
+
+notebook → notebook / laptop
+
+impresora → impresora / impresora 3d
+
+filamento → filamento / filamentos
+
+resina → resina / resinas
+```
+
+Esto permite obtener resultados más relevantes ante diferentes formas de realizar una búsqueda.
+
+---
+
+# 11. Carrito de compras
+
+Cada cliente dispone de un carrito asociado a su cuenta.
 
 El carrito permite:
 
-Agregar productos.
-Modificar cantidades.
-Eliminar productos.
-Consultar productos agregados.
-Validar disponibilidad.
+* Agregar productos.
+* Modificar cantidades.
+* Eliminar productos.
+* Consultar productos.
+* Preparar la compra.
+* Validar disponibilidad.
 
-La relación entre carrito y productos se gestiona mediante CartItem.
+Los productos del carrito se gestionan mediante `CartItem`.
 
-11. Checkout
+El sistema evita duplicaciones del mismo producto dentro del carrito mediante las restricciones correspondientes del modelo de datos.
 
-El proceso de checkout permite convertir el carrito del usuario en un pedido.
+---
 
-El sistema contempla dos métodos de entrega:
+# 12. Checkout
 
+El checkout permite convertir el carrito del cliente en un pedido.
+
+El proceso contempla:
+
+```text
+Carrito
+   │
+   ▼
+Checkout
+   │
+   ▼
+Validaciones
+   │
+   ▼
+Pedido
+   │
+   ▼
+Pago
+```
+
+Durante el proceso se validan:
+
+* Productos.
+* Cantidades.
+* Stock.
+* Método de entrega.
+* Dirección cuando corresponde.
+* Propiedad de la dirección.
+* Descuentos aplicables.
+* Total del pedido.
+
+---
+
+# 13. Métodos de entrega
+
+TECNO 3D utiliza:
+
+```text
 SHIPPING
 PICKUP
-SHIPPING
+```
 
-Requiere una dirección válida perteneciente al usuario.
+## SHIPPING
 
-PICKUP
+Requiere una dirección válida del cliente.
 
-Representa el retiro del pedido en el local y no requiere dirección de envío.
+Los pedidos enviados pueden almacenar:
 
-Durante la creación del pedido se valida:
+* Empresa de envío.
+* Número de seguimiento.
 
-Existencia del producto.
-Stock disponible.
-Método de entrega.
-Dirección.
-Propiedad de la dirección.
-Cantidades solicitadas.
-12. Pedidos
+## PICKUP
+
+Permite retirar el pedido en el local.
+
+No requiere una dirección de envío.
+
+---
+
+# 14. Pedidos
 
 Los pedidos poseen un ciclo de vida controlado.
 
-Los estados disponibles son:
+Estados disponibles:
 
+```text
 PENDING
 CONFIRMED
 PROCESSING
 SHIPPED
 DELIVERED
 CANCELLED
+```
 
-Las transiciones están controladas por reglas de negocio.
+Flujo principal:
 
-Ejemplo:
-
+```text
 PENDING
    │
    ▼
@@ -345,40 +500,47 @@ SHIPPED
    │
    ▼
 DELIVERED
+```
 
-Un pedido también puede ser cancelado cuando las reglas del sistema lo permiten.
+Las transiciones de estado son controladas por reglas de negocio.
 
-13. Pagos
+Esto evita modificaciones arbitrarias del estado de un pedido.
 
-El sistema posee una entidad Payment asociada a cada pedido.
+---
 
-Los estados disponibles son:
+# 15. Pagos
 
+Los pedidos poseen un registro asociado de pago.
+
+Estados disponibles:
+
+```text
 PENDING
 PAID
 FAILED
 REFUNDED
+```
 
-Los métodos de pago contemplados son:
+Métodos contemplados por el modelo:
 
+```text
 MERCADO_PAGO
 PAYPAL
 CASH
 BANK_TRANSFER
+```
 
-El sistema también contempla:
+La información de los pagos incluye los datos necesarios para relacionar la operación con el pedido correspondiente.
 
-Identificador de transacción.
-Monto.
-Fecha de creación.
-Fecha de actualización.
-Asociación con el pedido.
-14. Integración con Mercado Pago
+---
 
-TECNO 3D contempla integración con Mercado Pago.
+# 16. Mercado Pago
+
+TECNO 3D integra Mercado Pago como plataforma de procesamiento de pagos.
 
 El flujo general es:
 
+```text
 Cliente
    │
    ▼
@@ -388,111 +550,150 @@ Checkout
 Creación del pedido
    │
    ▼
-Generación del pago
-   │
-   ▼
 Mercado Pago
    │
    ▼
-Resultado del pago
+Pago
    │
    ▼
 Webhook
    │
    ▼
-Actualización del estado
-
-El webhook permite recibir información relacionada con el resultado del pago y actualizar el estado correspondiente dentro del sistema.
-
-15. Imágenes
-
-El sistema contempla almacenamiento de imágenes mediante Cloudinary.
-
-Se utiliza para:
-
-Imágenes de productos.
-Imágenes adicionales de productos.
-Imágenes de banners.
-Imágenes de usuarios.
-
-La base de datos almacena las URLs correspondientes y, cuando corresponde, el identificador público utilizado por Cloudinary.
-
-16. Reseñas
-
-Los usuarios pueden realizar reseñas sobre productos.
-
-Cada reseña contiene:
-
-Usuario.
-Producto.
-Calificación.
-Comentario.
-Fecha de creación.
-Fecha de actualización.
-
-El sistema establece una relación única entre usuario y producto para evitar múltiples reseñas del mismo usuario sobre un mismo producto.
-
-17. Favoritos
-
-Los usuarios pueden guardar productos como favoritos.
-
-La relación se establece mediante:
-
-User
+Backend
    │
    ▼
-Favorite
+Actualización del pago
    │
    ▼
-Product
+Actualización del pedido
+```
 
-También se impide que un mismo usuario agregue repetidamente el mismo producto a favoritos.
+La integración fue probada utilizando el entorno de producción.
 
-18. Banners
+Las credenciales y secretos de Mercado Pago no forman parte del código fuente ni de la documentación pública.
 
-La plataforma posee un sistema de banners promocionales.
+---
+
+# 17. Webhooks
+
+TECNO 3D utiliza webhooks para recibir notificaciones de Mercado Pago.
+
+El backend procesa las notificaciones correspondientes y valida la información recibida antes de actualizar datos internos.
+
+Los webhooks permiten mantener sincronizado el estado del pago con el estado del pedido.
+
+La validación de firma forma parte de las medidas de protección del flujo de notificaciones.
+
+---
+
+# 18. Cupones y descuentos
+
+El sistema incorpora un mecanismo de promociones mediante cupones y descuentos.
+
+Los descuentos pueden aplicarse durante el proceso de compra cuando cumplen las condiciones configuradas.
+
+El total final del pedido se calcula en el backend considerando los descuentos correspondientes.
+
+La información utilizada para el pago se genera a partir del total calculado por el sistema.
+
+---
+
+# 19. Favoritos
+
+Los usuarios autenticados pueden guardar productos como favoritos.
+
+La funcionalidad permite:
+
+* Agregar favoritos.
+* Consultar favoritos.
+* Eliminar favoritos.
+
+La relación entre usuario y producto utiliza restricciones que evitan duplicaciones.
+
+---
+
+# 20. Reseñas
+
+Los clientes pueden publicar reseñas sobre productos.
+
+Una reseña puede contener:
+
+* Usuario.
+* Producto.
+* Calificación.
+* Comentario.
+* Fecha de creación.
+* Fecha de actualización.
+
+El sistema evita múltiples reseñas del mismo usuario sobre un mismo producto mediante la restricción correspondiente.
+
+---
+
+# 21. Banners
+
+El sistema permite administrar banners promocionales.
 
 Los banners pueden contener:
 
-Título.
-Descripción.
-Texto del botón.
-Enlace.
-Imagen.
-Identificador de Cloudinary.
-Estado activo/inactivo.
-Fecha de creación.
-Fecha de actualización.
+* Título.
+* Descripción.
+* Texto del botón.
+* Enlace.
+* Imagen.
+* Identificador de Cloudinary.
+* Estado activo/inactivo.
+* Fecha de creación.
+* Fecha de actualización.
 
-Esto permite administrar contenido promocional desde el sistema.
+Los banners permiten gestionar contenido promocional desde el área administrativa.
 
-19. Dashboard administrativo
+---
 
-TECNO 3D dispone de un dashboard administrativo orientado a la gestión y análisis del negocio.
+# 22. Gestión de imágenes
 
-El dashboard contempla:
+Las imágenes se gestionan mediante Cloudinary.
 
-Ventas totales.
-Pedidos totales.
-Cantidad de clientes.
-Cantidad de productos.
-Ventas por período.
-Ventas por categoría.
-Productos más vendidos.
-Pedidos recientes.
-Estado de pagos.
-Stock y productos con poco stock.
+Se utiliza para recursos como:
 
-Las métricas deben obtenerse directamente desde PostgreSQL mediante Prisma.
+* Imágenes de productos.
+* Galerías de productos.
+* Banners.
+* Otros recursos multimedia de la plataforma.
 
-No se utilizan valores ficticios para las métricas definitivas.
+El sistema almacena las referencias necesarias para utilizar las imágenes posteriormente.
 
-20. API
+Los archivos no se almacenan directamente dentro del servidor de aplicación.
 
-El backend expone una API REST.
+---
 
-Las principales áreas disponibles son:
+# 23. Dashboard administrativo
 
+TECNO 3D dispone de un dashboard administrativo.
+
+El dashboard permite consultar información real del negocio, incluyendo:
+
+* Ventas totales.
+* Pedidos totales.
+* Clientes.
+* Productos.
+* Ventas por período.
+* Ventas por categoría.
+* Productos más vendidos.
+* Pedidos recientes.
+* Estado de pagos.
+* Productos con bajo stock.
+
+La información se obtiene desde los datos persistidos en PostgreSQL mediante Prisma.
+
+---
+
+# 24. API REST
+
+El backend expone una API REST organizada por módulos.
+
+Principales recursos:
+
+```text
 /api/auth
 /api/products
 /api/categories
@@ -509,241 +710,450 @@ Las principales áreas disponibles son:
 /api/reviews
 /api/favorites
 /api/banners
+```
 
-La documentación completa de endpoints se encuentra en:
+La documentación específica de la API se encuentra en:
 
+```text
 docs/API.md
-21. Estructura del backend
+```
 
-La estructura principal del backend es:
+---
 
-backend/
-│
-├── prisma/
-│   └── schema.prisma
-│
-└── src/
-    │
-    ├── controllers/
-    ├── services/
-    ├── repositories/
-    ├── routes/
-    ├── validators/
-    ├── middlewares/
-    ├── lib/
-    │
-    ├── app.js
-    └── server.js
+# 25. Arquitectura interna
 
-La aplicación utiliza separación por responsabilidades.
+El backend utiliza separación de responsabilidades:
 
-Controllers
+```text
+Route
+   ↓
+Middleware
+   ↓
+Controller
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Prisma
+   ↓
+PostgreSQL
+```
 
-Gestionan las solicitudes HTTP y respuestas.
+### Routes
 
-Services
+Definen los endpoints disponibles.
 
-Contienen las reglas de negocio.
+### Middlewares
 
-Repositories
+Gestionan autenticación, autorización, seguridad y validaciones transversales.
 
-Gestionan el acceso a la base de datos.
+### Controllers
 
-Routes
+Gestionan solicitudes y respuestas HTTP.
 
-Definen los endpoints de la API.
+### Services
 
-Middlewares
+Contienen la lógica y reglas de negocio.
 
-Gestionan autenticación, autorización, seguridad y errores.
+### Repositories
 
-Validators
+Gestionan el acceso a los datos.
 
-Validan los datos recibidos.
+### Prisma
 
-22. Estructura del frontend
+Actúa como ORM.
 
-La aplicación frontend utiliza una estructura basada en componentes, páginas y servicios.
+### PostgreSQL
 
-Estructura conceptual:
+Mantiene la información persistente.
 
-frontend/
-│
-└── src/
-    │
-    ├── api/
-    ├── components/
-    ├── pages/
-    ├── services/
-    ├── hooks/
-    ├── layouts/
-    ├── utils/
-    ├── App.jsx
-    └── main.jsx
+---
 
-La estructura puede evolucionar durante el desarrollo manteniendo la separación de responsabilidades.
+# 26. Infraestructura de producción
 
-23. Comunicación Frontend ↔ Backend
+TECNO 3D se encuentra desplegado sobre AWS.
 
-El frontend consume la API mediante Axios.
+La infraestructura principal está compuesta por:
+
+```text
+Internet
+   │
+   ▼
+Route 53
+   │
+   ▼
+Dominio
+   │
+   ▼
+HTTPS
+   │
+   ▼
+Nginx
+   │
+   ▼
+EC2
+   │
+   ├── Frontend
+   ├── Node.js
+   └── PM2
+          │
+          ▼
+       Prisma
+          │
+          ▼
+       RDS PostgreSQL
+```
+
+Servicios externos:
+
+```text
+EC2
+ │
+ ├── Mercado Pago
+ │
+ └── Cloudinary
+```
+
+---
+
+# 27. EC2
+
+La aplicación backend se ejecuta sobre una instancia Amazon EC2.
+
+La instancia ejecuta:
+
+* Node.js.
+* PM2.
+* Nginx.
+* Frontend compilado.
+* Herramientas necesarias para la aplicación.
+
+El backend escucha internamente en:
+
+```text
+127.0.0.1:5000
+```
+
+El puerto de la aplicación no se expone directamente a Internet.
+
+Nginx funciona como reverse proxy para las solicitudes dirigidas a la API.
+
+---
+
+# 28. Amazon RDS
+
+La base de datos de producción utiliza Amazon RDS PostgreSQL.
+
+RDS proporciona:
+
+* Persistencia administrada.
+* Almacenamiento cifrado.
+* Control de acceso mediante Security Groups.
+* Capacidad de ampliación de almacenamiento.
+* Métricas de CloudWatch.
+
+La base de datos no se encuentra expuesta públicamente.
+
+El acceso está restringido a la infraestructura autorizada.
+
+---
+
+# 29. HTTPS y dominio
+
+La plataforma utiliza HTTPS para las comunicaciones públicas.
+
+El tráfico HTTP es redirigido a HTTPS.
+
+Los servicios públicos principales son:
+
+```text
+https://tecno3d.net
+https://www.tecno3d.net
+https://api.tecno3d.net
+```
+
+El certificado TLS permite proteger la comunicación entre los usuarios y la infraestructura.
+
+---
+
+# 30. Despliegue automatizado
+
+TECNO 3D utiliza GitHub Actions para automatizar los despliegues.
 
 El flujo general es:
 
-React
-  │
-  ▼
-Service / API
-  │
-  ▼
-Axios
-  │
-  ▼
-Express API
-  │
-  ▼
-Controller
-  │
-  ▼
-Service
-  │
-  ▼
-Repository
-  │
-  ▼
-Prisma
-  │
-  ▼
-PostgreSQL
+```text
+Desarrollador
+      │
+      ▼
+Git Push
+      │
+      ▼
+GitHub
+      │
+      ▼
+GitHub Actions
+      │
+      ▼
+AWS IAM / OIDC
+      │
+      ▼
+AWS SSM
+      │
+      ▼
+EC2
+```
 
-Las respuestas del backend utilizan una estructura consistente para facilitar el consumo desde el frontend.
+Durante el despliegue se realizan operaciones como:
 
-24. Manejo de errores
+* Actualización del código.
+* Instalación de dependencias.
+* Prisma Generate.
+* Prisma Migrate.
+* Reinicio del backend.
+* Build del frontend.
+* Publicación del frontend.
+* Reload de Nginx.
 
-El backend dispone de middleware centralizado para el manejo de errores.
+El proceso utiliza autenticación federada mediante OIDC para acceder a AWS.
 
-El objetivo es evitar duplicación de lógica y mantener respuestas consistentes.
+---
 
-Los errores pueden corresponder a:
+# 31. Monitoreo y observabilidad
 
-Datos inválidos.
-Usuario no autenticado.
-Usuario sin permisos.
-Recursos inexistentes.
-Stock insuficiente.
-Transiciones de estado inválidas.
-Errores de base de datos.
-Errores de servicios externos.
-25. Seguridad
+La infraestructura utiliza Amazon CloudWatch para monitorear los principales recursos de producción.
 
-Entre las medidas de seguridad implementadas se encuentran:
+Se supervisan métricas relacionadas con:
 
-JWT.
-bcrypt.
-Middleware de autenticación.
-Middleware de autorización por roles.
-CORS.
-Helmet.
-Validación de datos.
-Control de acceso a recursos.
-Validación de propiedad de direcciones.
-Validación de stock.
-Control de transiciones de pedidos.
-Separación de responsabilidades.
-26. Principios de desarrollo
+* CPU de EC2.
+* Estado de EC2.
+* CPU de RDS.
+* Almacenamiento disponible de RDS.
+* Conexiones de RDS.
+* Capacidad de infraestructura.
 
-El proyecto sigue los siguientes principios:
+También existen alarmas configuradas para detectar situaciones anómalas.
 
-Código modular.
-Separación de responsabilidades.
-Reutilización.
-Validación de datos.
-Seguridad.
-Escalabilidad.
-Mantenibilidad.
-Consistencia.
-Evitar duplicación.
-Mantener las reglas de negocio en el backend.
-27. Estado actual del proyecto
+Las notificaciones de las alarmas se gestionan mediante Amazon SNS.
 
-El proyecto se encuentra en etapa de desarrollo avanzado.
+---
 
-Actualmente se encuentran implementadas las principales estructuras del sistema:
+# 32. Gestión de logs
 
-Autenticación.
-Usuarios.
-Roles.
-Productos.
-Categorías.
-Marcas.
-Imágenes.
-Carrito.
-Direcciones.
-Pedidos.
-Pagos.
-Checkout.
-Mercado Pago.
-Webhooks.
-Reseñas.
-Favoritos.
-Banners.
-Dashboard administrativo.
+El backend se ejecuta mediante PM2.
 
-Las funcionalidades continúan integrándose y validándose entre frontend, backend y base de datos.
+PM2 permite:
 
-28. Documentación complementaria
+* Mantener el proceso activo.
+* Reiniciar la aplicación cuando corresponde.
+* Consultar logs.
+* Supervisar el estado del proceso.
 
-Esta documentación se complementa con los siguientes archivos:
+Los logs de la aplicación se gestionan mediante rotación para evitar un crecimiento indefinido de los archivos.
 
+---
+
+# 33. Seguridad de producción
+
+La infraestructura y aplicación incorporan diferentes medidas de seguridad.
+
+Entre ellas:
+
+* HTTPS.
+* Security Groups de AWS.
+* Backend no expuesto directamente a Internet.
+* RDS sin acceso público.
+* SSH restringido.
+* Autenticación mediante claves.
+* Deshabilitación de autenticación SSH por contraseña.
+* JWT.
+* bcrypt.
+* Helmet.
+* CORS restringido.
+* Rate limiting.
+* Validación de datos.
+* Autorización por roles.
+* Validación de propiedad de recursos.
+* Validación de webhooks.
+* Gestión externa de credenciales sensibles.
+
+Los secretos de producción no se almacenan en el repositorio público.
+
+---
+
+# 34. Mantenimiento y operación
+
+El proyecto mantiene una estructura orientada a facilitar el mantenimiento.
+
+Antes de realizar modificaciones importantes se deben analizar:
+
+1. Arquitectura existente.
+2. Dependencias.
+3. Backend.
+4. Frontend.
+5. Base de datos.
+6. Integraciones externas.
+7. Seguridad.
+8. Despliegue.
+9. Funcionalidades existentes.
+
+Los cambios deben realizarse de forma controlada para evitar afectar funcionalidades ya operativas.
+
+---
+
+# 35. Estado actual del proyecto
+
+TECNO 3D cuenta actualmente con las principales funcionalidades de una plataforma e-commerce:
+
+* Autenticación.
+* Usuarios.
+* Roles.
+* Productos.
+* Categorías.
+* Marcas.
+* Imágenes.
+* Carrito.
+* Checkout.
+* Direcciones.
+* Pedidos.
+* Pagos.
+* Mercado Pago.
+* Webhooks.
+* Cupones.
+* Descuentos.
+* Favoritos.
+* Reseñas.
+* Banners.
+* Dashboard administrativo.
+* Gestión de stock.
+* Seguimiento de envíos.
+
+El sistema se encuentra desplegado y operativo en producción.
+
+Las funcionalidades principales fueron integradas y probadas entre frontend, backend, base de datos y servicios externos.
+
+---
+
+# 36. Documentación complementaria
+
+La documentación técnica se divide en varios documentos:
+
+```text
 docs/
-│
+
 ├── DOCUMENTACION_TECNO3D.md
 ├── ARQUITECTURA.md
 ├── BASE_DE_DATOS.md
 ├── API.md
 └── MANUAL_USUARIO.md
-DOCUMENTACION_TECNO3D.md
+```
 
-Documento general del proyecto.
+### DOCUMENTACION_TECNO3D.md
 
-ARQUITECTURA.md
+Documentación general del proyecto.
 
-Explica la arquitectura técnica y organización interna.
+### ARQUITECTURA.md
 
-BASE_DE_DATOS.md
+Documentación de la arquitectura técnica y organización interna.
 
-Documenta modelos, relaciones, enums e información de PostgreSQL.
+### BASE_DE_DATOS.md
 
-API.md
+Documentación del modelo de datos, entidades, relaciones, enums y restricciones.
 
-Documenta endpoints, métodos HTTP, autenticación, parámetros y respuestas.
+### API.md
 
-MANUAL_USUARIO.md
+Documentación de endpoints, métodos HTTP, autenticación y respuestas.
 
-Explica cómo utilizar la plataforma desde la perspectiva del usuario final y administrativo.
+### MANUAL_USUARIO.md
 
-29. Objetivo final
+Documentación destinada a usuarios finales y administradores.
 
-El objetivo final de TECNO 3D es disponer de una plataforma e-commerce profesional, funcional, segura y escalable, capaz de operar como una solución comercial real.
+---
 
-El sistema busca proporcionar una experiencia moderna para los clientes y herramientas completas de gestión para la administración del negocio.
+# 37. Objetivo del proyecto
 
-La arquitectura implementada permite continuar incorporando nuevas funcionalidades sin comprometer las existentes y manteniendo una estructura preparada para futuras etapas de crecimiento.
+TECNO 3D tiene como objetivo funcionar como una plataforma de comercio electrónico profesional y como un proyecto de portfolio técnico.
 
-TECNO 3D
+El sistema combina:
 
-Plataforma e-commerce profesional
+* Desarrollo frontend.
+* Desarrollo backend.
+* Diseño de base de datos.
+* Autenticación.
+* Autorización.
+* Integración de pagos.
+* Gestión de archivos.
+* Infraestructura cloud.
+* Despliegue automatizado.
+* Monitoreo.
+* Seguridad.
 
-Frontend: React + Vite
-Backend: Node.js + Express
-ORM: Prisma
-Base de datos: PostgreSQL
+La arquitectura permite continuar incorporando funcionalidades sin modificar innecesariamente los componentes existentes.
 
+---
 
-### Ahora
-
-Guardalo en:
+# 38. Stack tecnológico final
 
 ```text
-frontend/
-└── docs/
-    └── DOCUMENTACION_TECNO3D.md
+FRONTEND
+React
+Vite
+Tailwind CSS
+Axios
+React Router
+React Query
+React Hook Form
+Zod
+Lucide React
+Framer Motion
+Sonner
+
+BACKEND
+Node.js
+Express
+Prisma ORM
+JWT
+Zod
+bcrypt
+Helmet
+CORS
+
+DATABASE
+PostgreSQL
+Amazon RDS
+
+INFRASTRUCTURE
+Amazon EC2
+Amazon RDS
+Amazon Route 53
+Nginx
+PM2
+HTTPS
+
+CI/CD
+GitHub
+GitHub Actions
+AWS IAM OIDC
+AWS SSM
+
+MONITORING
+Amazon CloudWatch
+Amazon SNS
+
+EXTERNAL SERVICES
+Mercado Pago
+Cloudinary
+```
+
+---
+
+# 39. Conclusión
+
+TECNO 3D es una plataforma e-commerce full-stack desarrollada con tecnologías modernas y una arquitectura organizada por responsabilidades.
+
+El sistema integra frontend, backend, base de datos, autenticación, autorización, catálogo, carrito, checkout, pedidos, pagos, promociones, favoritos, reseñas, banners y herramientas administrativas.
+
+La plataforma se encuentra desplegada en producción utilizando infraestructura AWS, con PostgreSQL mediante Amazon RDS, backend ejecutado sobre EC2, Nginx como reverse proxy, HTTPS, despliegue automatizado mediante GitHub Actions y monitoreo mediante CloudWatch.
+
+La arquitectura y las herramientas utilizadas permiten mantener el sistema, detectar problemas operativos y continuar evolucionándolo hacia nuevas funcionalidades y etapas de crecimiento.
