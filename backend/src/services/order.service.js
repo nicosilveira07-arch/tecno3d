@@ -124,6 +124,7 @@ const createOrderService = async (data) => {
 
     orderItems.push({
       productId: product.id,
+      productName: product.name,
       quantity: item.quantity,
       price: effectivePrice,
     });
