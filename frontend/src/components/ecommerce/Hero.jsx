@@ -202,12 +202,12 @@ export default function Hero() {
               transition={{ duration: 0.8 }}
               className="relative flex justify-center"
             >
-              <div className="absolute h-72 w-72 rounded-full bg-red-600/10 blur-3xl" />
+              <div className="absolute h-72 w-72 rounded-full bg-red-600/10" />
 
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="relative z-10 w-full max-w-xl drop-shadow-[0_20px_80px_rgba(220,38,38,.35)]"
+                className="relative z-10 w-full max-w-xl"
               />
             </motion.div>
           </motion.div>
