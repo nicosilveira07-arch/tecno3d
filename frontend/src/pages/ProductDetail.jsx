@@ -455,7 +455,7 @@ export default function ProductDetail() {
               {/* MINIATURAS */}
 
               {galleryImages.length > 1 && (
-                <div className="flex w-20 flex-col gap-3">
+                  <div className="hidden w-20 flex-col gap-3 lg:flex">
 
                   {galleryImages.map(
                     (image, index) => (
@@ -657,7 +657,7 @@ export default function ProductDetail() {
                 Descripción
               </h2>
 
-              <p className="leading-7 text-zinc-400">
+              <p className="whitespace-pre-line leading-7 text-zinc-400">
                 {product.description ||
                   "Este producto no tiene una descripción disponible."}
               </p>
