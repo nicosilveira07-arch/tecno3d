@@ -689,8 +689,8 @@ export default function Checkout() {
                     </p>
 
                     <p className="mt-3 text-sm text-zinc-500">
-                      Te informaremos cuando tu pedido
-                      esté listo para retirar.
+                      Magallanes 3140, SALTO, Uruguay
+                      
                     </p>
 
                   </div>

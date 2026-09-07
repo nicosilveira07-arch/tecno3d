@@ -1,19 +1,38 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import api from "@/services/api";
 
+import {
+  addToCart,
+  clearCart,
+} from "@/features/cart/cart.store";
+
+import { cancelPendingOrder } from "@/services/orders.api";
+
 export default function Orders() {
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [continuingOrderId, setContinuingOrderId] =
+    useState(null);
+  const [cancellingOrderId, setCancellingOrderId] =
+    useState(null);
 
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const response = await api.get("/orders/my-orders");
+        const response =
+          await api.get("/orders/my-orders");
 
         setOrders(response.data.data);
       } catch (error) {
-        console.error("ERROR CARGANDO PEDIDOS:", error);
+        console.error(
+          "ERROR CARGANDO PEDIDOS:",
+          error
+        );
 
         setError(
           error.response?.data?.message ||
@@ -79,7 +98,9 @@ export default function Orders() {
   };
 
   const formatDate = (date) => {
-    if (!date) return "Fecha no disponible";
+    if (!date) {
+      return "Fecha no disponible";
+    }
 
     return new Date(date).toLocaleString("es-UY", {
       day: "2-digit",
@@ -88,6 +109,160 @@ export default function Orders() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleContinueOrder = async (order) => {
+    if (
+      !order ||
+      order.status !== "PENDING"
+    ) {
+      return;
+    }
+
+    try {
+      setContinuingOrderId(order.id);
+      setError("");
+
+      const response =
+        await api.get(`/orders/pending/${order.id}`);
+
+      const pendingOrder =
+        response.data.data;
+
+      if (
+        !pendingOrder ||
+        pendingOrder.id !== order.id ||
+        pendingOrder.status !== "PENDING"
+      ) {
+        throw new Error(
+          "El pedido pendiente ya no está disponible."
+        );
+      }
+
+      if (
+        pendingOrder.payment &&
+        pendingOrder.payment.status === "PAID"
+      ) {
+        throw new Error(
+          "Este pedido ya tiene el pago confirmado."
+        );
+      }
+
+      if (
+        !Array.isArray(pendingOrder.items) ||
+        pendingOrder.items.length === 0
+      ) {
+        throw new Error(
+          "El pedido pendiente no contiene productos."
+        );
+      }
+
+      clearCart();
+
+      for (const item of pendingOrder.items) {
+        const product = item.product;
+
+        if (!product) {
+          console.warn(
+            "PRODUCTO NO DISPONIBLE:",
+            item.productId
+          );
+
+          continue;
+        }
+
+        for (
+          let quantity = 0;
+          quantity < item.quantity;
+          quantity++
+        ) {
+          addToCart({
+            id: product.id,
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            offerActive:
+              product.offerActive,
+            offerPrice:
+              product.offerPrice,
+            image: product.image,
+          });
+        }
+      }
+
+      navigate("/checkout", {
+        state: {
+          pendingOrderId:
+            pendingOrder.id,
+
+          deliveryMethod:
+            pendingOrder.deliveryMethod,
+
+          addressId:
+            pendingOrder.addressId,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "ERROR CONTINUANDO PEDIDO:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "No se pudo continuar la compra."
+      );
+
+      setContinuingOrderId(null);
+    }
+  };
+
+  const handleCancelOrder = async (order) => {
+    if (
+      !order ||
+      order.status !== "PENDING"
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Estás seguro de que querés cancelar esta compra?\n\nEl pedido quedará registrado como cancelado y no podrás continuarlo."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setCancellingOrderId(order.id);
+      setError("");
+
+      await cancelPendingOrder(order.id);
+
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) =>
+          currentOrder.id === order.id
+            ? {
+                ...currentOrder,
+                status: "CANCELLED",
+              }
+            : currentOrder
+        )
+      );
+    } catch (error) {
+      console.error(
+        "ERROR CANCELANDO PEDIDO:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "No se pudo cancelar la compra."
+      );
+    } finally {
+      setCancellingOrderId(null);
+    }
   };
 
   if (loading) {
@@ -154,7 +329,9 @@ export default function Orders() {
                       order.status
                     )}`}
                   >
-                    {getStatusLabel(order.status)}
+                    {getStatusLabel(
+                      order.status
+                    )}
                   </span>
                 </div>
 
@@ -164,14 +341,18 @@ export default function Orders() {
                   </p>
 
                   <p className="mt-1 text-xl font-black text-white">
-                    UYU {Number(order.total).toFixed(2)}
+                    UYU{" "}
+                    {Number(order.total).toFixed(
+                      2
+                    )}
                   </p>
                 </div>
               </div>
 
               {/* INFORMACIÓN DE ENVÍO */}
 
-              {order.deliveryMethod === "SHIPPING" &&
+              {order.deliveryMethod ===
+                "SHIPPING" &&
                 (order.shippingCompany ||
                   order.trackingNumber) && (
                   <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
@@ -187,7 +368,9 @@ export default function Orders() {
                           </p>
 
                           <p className="mt-1 font-semibold text-white">
-                            {order.shippingCompany}
+                            {
+                              order.shippingCompany
+                            }
                           </p>
                         </div>
                       )}
@@ -199,7 +382,9 @@ export default function Orders() {
                           </p>
 
                           <p className="mt-1 font-mono font-bold text-red-500">
-                            {order.trackingNumber}
+                            {
+                              order.trackingNumber
+                            }
                           </p>
                         </div>
                       )}
@@ -209,17 +394,19 @@ export default function Orders() {
 
               {/* RETIRO EN LOCAL */}
 
-              {order.deliveryMethod === "PICKUP" && (
-                <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-                  <h2 className="font-bold text-white">
-                    Retiro en local
-                  </h2>
+              {order.deliveryMethod ===
+                "PICKUP" && (
+                  <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+                    <h2 className="font-bold text-white">
+                      Retiro en local
+                    </h2>
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Este pedido será retirado en el local.
-                  </p>
-                </div>
-              )}
+                    <p className="mt-1 text-sm text-zinc-500">
+                      Este pedido será retirado
+                      en el local.
+                    </p>
+                  </div>
+                )}
 
               {/* PRODUCTOS */}
 
@@ -231,23 +418,75 @@ export default function Orders() {
                   >
                     <div>
                       <p className="font-semibold text-white">
-                        {item.product.name}
+                        {item.product?.name ||
+                          item.productName ||
+                          "Producto no disponible"}
                       </p>
 
                       <p className="text-sm text-zinc-500">
-                        Cantidad: {item.quantity}
+                        Cantidad:{" "}
+                        {item.quantity}
                       </p>
                     </div>
 
                     <p className="font-semibold text-white">
                       UYU{" "}
                       {(
-                        Number(item.price) * item.quantity
+                        Number(item.price) *
+                        item.quantity
                       ).toFixed(2)}
                     </p>
                   </div>
                 ))}
               </div>
+
+              {/* ACCIONES DE COMPRA PENDIENTE */}
+
+              {order.status === "PENDING" && (
+                <div className="mt-6 flex flex-col gap-3 border-t border-zinc-800 pt-6 sm:flex-row sm:items-center sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCancelOrder(
+                        order
+                      )
+                    }
+                    disabled={
+                      cancellingOrderId ===
+                        order.id ||
+                      continuingOrderId ===
+                        order.id
+                    }
+                    className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-bold text-zinc-400 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {cancellingOrderId ===
+                    order.id
+                      ? "Cancelando..."
+                      : "Cancelar compra"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleContinueOrder(
+                        order
+                      )
+                    }
+                    disabled={
+                      continuingOrderId ===
+                        order.id ||
+                      cancellingOrderId ===
+                        order.id
+                    }
+                    className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
+                  >
+                    {continuingOrderId ===
+                    order.id
+                      ? "Cargando compra..."
+                      : "Continuar compra"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -255,3 +494,4 @@ export default function Orders() {
     </section>
   );
 }
+

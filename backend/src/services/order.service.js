@@ -2,6 +2,9 @@ import {
   getOrdersByUser,
   getAllOrders,
   getOrderById,
+  getPendingOrderByUser,
+  getPendingOrderById,
+  cancelPendingOrder,
   updateOrderStatus,
 } from "../repositories/order.repository.js";
 
@@ -24,6 +27,12 @@ const createOrderService = async (data) => {
     addressId,
     couponCode,
   } = data;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error(
+      "El pedido debe contener al menos un producto."
+    );
+  }
 
   let subtotal = 0;
 
@@ -83,6 +92,17 @@ const createOrderService = async (data) => {
   // VALIDAR PRODUCTOS Y STOCK
 
   for (const item of items) {
+    const quantity = Number(item.quantity);
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity <= 0
+    ) {
+      throw new Error(
+        "La cantidad de cada producto debe ser un número entero mayor a 0."
+      );
+    }
+
     const product =
       await getProductByIdForOrder(
         item.productId
@@ -94,7 +114,7 @@ const createOrderService = async (data) => {
       );
     }
 
-    if (product.stock < item.quantity) {
+    if (product.stock < quantity) {
       throw new Error(
         `Stock insuficiente para ${product.name}`
       );
@@ -120,12 +140,12 @@ const createOrderService = async (data) => {
         : originalPrice;
 
     subtotal +=
-      effectivePrice * item.quantity;
+      effectivePrice * quantity;
 
     orderItems.push({
       productId: product.id,
       productName: product.name,
-      quantity: item.quantity,
+      quantity,
       price: effectivePrice,
     });
   }
@@ -204,7 +224,136 @@ const createOrderService = async (data) => {
     0
   );
 
-  // CREAR PEDIDO
+  // BUSCAR PEDIDO PENDIENTE DEL USUARIO
+
+  const pendingOrder =
+    await prisma.order.findFirst({
+      where: {
+        userId,
+        status: "PENDING",
+      },
+      include: {
+        items: true,
+        payment: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+  // SI EXISTE UN PEDIDO PENDIENTE,
+  // REUTILIZAR EL MISMO PEDIDO
+
+  if (pendingOrder) {
+    // Un pedido con pago confirmado no puede reutilizarse.
+
+    if (
+      pendingOrder.payment &&
+      pendingOrder.payment.status === "PAID"
+    ) {
+      throw new Error(
+        "Este pedido ya tiene el pago confirmado."
+      );
+    }
+
+    const oldCouponId =
+      pendingOrder.couponId;
+
+    const newCouponId =
+      coupon?.id || null;
+
+    const couponChanged =
+      oldCouponId !== newCouponId;
+
+    const order =
+      await prisma.$transaction(
+        async (tx) => {
+          // Si el pedido tenía un cupón anterior
+          // y ahora se cambia por otro, liberar
+          // el uso anterior.
+
+          if (
+            couponChanged &&
+            oldCouponId
+          ) {
+            await tx.coupon.update({
+              where: {
+                id: oldCouponId,
+              },
+              data: {
+                usedCount: {
+                  decrement: 1,
+                },
+              },
+            });
+          }
+
+          // Si se coloca un cupón nuevo,
+          // registrar su uso solamente una vez.
+
+          if (
+            couponChanged &&
+            newCouponId
+          ) {
+            await tx.coupon.update({
+              where: {
+                id: newCouponId,
+              },
+              data: {
+                usedCount: {
+                  increment: 1,
+                },
+              },
+            });
+          }
+
+          // Eliminar los productos anteriores
+          // del mismo pedido.
+
+          await tx.orderItem.deleteMany({
+            where: {
+              orderId: pendingOrder.id,
+            },
+          });
+
+          // Actualizar el mismo pedido.
+          // El ID NO cambia.
+
+          return await tx.order.update({
+            where: {
+              id: pendingOrder.id,
+            },
+            data: {
+              total,
+              discount,
+              couponId: newCouponId,
+              deliveryMethod,
+              addressId:
+                deliveryMethod === "SHIPPING"
+                  ? addressId
+                  : null,
+              items: {
+                create: orderItems,
+              },
+            },
+            include: {
+              items: {
+                include: {
+                  product: true,
+                },
+              },
+              address: true,
+              coupon: true,
+              payment: true,
+            },
+          });
+        }
+      );
+
+    return order;
+  }
+
+  // NO EXISTE PENDING → CREAR UNO NUEVO
 
   const order =
     await prisma.order.create({
@@ -241,10 +390,13 @@ const createOrderService = async (data) => {
         address: true,
 
         coupon: true,
+
+        payment: true,
       },
     });
 
   // INCREMENTAR USO DEL CUPÓN
+  // SOLAMENTE CUANDO SE CREA EL PEDIDO.
 
   if (coupon) {
     await incrementCouponUsageRepository(
@@ -253,6 +405,140 @@ const createOrderService = async (data) => {
   }
 
   return order;
+};
+
+// ======================================================
+// CONTINUAR COMPRA
+// ======================================================
+
+const getPendingOrderService = async (
+  orderId,
+  userId
+) => {
+  const pendingOrder =
+    await getPendingOrderById(
+      orderId,
+      userId
+    );
+
+  if (!pendingOrder) {
+    throw new Error(
+      "El pedido pendiente no existe o no tienes permiso para continuarlo."
+    );
+  }
+
+  // SEGURIDAD:
+  // El repositorio filtra por ID, usuario y PENDING.
+  // Esta validación adicional evita que este servicio
+  // pueda devolver accidentalmente otro pedido.
+
+  if (
+    pendingOrder.id !== orderId ||
+    pendingOrder.userId !== userId ||
+    pendingOrder.status !== "PENDING"
+  ) {
+    throw new Error(
+      "No tienes permiso para continuar este pedido."
+    );
+  }
+
+  // Un pedido PENDING con pago PAID no puede continuar.
+
+  if (
+    pendingOrder.payment &&
+    pendingOrder.payment.status === "PAID"
+  ) {
+    throw new Error(
+      "Este pedido ya tiene el pago confirmado."
+    );
+  }
+
+  // Si alguno de los productos originales
+  // fue eliminado, no podemos reconstruir
+  // correctamente el carrito.
+
+  const unavailableItems =
+    pendingOrder.items.filter(
+      (item) => !item.product
+    );
+
+  if (unavailableItems.length > 0) {
+    throw new Error(
+      "Uno o más productos de este pedido ya no están disponibles."
+    );
+  }
+
+  if (
+    !pendingOrder.items ||
+    pendingOrder.items.length === 0
+  ) {
+    throw new Error(
+      "El pedido pendiente no contiene productos."
+    );
+  }
+
+  return pendingOrder;
+};
+
+// ======================================================
+// CANCELAR COMPRA PENDIENTE
+// ======================================================
+
+const cancelPendingOrderService = async (
+  orderId,
+  userId
+) => {
+  const pendingOrder =
+    await getPendingOrderById(
+      orderId,
+      userId
+    );
+
+  if (!pendingOrder) {
+    throw new Error(
+      "El pedido pendiente no existe o no tienes permiso para cancelarlo."
+    );
+  }
+
+  // SEGURIDAD:
+  // Solo se permite cancelar un pedido
+  // perteneciente al usuario y con estado PENDING.
+
+  if (
+    pendingOrder.id !== orderId ||
+    pendingOrder.userId !== userId ||
+    pendingOrder.status !== "PENDING"
+  ) {
+    throw new Error(
+      "No tienes permiso para cancelar este pedido."
+    );
+  }
+
+  // Un pedido que ya fue pagado no puede cancelarse
+  // mediante esta función.
+
+  if (
+    pendingOrder.payment &&
+    pendingOrder.payment.status === "PAID"
+  ) {
+    throw new Error(
+      "Este pedido ya tiene el pago confirmado y no puede cancelarse."
+    );
+  }
+
+  const cancelledOrder =
+    await cancelPendingOrder(
+      orderId,
+      userId
+    );
+
+  if (!cancelledOrder) {
+    throw new Error(
+      "El pedido ya no está pendiente o no puede cancelarse."
+    );
+  }
+
+  return cancelledOrder;
 };
 
 const getMyOrdersService = async (
@@ -481,6 +767,8 @@ const updateOrderStatusService = async (
 
 export {
   createOrderService,
+  getPendingOrderService,
+  cancelPendingOrderService,
   getMyOrdersService,
   getOrdersService,
   getOrderByIdService,

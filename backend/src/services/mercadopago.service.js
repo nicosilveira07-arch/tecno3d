@@ -9,6 +9,7 @@ import {
 import {
   findPaymentByOrderId,
   createPayment,
+  updatePayment,
 } from "../repositories/payment.repository.js";
 
 export async function createOrderPaymentService(orderId) {
@@ -18,29 +19,29 @@ export async function createOrderPaymentService(orderId) {
     throw new Error("Pedido no encontrado.");
   }
 
+  // Un pedido confirmado o posterior no debe
+  // volver a utilizarse desde el checkout pendiente.
+
+  if (order.status !== "PENDING") {
+    throw new Error(
+      "Este pedido ya no está pendiente y no puede continuar la compra."
+    );
+  }
+
   const existingPayment =
     await findPaymentByOrderId(orderId);
 
+  // Si el pago ya fue confirmado, no permitir
+  // generar otro pago.
+
   if (
     existingPayment &&
-    existingPayment.status !== "FAILED"
+    existingPayment.status === "PAID"
   ) {
-    throw new Error("El pedido ya tiene un pago.");
+    throw new Error(
+      "El pedido ya tiene el pago confirmado."
+    );
   }
-
-  /*
-   * IMPORTANTE:
-   *
-   * order.total ya contiene el descuento del cupón.
-   *
-   * Ejemplo:
-   *
-   * Subtotal: 49.99
-   * Descuento: 5.00
-   * Total: 44.99
-   *
-   * Mercado Pago debe recibir 44.99.
-   */
 
   const items = [
     {
@@ -51,18 +52,38 @@ export async function createOrderPaymentService(orderId) {
     },
   ];
 
+  // Crear una nueva preferencia de Mercado Pago
+  // para el mismo pedido.
+
   const preference =
     await createMercadoPagoPreference({
       orderId,
       items,
     });
 
-  const payment = await createPayment({
-    orderId,
-    amount: Number(order.total),
-    status: "PENDING",
-    method: "MERCADO_PAGO",
-  });
+  let payment;
+
+  // Si ya existe un pago PENDING o FAILED,
+  // reutilizar el mismo registro.
+
+  if (existingPayment) {
+    payment = await updatePayment(
+      existingPayment.id,
+      {
+        amount: Number(order.total),
+        status: "PENDING",
+        method: "MERCADO_PAGO",
+        transactionId: null,
+      }
+    );
+  } else {
+    payment = await createPayment({
+      orderId,
+      amount: Number(order.total),
+      status: "PENDING",
+      method: "MERCADO_PAGO",
+    });
+  }
 
   return {
     payment,
@@ -71,3 +92,4 @@ export async function createOrderPaymentService(orderId) {
     sandboxInitPoint: preference.sandbox_init_point,
   };
 }
+

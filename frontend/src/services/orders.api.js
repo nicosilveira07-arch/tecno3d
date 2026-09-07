@@ -17,3 +17,13 @@ export async function createOrderPayment(orderId) {
   return response.data;
 }
 
+export async function cancelPendingOrder(
+  orderId
+) {
+  const response = await api.patch(
+    `/orders/pending/${orderId}/cancel`
+  );
+
+  return response.data;
+}
+
