@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
-import { register } from "@/services/auth.api";
+import {
+  register,
+  loginWithGoogle,
+} from "@/services/auth.api";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,6 +21,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
@@ -38,8 +43,6 @@ export default function Register() {
         password,
       });
 
-      
-
       const { token, user } = response.data;
 
       localStorage.setItem("token", token);
@@ -59,6 +62,52 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setGoogleLoading(true);
+      setError("");
+
+      if (!credentialResponse?.credential) {
+        throw new Error(
+          "Google no proporcionó una credencial válida."
+        );
+      }
+
+      const response = await loginWithGoogle(
+        credentialResponse.credential
+      );
+
+      const { token, user } = response.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(user)
+      );
+
+      navigate("/");
+    } catch (error) {
+      console.error(
+        "ERROR REGISTRO GOOGLE:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "No se pudo crear la cuenta con Google."
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError(
+      "No se pudo crear la cuenta con Google."
+    );
   };
 
   return (
@@ -243,7 +292,10 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                googleLoading
+              }
               className="w-full rounded-xl bg-red-600 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
             >
               {loading
@@ -252,6 +304,34 @@ export default function Register() {
             </button>
 
           </form>
+
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-zinc-800" />
+
+            <span className="text-xs font-medium text-zinc-500">
+              O
+            </span>
+
+            <div className="h-px flex-1 bg-zinc-800" />
+          </div>
+
+          <div className="flex justify-center">
+            {googleLoading ? (
+              <div className="flex h-10 w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950 text-sm text-zinc-400">
+                Creando cuenta con Google...
+              </div>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_black"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                width="384"
+              />
+            )}
+          </div>
 
           <p className="mt-6 text-center text-sm text-zinc-500">
             ¿Ya tenés una cuenta?{" "}
@@ -270,4 +350,3 @@ export default function Register() {
     </section>
   );
 }
-

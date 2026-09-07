@@ -1,6 +1,7 @@
 import {
   register,
   login,
+  googleLogin,
   changePassword,
 } from "../services/auth.service.js";
 
@@ -53,6 +54,35 @@ export async function loginController(req, res) {
   }
 }
 
+// Login con Google
+export async function googleLoginController(req, res) {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Credencial de Google requerida.",
+      });
+    }
+
+    const result = await googleLogin(credential);
+
+    return res.status(200).json({
+      success: true,
+      message: "Inicio de sesión con Google exitoso.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("ERROR LOGIN GOOGLE:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 // Usuario autenticado
 export function meController(req, res) {
   return res.status(200).json({
@@ -83,4 +113,3 @@ export async function changePasswordController(req, res) {
     });
   }
 }
-

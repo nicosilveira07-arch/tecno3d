@@ -311,10 +311,16 @@ const updateOrderStatusService = async (
       "CANCELLED",
     ],
 
-    CONFIRMED: [
-      "PROCESSING",
-      "CANCELLED",
-    ],
+    CONFIRMED:
+      order.deliveryMethod === "PICKUP"
+        ? [
+            "DELIVERED",
+            "CANCELLED",
+          ]
+        : [
+            "PROCESSING",
+            "CANCELLED",
+          ],
 
     PROCESSING: [
       "SHIPPED",
@@ -345,13 +351,50 @@ const updateOrderStatusService = async (
     );
   }
 
+  // PICKUP → DELIVERED
+  // EL PAGO DEBE ESTAR CONFIRMADO
+
+  if (
+    order.deliveryMethod === "PICKUP" &&
+    currentStatus === "CONFIRMED" &&
+    status === "DELIVERED"
+  ) {
+    const payment =
+      await prisma.payment.findUnique({
+        where: {
+          orderId: id,
+        },
+      });
+
+    if (!payment) {
+      throw new Error(
+        "El pedido no tiene un pago registrado."
+      );
+    }
+
+    if (payment.status !== "PAID") {
+      throw new Error(
+        "El pedido no puede entregarse porque el pago no está confirmado."
+      );
+    }
+  }
+
   // CONFIRMED → PROCESSING
-  // SOLO SI EL PAGO ESTÁ CONFIRMADO
+  // SOLO PARA ENVÍOS
+  // EL PAGO DEBE ESTAR CONFIRMADO
 
   if (
     currentStatus === "CONFIRMED" &&
     status === "PROCESSING"
   ) {
+    if (
+      order.deliveryMethod !== "SHIPPING"
+    ) {
+      throw new Error(
+        "Este pedido es para retiro en local y no requiere preparación para envío."
+      );
+    }
+
     const payment =
       await prisma.payment.findUnique({
         where: {
@@ -443,3 +486,4 @@ export {
   getOrderByIdService,
   updateOrderStatusService,
 };
+

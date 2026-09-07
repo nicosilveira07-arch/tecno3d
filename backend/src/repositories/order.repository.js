@@ -1,7 +1,5 @@
 import prisma from "../lib/prisma.js";
 
-
-
 const createOrder = async (data) => {
   return await prisma.order.create({
     data,
@@ -14,8 +12,6 @@ const createOrder = async (data) => {
     },
   });
 };
-
-
 
 const getOrdersByUser = async (userId) => {
   return await prisma.order.findMany({
@@ -37,8 +33,6 @@ const getOrdersByUser = async (userId) => {
   });
 };
 
-
-
 const getAllOrders = async () => {
   return await prisma.order.findMany({
     include: {
@@ -58,8 +52,6 @@ const getAllOrders = async () => {
     },
   });
 };
-
-
 
 const getOrderById = async (id) => {
   return await prisma.order.findUnique({
@@ -83,41 +75,96 @@ const getOrderById = async (id) => {
   });
 };
 
-
-
 const updateOrderStatus = async (
   id,
   status,
   shippingData = {}
 ) => {
-  return await prisma.order.update({
-    where: {
-      id,
-    },
+  return await prisma.$transaction(async (tx) => {
+    const currentOrder = await tx.order.findUnique({
+      where: {
+        id,
+      },
 
-    data: {
-      status,
+      select: {
+        deliveryMethod: true,
+      },
+    });
 
-      ...shippingData,
-    },
+    if (!currentOrder) {
+      throw new Error("Pedido no encontrado.");
+    }
 
-    include: {
-      user: true,
+    const order = await tx.order.update({
+      where: {
+        id,
+      },
 
-      payment: true,
+      data: {
+        status,
 
-      address: true,
+        ...shippingData,
+      },
 
-      items: {
-        include: {
-          product: true,
+      include: {
+        user: true,
+
+        payment: true,
+
+        address: true,
+
+        items: {
+          include: {
+            product: true,
+          },
         },
       },
-    },
+    });
+
+    // RETIRO EN LOCAL:
+    // cuando el pedido se entrega al cliente,
+    // la operación económica queda finalizada.
+    //
+    // Solo actualizamos el pago si existe.
+    // No creamos un Payment nuevo porque el modelo
+    // requiere un método de pago obligatorio.
+
+    if (
+      currentOrder.deliveryMethod === "PICKUP" &&
+      status === "DELIVERED"
+    ) {
+      await tx.payment.updateMany({
+        where: {
+          orderId: id,
+        },
+
+        data: {
+          status: "PAID",
+        },
+      });
+    }
+
+    return await tx.order.findUnique({
+      where: {
+        id,
+      },
+
+      include: {
+        user: true,
+
+        payment: true,
+
+        address: true,
+
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
   });
 };
-
-
 
 export {
   createOrder,

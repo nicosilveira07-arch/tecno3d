@@ -179,6 +179,9 @@ export default function AdminOrderDetail() {
     }
   };
 
+  // PREPARAR PEDIDO
+  // SOLO PARA ENVÍOS
+
   const handlePrepareOrder = async () => {
     try {
       setUpdatingStatus(true);
@@ -201,6 +204,37 @@ export default function AdminOrderDetail() {
       setError(
         error.response?.data?.message ||
           "No se pudo preparar el pedido."
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  // ENTREGAR PEDIDO
+  // SOLO PARA RETIRO EN LOCAL
+
+  const handleDeliverPickupOrder = async () => {
+    try {
+      setUpdatingStatus(true);
+      setError("");
+
+      const response = await api.patch(
+        `/orders/${id}/status`,
+        {
+          status: "DELIVERED",
+        }
+      );
+
+      setOrder(response.data.data);
+    } catch (error) {
+      console.error(
+        "ERROR ENTREGANDO PEDIDO:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "No se pudo marcar el pedido como entregado."
       );
     } finally {
       setUpdatingStatus(false);
@@ -440,43 +474,85 @@ export default function AdminOrderDetail() {
 
       </div>
 
-      {/* PREPARAR PEDIDO */}
+      {/* RETIRO EN LOCAL */}
 
-      {order.status === "CONFIRMED" && (
-        <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6">
+      {order.status === "CONFIRMED" &&
+        order.deliveryMethod === "PICKUP" && (
+          <div className="mt-6 rounded-2xl border border-green-500/20 bg-green-500/5 p-6">
 
-          <p className="text-lg font-black text-white">
-            Pedido listo para preparar
-          </p>
-
-          <p className="mt-2 text-sm text-zinc-400">
-            El pago está confirmado. Podés comenzar
-            a preparar el paquete.
-          </p>
-
-          <button
-            type="button"
-            onClick={handlePrepareOrder}
-            disabled={
-              updatingStatus ||
-              order.payment?.status !== "PAID"
-            }
-            className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
-          >
-            {updatingStatus
-              ? "Preparando..."
-              : "Preparar pedido"}
-          </button>
-
-          {order.payment?.status !== "PAID" && (
-            <p className="mt-3 text-sm text-yellow-500">
-              El pedido no puede prepararse hasta que
-              el pago esté confirmado.
+            <p className="text-lg font-black text-white">
+              Pedido listo para retirar
             </p>
-          )}
 
-        </div>
-      )}
+            <p className="mt-2 text-sm text-zinc-400">
+              El pago está confirmado. Cuando el
+              cliente retire el producto, marcá el
+              pedido como entregado.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleDeliverPickupOrder}
+              disabled={
+                updatingStatus ||
+                order.payment?.status !== "PAID"
+              }
+              className="mt-5 rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
+            >
+              {updatingStatus
+                ? "Marcando como entregado..."
+                : "Pedido entregado"}
+            </button>
+
+            {order.payment?.status !== "PAID" && (
+              <p className="mt-3 text-sm text-yellow-500">
+                El pedido no puede entregarse hasta
+                que el pago esté confirmado.
+              </p>
+            )}
+
+          </div>
+        )}
+
+      {/* PREPARAR PEDIDO */}
+      {/* SOLO PARA ENVÍOS */}
+
+      {order.status === "CONFIRMED" &&
+        order.deliveryMethod === "SHIPPING" && (
+          <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6">
+
+            <p className="text-lg font-black text-white">
+              Pedido listo para preparar
+            </p>
+
+            <p className="mt-2 text-sm text-zinc-400">
+              El pago está confirmado. Podés comenzar
+              a preparar el paquete.
+            </p>
+
+            <button
+              type="button"
+              onClick={handlePrepareOrder}
+              disabled={
+                updatingStatus ||
+                order.payment?.status !== "PAID"
+              }
+              className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
+            >
+              {updatingStatus
+                ? "Preparando..."
+                : "Preparar pedido"}
+            </button>
+
+            {order.payment?.status !== "PAID" && (
+              <p className="mt-3 text-sm text-yellow-500">
+                El pedido no puede prepararse hasta que
+                el pago esté confirmado.
+              </p>
+            )}
+
+          </div>
+        )}
 
       {/* ENVIAR PEDIDO */}
 
@@ -608,7 +684,8 @@ export default function AdminOrderDetail() {
 
               <div>
                 <p className="font-semibold text-white">
-                  {item.product?.name}
+                  {item.product?.name ||
+                    item.productName}
                 </p>
 
                 <p className="mt-1 text-sm text-zinc-500">

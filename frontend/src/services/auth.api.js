@@ -45,3 +45,11 @@ export async function changePassword(data) {
 
   return response.data;
 }
+
+export async function loginWithGoogle(credential) {
+  const response = await api.post("/auth/google", {
+    credential,
+  });
+
+  return response.data;
+}

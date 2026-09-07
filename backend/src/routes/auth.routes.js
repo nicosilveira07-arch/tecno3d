@@ -3,12 +3,15 @@ import { Router } from "express";
 import {
   registerController,
   loginController,
+  googleLoginController,
   meController,
   changePasswordController,
 } from "../controllers/auth.controller.js";
 
 import { authenticate } from "../middlewares/auth.middleware.js";
+
 import { allowRoles } from "../middlewares/role.middleware.js";
+
 import { loginRateLimit } from "../middlewares/authRateLimit.middleware.js";
 
 const router = Router();
@@ -19,6 +22,11 @@ router.post(
   "/login",
   loginRateLimit,
   loginController
+);
+
+router.post(
+  "/google",
+  googleLoginController
 );
 
 router.get(
@@ -48,4 +56,3 @@ router.get(
 );
 
 export default router;
-

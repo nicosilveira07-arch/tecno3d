@@ -8,9 +8,30 @@ export async function findByEmail(email) {
   });
 }
 
+// Buscar usuario por Google ID
+export async function findByGoogleId(googleId) {
+  return prisma.user.findUnique({
+    where: {
+      googleId,
+    },
+  });
+}
+
 export async function createUser(data) {
   return prisma.user.create({
     data,
+  });
+}
+
+// Vincular cuenta existente con Google
+export async function updateUserGoogleId(id, googleId) {
+  return prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      googleId,
+    },
   });
 }
 
