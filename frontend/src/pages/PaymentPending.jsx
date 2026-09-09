@@ -47,12 +47,8 @@ export default function PaymentPending() {
       }
 
       try {
-        const data =
-          await getCheckoutSession(
-            externalReference
-          );
-
-        setSession(data);
+        const response = await getCheckoutSession(externalReference);
+        setSession(response.data);;
       } catch (err) {
         console.error(
           "ERROR OBTENIENDO CHECKOUT SESSION:",
