@@ -51,6 +51,14 @@ enum CouponType {
   FIXED
 }
 
+enum CheckoutSessionStatus {
+  ACTIVE
+  PAYMENT_PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
 model User {
   id String @id @default(cuid())
 
@@ -85,6 +93,8 @@ model User {
   reviews Review[]
 
   favorites Favorite[]
+
+  checkoutSessions CheckoutSession[]
 
   createdUsers User[] @relation("UserCreatedUsers")
 
@@ -177,6 +187,8 @@ model Address {
   user User @relation(fields: [userId], references: [id])
 
   orders Order[]
+
+  checkoutSessions CheckoutSession[]
 }
 
 model Category {
@@ -254,6 +266,8 @@ model Product {
 
   cartItems CartItem[]
 
+  checkoutSessionItems CheckoutSessionItem[]
+
   reviews Review[]
 
   images ProductImage[]
@@ -273,6 +287,74 @@ model ProductImage {
   createdAt DateTime @default(now())
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model CheckoutSession {
+  id String @id @default(cuid())
+
+  userId String
+
+  total Float
+
+  discount Float @default(0)
+
+  couponId String?
+
+  deliveryMethod DeliveryMethod @default(SHIPPING)
+
+  addressId String?
+
+  status CheckoutSessionStatus @default(ACTIVE)
+
+  paymentStatus PaymentStatus?
+
+  paymentMethod PaymentMethod?
+
+  paymentPreferenceId String?
+
+  paymentTransactionId String?
+
+  paymentReferenceId String?
+
+  paymentVerificationCode String?
+
+  paymentInstructionsUrl String?
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+
+  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  items CheckoutSessionItem[]
+
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@index([paymentPreferenceId])
+}
+
+model CheckoutSessionItem {
+  id String @id @default(cuid())
+
+  quantity Int
+
+  price Float
+
+  productName String
+
+  checkoutSessionId String
+
+  productId String?
+
+  checkoutSession CheckoutSession @relation(fields: [checkoutSessionId], references: [id], onDelete: Cascade)
+
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Order {
@@ -371,6 +453,8 @@ model Coupon {
   updatedAt DateTime @updatedAt
 
   orders Order[]
+
+  checkoutSessions CheckoutSession[]
 }
 
 model Review {
@@ -418,24 +502,33 @@ model StoreSettings {
 
   description String?
 
-  logo         String?
+  logo String?
+
   logoPublicId String?
 
-  address    String?
-  city       String?
+  address String?
+
+  city String?
+
   department String?
-  country    String?
+
+  country String?
 
   phone String?
+
   email String?
 
-  whatsappNumber  String?
+  whatsappNumber String?
+
   whatsappMessage String?
 
   instagram String?
-  facebook  String?
-  tiktok    String?
-  youtube   String?
+
+  facebook String?
+
+  tiktok String?
+
+  youtube String?
 
   openingHours String?
 
@@ -443,12 +536,17 @@ model StoreSettings {
 
   offerEnabled Boolean @default(true)
 
-  offerEyebrow     String?
-  offerTitle       String?
+  offerEyebrow String?
+
+  offerTitle String?
+
   offerDescription String?
-  offerButtonText  String?
-  offerButtonUrl   String? @default("/offers")
+
+  offerButtonText String?
+
+  offerButtonUrl String? @default("/offers")
 
   createdAt DateTime @default(now())
+
   updatedAt DateTime @updatedAt
 }

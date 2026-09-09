@@ -1,49 +1,49 @@
 import {
-  createOrderPaymentService,
+createOrderPaymentService,
 } from "../services/mercadopago.service.js";
 
-
-export async function createOrderPaymentController(req, res) {
-
-  try {
-
-    const result =
-      await createOrderPaymentService(
-        req.params.orderId
-      );
-
-
-    return res.json({
-      success: true,
-      data: result,
-    });
+export async function createOrderPaymentController(
+req,
+res
+) {
+try {
+const result =
+await createOrderPaymentService(
+req.params.orderId,
+req.user.id
+);
 
 
-  } catch (error) {
-
-    console.error(
-      "ERROR MERCADO PAGO:"
-    );
-
-    console.error(error);
-
-    console.error(
-      "MESSAGE:",
-      error.message
-    );
-
-    console.error(
-      "CAUSE:",
-      error.cause
-    );
+return res.json({
+  success: true,
+  data: result,
+});
 
 
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-      cause: error.cause,
-    });
+} catch (error) {
+console.error(
+"ERROR MERCADO PAGO:"
+);
 
-  }
 
+console.error(error);
+
+console.error(
+  "MESSAGE:",
+  error.message
+);
+
+console.error(
+  "CAUSE:",
+  error.cause
+);
+
+return res.status(400).json({
+  success: false,
+  message: error.message,
+  cause: error.cause,
+});
+
+
+}
 }

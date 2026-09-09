@@ -1,95 +1,162 @@
 import {
-  createMercadoPagoPreference,
+createMercadoPagoPreference,
 } from "../integrations/mercadopago/mercadopago.service.js";
 
 import {
-  getOrderById,
-} from "../repositories/order.repository.js";
+getCheckoutSessionById,
+updateCheckoutSessionStatus,
+} from "../repositories/checkoutSession.repository.js";
 
-import {
-  findPaymentByOrderId,
-  createPayment,
-  updatePayment,
-} from "../repositories/payment.repository.js";
-
-export async function createOrderPaymentService(orderId) {
-  const order = await getOrderById(orderId);
-
-  if (!order) {
-    throw new Error("Pedido no encontrado.");
-  }
-
-  // Un pedido confirmado o posterior no debe
-  // volver a utilizarse desde el checkout pendiente.
-
-  if (order.status !== "PENDING") {
-    throw new Error(
-      "Este pedido ya no está pendiente y no puede continuar la compra."
-    );
-  }
-
-  const existingPayment =
-    await findPaymentByOrderId(orderId);
-
-  // Si el pago ya fue confirmado, no permitir
-  // generar otro pago.
-
-  if (
-    existingPayment &&
-    existingPayment.status === "PAID"
-  ) {
-    throw new Error(
-      "El pedido ya tiene el pago confirmado."
-    );
-  }
-
-  const items = [
-    {
-      title: `Pedido TECNO 3D #${order.id}`,
-      quantity: 1,
-      unit_price: Number(order.total),
-      currency_id: "UYU",
-    },
-  ];
-
-  // Crear una nueva preferencia de Mercado Pago
-  // para el mismo pedido.
-
-  const preference =
-    await createMercadoPagoPreference({
-      orderId,
-      items,
-    });
-
-  let payment;
-
-  // Si ya existe un pago PENDING o FAILED,
-  // reutilizar el mismo registro.
-
-  if (existingPayment) {
-    payment = await updatePayment(
-      existingPayment.id,
-      {
-        amount: Number(order.total),
-        status: "PENDING",
-        method: "MERCADO_PAGO",
-        transactionId: null,
-      }
-    );
-  } else {
-    payment = await createPayment({
-      orderId,
-      amount: Number(order.total),
-      status: "PENDING",
-      method: "MERCADO_PAGO",
-    });
-  }
-
-  return {
-    payment,
-    preferenceId: preference.id,
-    initPoint: preference.init_point,
-    sandboxInitPoint: preference.sandbox_init_point,
-  };
+export async function createOrderPaymentService(
+checkoutSessionId,
+userId
+) {
+if (!checkoutSessionId) {
+throw new Error(
+"La sesión de checkout es obligatoria."
+);
 }
 
+if (!userId) {
+throw new Error(
+"El usuario es obligatorio."
+);
+}
+
+const session =
+await getCheckoutSessionById(
+checkoutSessionId,
+userId
+);
+
+if (!session) {
+throw new Error(
+"Sesión de checkout no encontrada."
+);
+}
+
+// La sesión debe seguir activa para
+// poder iniciar el pago.
+
+if (session.status !== "ACTIVE") {
+if (
+session.status ===
+"PAYMENT_PENDING"
+) {
+throw new Error(
+"Esta sesión ya tiene un pago pendiente iniciado."
+);
+}
+
+
+if (
+  session.status ===
+  "COMPLETED"
+) {
+  throw new Error(
+    "Esta sesión de checkout ya fue completada."
+  );
+}
+
+if (
+  session.status ===
+  "EXPIRED"
+) {
+  throw new Error(
+    "La sesión de checkout ha vencido."
+  );
+}
+
+throw new Error(
+  "La sesión de checkout ya no está disponible."
+);
+
+
+}
+
+// Verificar vencimiento antes de iniciar
+// cualquier operación de pago.
+
+if (
+session.expiresAt <= new Date()
+) {
+await updateCheckoutSessionStatus(
+session.id,
+"EXPIRED"
+);
+
+
+throw new Error(
+  "La sesión de checkout ha vencido."
+);
+
+
+}
+
+// Preparar los productos de la sesión
+// para Mercado Pago.
+
+const items = [
+{
+title:
+`Compra TECNO 3D #${session.id}`,
+quantity: 1,
+unit_price:
+Number(session.total),
+currency_id: "UYU",
+},
+];
+
+// Crear la preferencia usando el ID
+// de CheckoutSession como referencia externa.
+
+const preference =
+await createMercadoPagoPreference({
+checkoutSessionId:
+session.id,
+items,
+});
+
+if (!preference?.id) {
+throw new Error(
+"Mercado Pago no devolvió un ID de preferencia válido."
+);
+}
+
+// Marcar la sesión como pago pendiente
+// solamente después de que Mercado Pago
+// haya creado correctamente la preferencia.
+
+const updatedSession =
+await updateCheckoutSessionStatus(
+session.id,
+"PAYMENT_PENDING",
+{
+paymentStatus: "PENDING",
+
+
+    paymentMethod:
+      "MERCADO_PAGO",
+
+    paymentPreferenceId:
+      preference.id,
+  }
+);
+
+
+return {
+checkoutSession:
+updatedSession,
+
+
+preferenceId:
+  preference.id,
+
+initPoint:
+  preference.init_point,
+
+sandboxInitPoint:
+  preference.sandbox_init_point,
+
+};
+}

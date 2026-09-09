@@ -4,9 +4,12 @@ import client from "./mercadopago.client.js";
 
 const preference = new Preference(client);
 
-export async function createMercadoPagoPreference(data) {
+export async function createMercadoPagoPreference(
+  data
+) {
   const notificationUrl =
     "https://api.tecno3d.net/api/webhook/mercadopago";
+
   const body = {
     items: data.items,
 
@@ -21,36 +24,91 @@ export async function createMercadoPagoPreference(data) {
         "https://www.tecno3d.net/payment/pending",
     },
 
-     auto_return: "approved",
+    auto_return: "approved",
 
-    notification_url: notificationUrl,
+    notification_url:
+      notificationUrl,
 
-    external_reference: data.orderId,
+    // La referencia externa ahora identifica
+    // la sesión temporal de checkout.
+    //
+    // Todavía NO utilizamos Order porque el pedido
+    // definitivo se creará posteriormente.
+
+    external_reference:
+      data.checkoutSessionId,
   };
 
-  console.log("==========================================");
-  console.log("CREANDO PREFERENCE MERCADO PAGO");
-  console.log("NOTIFICATION URL:");
-  console.log(notificationUrl);
-  console.log("==========================================");
+  console.log(
+    "=========================================="
+  );
+
+  console.log(
+    "CREANDO PREFERENCE MERCADO PAGO"
+  );
+
+  console.log(
+    "NOTIFICATION URL:"
+  );
+
+  console.log(
+    notificationUrl
+  );
+
+  console.log(
+    "=========================================="
+  );
 
   console.log(
     "PREFERENCE BODY:",
-    JSON.stringify(body, null, 2)
+    JSON.stringify(
+      body,
+      null,
+      2
+    )
   );
 
-  const response = await preference.create({
-    body,
-  });
+  const response =
+    await preference.create({
+      body,
+    });
 
-  console.log("==========================================");
-  console.log("PREFERENCE CREADA");
-  console.log("ID:", response.id);
-  console.log("NOTIFICATION_URL DEVUELTA:", response.notification_url);
-  console.log("COLLECTOR ID:", response.collector_id);
-  console.log("CLIENT ID:", response.client_id);
-  console.log("EXTERNAL REFERENCE:", response.external_reference);
-  console.log("==========================================");
+  console.log(
+    "=========================================="
+  );
+
+  console.log(
+    "PREFERENCE CREADA"
+  );
+
+  console.log(
+    "ID:",
+    response.id
+  );
+
+  console.log(
+    "NOTIFICATION_URL DEVUELTA:",
+    response.notification_url
+  );
+
+  console.log(
+    "COLLECTOR ID:",
+    response.collector_id
+  );
+
+  console.log(
+    "CLIENT ID:",
+    response.client_id
+  );
+
+  console.log(
+    "EXTERNAL REFERENCE:",
+    response.external_reference
+  );
+
+  console.log(
+    "=========================================="
+  );
 
   return response;
 }

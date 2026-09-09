@@ -1,25 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import api from "@/services/api";
 
-import {
-  addToCart,
-  clearCart,
-} from "@/features/cart/cart.store";
-
-import { cancelPendingOrder } from "@/services/orders.api";
-
 export default function Orders() {
-  const navigate = useNavigate();
-
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [continuingOrderId, setContinuingOrderId] =
-    useState(null);
-  const [cancellingOrderId, setCancellingOrderId] =
-    useState(null);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -27,7 +13,29 @@ export default function Orders() {
         const response =
           await api.get("/orders/my-orders");
 
-        setOrders(response.data.data);
+        const ordersData =
+          Array.isArray(response.data.data)
+            ? response.data.data
+            : [];
+
+        // La nueva arquitectura ya no utiliza
+        // Orders con estado PENDING.
+        //
+        // Solo mostramos pedidos reales:
+        // CONFIRMED, PROCESSING, SHIPPED,
+        // DELIVERED y CANCELLED.
+        const realOrders =
+          ordersData.filter((order) =>
+            [
+              "CONFIRMED",
+              "PROCESSING",
+              "SHIPPED",
+              "DELIVERED",
+              "CANCELLED",
+            ].includes(order.status)
+          );
+
+        setOrders(realOrders);
       } catch (error) {
         console.error(
           "ERROR CARGANDO PEDIDOS:",
@@ -51,13 +59,6 @@ export default function Orders() {
       case "CONFIRMED":
         return "bg-green-500/10 text-green-400 border-green-500/30";
 
-      case "PENDING":
-        return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
-
-      case "FAILED":
-      case "CANCELLED":
-        return "bg-red-500/10 text-red-400 border-red-500/30";
-
       case "PROCESSING":
         return "bg-blue-500/10 text-blue-400 border-blue-500/30";
 
@@ -67,6 +68,9 @@ export default function Orders() {
       case "DELIVERED":
         return "bg-green-500/10 text-green-400 border-green-500/30";
 
+      case "CANCELLED":
+        return "bg-red-500/10 text-red-400 border-red-500/30";
+
       default:
         return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
     }
@@ -74,9 +78,6 @@ export default function Orders() {
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case "PENDING":
-        return "Pendiente";
-
       case "CONFIRMED":
         return "Confirmado";
 
@@ -109,160 +110,6 @@ export default function Orders() {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const handleContinueOrder = async (order) => {
-    if (
-      !order ||
-      order.status !== "PENDING"
-    ) {
-      return;
-    }
-
-    try {
-      setContinuingOrderId(order.id);
-      setError("");
-
-      const response =
-        await api.get(`/orders/pending/${order.id}`);
-
-      const pendingOrder =
-        response.data.data;
-
-      if (
-        !pendingOrder ||
-        pendingOrder.id !== order.id ||
-        pendingOrder.status !== "PENDING"
-      ) {
-        throw new Error(
-          "El pedido pendiente ya no está disponible."
-        );
-      }
-
-      if (
-        pendingOrder.payment &&
-        pendingOrder.payment.status === "PAID"
-      ) {
-        throw new Error(
-          "Este pedido ya tiene el pago confirmado."
-        );
-      }
-
-      if (
-        !Array.isArray(pendingOrder.items) ||
-        pendingOrder.items.length === 0
-      ) {
-        throw new Error(
-          "El pedido pendiente no contiene productos."
-        );
-      }
-
-      clearCart();
-
-      for (const item of pendingOrder.items) {
-        const product = item.product;
-
-        if (!product) {
-          console.warn(
-            "PRODUCTO NO DISPONIBLE:",
-            item.productId
-          );
-
-          continue;
-        }
-
-        for (
-          let quantity = 0;
-          quantity < item.quantity;
-          quantity++
-        ) {
-          addToCart({
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            price: product.price,
-            offerActive:
-              product.offerActive,
-            offerPrice:
-              product.offerPrice,
-            image: product.image,
-          });
-        }
-      }
-
-      navigate("/checkout", {
-        state: {
-          pendingOrderId:
-            pendingOrder.id,
-
-          deliveryMethod:
-            pendingOrder.deliveryMethod,
-
-          addressId:
-            pendingOrder.addressId,
-        },
-      });
-    } catch (error) {
-      console.error(
-        "ERROR CONTINUANDO PEDIDO:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          "No se pudo continuar la compra."
-      );
-
-      setContinuingOrderId(null);
-    }
-  };
-
-  const handleCancelOrder = async (order) => {
-    if (
-      !order ||
-      order.status !== "PENDING"
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "¿Estás seguro de que querés cancelar esta compra?\n\nEl pedido quedará registrado como cancelado y no podrás continuarlo."
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setCancellingOrderId(order.id);
-      setError("");
-
-      await cancelPendingOrder(order.id);
-
-      setOrders((currentOrders) =>
-        currentOrders.map((currentOrder) =>
-          currentOrder.id === order.id
-            ? {
-                ...currentOrder,
-                status: "CANCELLED",
-              }
-            : currentOrder
-        )
-      );
-    } catch (error) {
-      console.error(
-        "ERROR CANCELANDO PEDIDO:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "No se pudo cancelar la compra."
-      );
-    } finally {
-      setCancellingOrderId(null);
-    }
   };
 
   if (loading) {
@@ -439,54 +286,6 @@ export default function Orders() {
                   </div>
                 ))}
               </div>
-
-              {/* ACCIONES DE COMPRA PENDIENTE */}
-
-              {order.status === "PENDING" && (
-                <div className="mt-6 flex flex-col gap-3 border-t border-zinc-800 pt-6 sm:flex-row sm:items-center sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleCancelOrder(
-                        order
-                      )
-                    }
-                    disabled={
-                      cancellingOrderId ===
-                        order.id ||
-                      continuingOrderId ===
-                        order.id
-                    }
-                    className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-bold text-zinc-400 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {cancellingOrderId ===
-                    order.id
-                      ? "Cancelando..."
-                      : "Cancelar compra"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleContinueOrder(
-                        order
-                      )
-                    }
-                    disabled={
-                      continuingOrderId ===
-                        order.id ||
-                      cancellingOrderId ===
-                        order.id
-                    }
-                    className="rounded-xl bg-red-600 px-6 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
-                  >
-                    {continuingOrderId ===
-                    order.id
-                      ? "Cargando compra..."
-                      : "Continuar compra"}
-                  </button>
-                </div>
-              )}
             </div>
           ))}
         </div>

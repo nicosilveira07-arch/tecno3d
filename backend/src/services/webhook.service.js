@@ -3,30 +3,18 @@ import { Payment } from "mercadopago";
 import client from "../integrations/mercadopago/mercadopago.client.js";
 
 import {
-  findPaymentByOrderId,
-  updatePayment,
-} from "../repositories/payment.repository.js";
-
-import {
-  updateOrderStatus,
-  getOrderById,
-} from "../repositories/order.repository.js";
-
-import {
-  decreaseStock,
-} from "../repositories/product.repository.js";
-
+  getCheckoutSessionByIdForWebhook,
+  updateCheckoutSessionStatus,
+  completeCheckoutSessionAsOrder,
+} from "../repositories/checkoutSession.repository.js";
 
 const paymentClient = new Payment(client);
-
-
 
 export async function processMercadoPagoWebhookService(data) {
   console.log(
     "WEBHOOK MERCADO PAGO:",
     JSON.stringify(data, null, 2)
   );
-
 
   // =========================================================
   // IDENTIFICAR TIPO DE NOTIFICACIÓN
@@ -36,21 +24,11 @@ export async function processMercadoPagoWebhookService(data) {
     data?.type ||
     data?.topic;
 
-
   // =========================================================
-  // MERCADO PAGO PUEDE ENVIAR MERCHANT_ORDER
-  // =========================================================
-  // Para Checkout Pro no necesitamos procesarlo.
-  // El evento PAYMENT contiene el ID real del pago y es
-  // suficiente para actualizar nuestro sistema.
-  //
-  // Lo ignoramos correctamente y respondemos 200 desde
-  // el controller para evitar reintentos innecesarios.
+  // MERCHANT ORDER
   // =========================================================
 
-  if (
-    topic === "merchant_order"
-  ) {
+  if (topic === "merchant_order") {
     console.log(
       "MERCHANT_ORDER RECIBIDO - SE IGNORA. ESPERAMOS PAYMENT."
     );
@@ -58,14 +36,11 @@ export async function processMercadoPagoWebhookService(data) {
     return true;
   }
 
-
   // =========================================================
   // SOLO PROCESAR PAYMENT
   // =========================================================
 
-  if (
-    topic !== "payment"
-  ) {
+  if (topic !== "payment") {
     console.log(
       `WEBHOOK IGNORADO - TIPO NO SOPORTADO: ${topic}`
     );
@@ -73,14 +48,12 @@ export async function processMercadoPagoWebhookService(data) {
     return true;
   }
 
-
   // =========================================================
-  // OBTENER ID DEL PAGO
+  // OBTENER ID DEL PAYMENT
   // =========================================================
 
   const paymentId =
     data?.data?.id;
-
 
   if (!paymentId) {
     console.warn(
@@ -90,18 +63,13 @@ export async function processMercadoPagoWebhookService(data) {
     return true;
   }
 
-
   console.log(
     "PAYMENT ID OBTENIDO:",
     paymentId
   );
 
-
   // =========================================================
-  // CONSULTAR PAGO DIRECTAMENTE EN MERCADO PAGO
-  // =========================================================
-  // Nunca confiamos en el estado enviado por el webhook.
-  // Consultamos el recurso directamente a Mercado Pago.
+  // CONSULTAR PAYMENT DIRECTAMENTE EN MERCADO PAGO
   // =========================================================
 
   const paymentMP =
@@ -109,28 +77,24 @@ export async function processMercadoPagoWebhookService(data) {
       id: paymentId,
     });
 
-
   console.log(
     "ESTADO MP:",
     paymentMP.status
   );
 
-
   // =========================================================
-  // OBTENER ORDER ID
+  // OBTENER CHECKOUT SESSION ID
   // =========================================================
 
-  const orderId =
+  const checkoutSessionId =
     paymentMP.external_reference;
 
-
   console.log(
-    "ORDER ID:",
-    orderId
+    "CHECKOUT SESSION ID:",
+    checkoutSessionId
   );
 
-
-  if (!orderId) {
+  if (!checkoutSessionId) {
     console.warn(
       "El pago de Mercado Pago no tiene external_reference."
     );
@@ -138,162 +102,291 @@ export async function processMercadoPagoWebhookService(data) {
     return true;
   }
 
-
   // =========================================================
-  // BUSCAR PAGO INTERNO
+  // EXTRAER DATOS OFICIALES DEL TICKET
   // =========================================================
 
-  const payment =
-    await findPaymentByOrderId(
-      orderId
-    );
+  const transactionDetails =
+    paymentMP?.transaction_details;
 
+  const paymentReferenceId =
+    transactionDetails?.payment_method_reference_id
+      ? String(
+          transactionDetails.payment_method_reference_id
+        )
+      : null;
+
+  const paymentVerificationCode =
+    transactionDetails?.verification_code
+      ? String(
+          transactionDetails.verification_code
+        )
+      : null;
+
+  const paymentInstructionsUrl =
+    transactionDetails?.external_resource_url
+      ? String(
+          transactionDetails.external_resource_url
+        )
+      : null;
 
   console.log(
-    "PAGO INTERNO ENCONTRADO:",
+    "DATOS DEL TICKET MERCADO PAGO:"
+  );
+
+  console.log(
+    "PAYMENT METHOD REFERENCE ID:",
+    paymentReferenceId
+  );
+
+  console.log(
+    "VERIFICATION CODE:",
+    paymentVerificationCode
+  );
+
+  console.log(
+    "EXTERNAL RESOURCE URL:",
+    paymentInstructionsUrl
+  );
+
+  // =========================================================
+  // BUSCAR CHECKOUT SESSION
+  // =========================================================
+
+  const session =
+    await getCheckoutSessionByIdForWebhook(
+      String(checkoutSessionId)
+    );
+
+  if (!session) {
+    console.warn(
+      "CHECKOUT SESSION NO ENCONTRADA:"
+    );
+
+    console.warn(
+      String(checkoutSessionId)
+    );
+
+    return true;
+  }
+
+  console.log(
+    "CHECKOUT SESSION ENCONTRADA:"
+  );
+
+  console.log(
     JSON.stringify(
-      payment,
+      session,
       null,
       2
     )
   );
 
+  // =========================================================
+  // SESIÓN YA COMPLETADA
+  // =========================================================
 
-  if (!payment) {
-    console.warn(
-      "Pago interno no encontrado."
+  if (session.status === "COMPLETED") {
+    console.log(
+      "WEBHOOK DUPLICADO: CHECKOUT SESSION YA COMPLETADA."
     );
 
     return true;
   }
 
-
   // =========================================================
-  // EVITAR PROCESAMIENTO DUPLICADO
+  // PAYMENT APPROVED
   // =========================================================
 
-  if (
-    payment.status === "PAID" &&
-    payment.transactionId ===
+  if (paymentMP.status === "approved") {
+    console.log(
+      "=========================================="
+    );
+
+    console.log(
+      "PAGO APROBADO - CREANDO ORDER REAL"
+    );
+
+    console.log(
+      "CHECKOUT SESSION:",
+      session.id
+    );
+
+    console.log(
+      "PAYMENT ID:",
       String(paymentMP.id)
-  ) {
-    console.log(
-      "WEBHOOK DUPLICADO: pago ya procesado."
     );
 
-    return true;
-  }
-
-
-  // =========================================================
-  // DETERMINAR ESTADO INTERNO
-  // =========================================================
-
-  let paymentStatus =
-    "PENDING";
-
-
-  if (
-    paymentMP.status === "approved"
-  ) {
-    paymentStatus =
-      "PAID";
-  }
-
-
-  if (
-    paymentMP.status === "rejected" ||
-    paymentMP.status === "cancelled"
-  ) {
-    paymentStatus =
-      "FAILED";
-  }
-
-
-  // =========================================================
-  // ACTUALIZAR PAGO
-  // =========================================================
-
-  await updatePayment(
-    payment.id,
-    {
-      status: paymentStatus,
-
-      transactionId:
-        String(paymentMP.id),
-    }
-  );
-
-
-  // =========================================================
-  // PAGO APROBADO
-  // =========================================================
-
-  if (
-    paymentMP.status === "approved"
-  ) {
     console.log(
-      "ACTUALIZANDO PEDIDO A CONFIRMED"
+      "=========================================="
     );
 
-
-    // =======================================================
-    // EVITAR VOLVER A CONFIRMAR EL PEDIDO
-    // =======================================================
-
-    const order =
-      await getOrderById(
-        orderId
+    const result =
+      await completeCheckoutSessionAsOrder(
+        session.id,
+        String(paymentMP.id)
       );
 
-
-    if (!order) {
-      console.warn(
-        "Pedido no encontrado para el pago aprobado."
+    if (result.alreadyCompleted) {
+      console.log(
+        "CHECKOUT SESSION YA HABÍA SIDO COMPLETADA."
       );
 
       return true;
     }
 
+    console.log(
+      "ORDER REAL CREADO CORRECTAMENTE:"
+    );
 
-    if (
-      order.status !== "CONFIRMED"
-    ) {
-      await updateOrderStatus(
-        orderId,
-        "CONFIRMED"
-      );
-    }
+    console.log(
+      JSON.stringify(
+        result.order,
+        null,
+        2
+      )
+    );
 
+    console.log(
+      "WEBHOOK PAYMENT APROBADO PROCESADO."
+    );
 
-    // =======================================================
-    // DESCONTAR STOCK UNA SOLA VEZ
-    // =======================================================
-    // Si el pago ya estaba PAID antes de este webhook,
-    // no volvemos a descontar stock.
-    // =======================================================
-
-    const wasAlreadyPaid =
-      payment.status === "PAID";
-
-
-    if (!wasAlreadyPaid) {
-      for (
-        const item of order.items
-      ) {
-        await decreaseStock(
-          item.productId,
-          item.quantity
-        );
-      }
-    }
+    return true;
   }
 
+  // =========================================================
+  // PAYMENT REJECTED / CANCELLED
+  // =========================================================
+
+  if (
+    paymentMP.status === "rejected" ||
+    paymentMP.status === "cancelled"
+  ) {
+    console.log(
+      "=========================================="
+    );
+
+    console.log(
+      "PAGO RECHAZADO / CANCELADO"
+    );
+
+    console.log(
+      "CHECKOUT SESSION:",
+      session.id
+    );
+
+    console.log(
+      "ESTADO MP:",
+      paymentMP.status
+    );
+
+    console.log(
+      "=========================================="
+    );
+
+    await updateCheckoutSessionStatus(
+      session.id,
+      "FAILED",
+      {
+        paymentStatus: "FAILED",
+
+        paymentMethod:
+          session.paymentMethod ||
+          "MERCADO_PAGO",
+
+        paymentPreferenceId:
+          session.paymentPreferenceId,
+
+        paymentTransactionId:
+          String(paymentMP.id),
+
+        paymentReferenceId,
+
+        paymentVerificationCode,
+
+        paymentInstructionsUrl,
+      }
+    );
+
+    console.log(
+      "CHECKOUT SESSION MARCADA COMO FAILED."
+    );
+
+    return true;
+  }
+
+  // =========================================================
+  // PAYMENT PENDING / IN_PROCESS
+  // =========================================================
+
+  if (
+    paymentMP.status === "pending" ||
+    paymentMP.status === "in_process"
+  ) {
+    console.log(
+      "=========================================="
+    );
+
+    console.log(
+      "PAGO TODAVÍA PENDIENTE"
+    );
+
+    console.log(
+      "CHECKOUT SESSION:",
+      session.id
+    );
+
+    console.log(
+      "ESTADO MP:",
+      paymentMP.status
+    );
+
+    console.log(
+      "=========================================="
+    );
+
+    await updateCheckoutSessionStatus(
+      session.id,
+      "PAYMENT_PENDING",
+      {
+        paymentStatus: "PENDING",
+
+        paymentMethod:
+          session.paymentMethod ||
+          "MERCADO_PAGO",
+
+        paymentPreferenceId:
+          session.paymentPreferenceId,
+
+        paymentTransactionId:
+          String(paymentMP.id),
+
+        paymentReferenceId,
+
+        paymentVerificationCode,
+
+        paymentInstructionsUrl,
+      }
+    );
+
+    console.log(
+      "DATOS DEL TICKET GUARDADOS EN CHECKOUT SESSION."
+    );
+
+    console.log(
+      "CHECKOUT SESSION CONTINÚA COMO PAYMENT_PENDING."
+    );
+
+    return true;
+  }
+
+  // =========================================================
+  // OTROS ESTADOS
+  // =========================================================
 
   console.log(
-    "WEBHOOK MERCADO PAGO PROCESADO CORRECTAMENTE."
+    `ESTADO DE MERCADO PAGO NO PROCESADO: ${paymentMP.status}`
   );
-
 
   return true;
 }

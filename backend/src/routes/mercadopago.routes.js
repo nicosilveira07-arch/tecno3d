@@ -1,23 +1,24 @@
 import { Router } from "express";
 
 import {
-  createOrderPaymentController,
+createOrderPaymentController,
 } from "../controllers/mercadopago.controller.js";
 
-import { authenticate } from "../middlewares/auth.middleware.js";
-
+import {
+authenticate,
+} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-
 // Crear Preference Mercado Pago
-// Usuario autenticado
+// El parámetro actualmente mantiene el nombre
+// orderId por compatibilidad con la ruta existente,
+// pero ahora contiene el ID de CheckoutSession.
 
 router.post(
-  "/order/:orderId",
-  authenticate,
-  createOrderPaymentController
+"/order/:orderId",
+authenticate,
+createOrderPaymentController
 );
-
 
 export default router;

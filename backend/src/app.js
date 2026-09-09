@@ -13,6 +13,7 @@ import uploadRoutes from "./routes/upload.routes.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import cartRoutes from "./routes/cart.routes.js";
 import checkoutRoutes from "./routes/checkout.routes.js";
+import checkoutSessionRoutes from "./routes/checkoutSession.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import mercadopagoRoutes from "./routes/mercadopago.routes.js";
 import webhookRoutes from "./routes/webhook.routes.js";
@@ -28,29 +29,27 @@ const app = express();
 app.set("trust proxy", 1);
 
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://www.tecno3d.net",
-  "https://tecno3d.net",
+"http://localhost:5173",
+"http://127.0.0.1:5173",
+"https://www.tecno3d.net",
+"https://tecno3d.net",
 ];
 
-
-
 app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  }),
+cors({
+origin: allowedOrigins,
+credentials: true,
+}),
 );
 
 app.use(helmet());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "TECNO3D API funcionando 🚀",
-  });
+res.json({
+success: true,
+message: "TECNO3D API funcionando 🚀",
+});
 });
 
 app.use("/api/auth", authRoutes);
@@ -63,6 +62,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/checkout-sessions", checkoutSessionRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/mercadopago", mercadopagoRoutes);
 app.use("/api/webhook", webhookRoutes);
@@ -74,10 +74,10 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/settings", storeSettingsRoutes);
 
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Ruta no encontrada.",
-  });
+res.status(404).json({
+success: false,
+message: "Ruta no encontrada.",
+});
 });
 
 app.use(errorMiddleware);
