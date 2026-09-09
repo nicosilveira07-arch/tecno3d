@@ -5,6 +5,7 @@ import api from "@/services/api";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
+  const [pendingCheckouts, setPendingCheckouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -16,9 +17,25 @@ export default function AdminOrders() {
       setLoading(true);
       setError("");
 
-      const response = await api.get("/orders");
+      const [
+        ordersResponse,
+        pendingResponse,
+      ] = await Promise.all([
+        api.get("/orders"),
+        api.get("/checkout-sessions/admin/pending"),
+      ]);
 
-      setOrders(response.data.data || []);
+      setOrders(
+        Array.isArray(ordersResponse.data.data)
+          ? ordersResponse.data.data
+          : []
+      );
+
+      setPendingCheckouts(
+        Array.isArray(pendingResponse.data.data)
+          ? pendingResponse.data.data
+          : []
+      );
     } catch (error) {
       console.error(
         "ERROR CARGANDO PEDIDOS ADMIN:",
@@ -63,6 +80,31 @@ export default function AdminOrders() {
     }
   };
 
+  const getCheckoutStatusStyle = (status) => {
+    if (status === "PAYMENT_PENDING") {
+      return "border-yellow-500/30 bg-yellow-500/10 text-yellow-400";
+    }
+
+    if (status === "EXPIRED") {
+      return "border-red-500/30 bg-red-500/10 text-red-400";
+    }
+
+    return "border-zinc-700 bg-zinc-800 text-zinc-400";
+  };
+
+  const getCheckoutStatusLabel = (status) => {
+    switch (status) {
+      case "PAYMENT_PENDING":
+        return "Pago pendiente";
+
+      case "EXPIRED":
+        return "Cancelado por vencimiento";
+
+      default:
+        return status;
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) {
       return "Fecha no disponible";
@@ -78,23 +120,32 @@ export default function AdminOrders() {
   };
 
   const filteredOrders = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch =
+      search.trim().toLowerCase();
 
     return orders.filter((order) => {
-      const orderId = String(order.id || "").toLowerCase();
-
-      const matchesProductId = order.items?.some((item) =>
-        String(item.productId || "").toLowerCase().includes(
-          normalizedSearch
-        )
-      );
-
-      const paymentTransactionId = String(
-        order.payment?.transactionId || ""
+      const orderId = String(
+        order.id || ""
       ).toLowerCase();
 
+      const matchesProductId =
+        order.items?.some((item) =>
+          String(
+            item.productId || ""
+          )
+            .toLowerCase()
+            .includes(normalizedSearch)
+        );
+
+      const paymentTransactionId =
+        String(
+          order.payment?.transactionId || ""
+        ).toLowerCase();
+
       const matchesPaymentId =
-        paymentTransactionId.includes(normalizedSearch);
+        paymentTransactionId.includes(
+          normalizedSearch
+        );
 
       const matchesOrderId =
         orderId.includes(normalizedSearch);
@@ -109,9 +160,16 @@ export default function AdminOrders() {
         statusFilter === "ALL" ||
         order.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
     });
-  }, [orders, search, statusFilter]);
+  }, [
+    orders,
+    search,
+    statusFilter,
+  ]);
 
   const clearFilters = () => {
     setSearch("");
@@ -119,7 +177,8 @@ export default function AdminOrders() {
   };
 
   const hasActiveFilters =
-    search.trim() !== "" || statusFilter !== "ALL";
+    search.trim() !== "" ||
+    statusFilter !== "ALL";
 
   if (loading) {
     return (
@@ -157,6 +216,254 @@ export default function AdminOrders() {
         </div>
       )}
 
+      {/* ======================================================
+          COMPRAS EN TRÁMITE
+      ====================================================== */}
+
+      {pendingCheckouts.length > 0 && (
+        <div className="mb-10">
+          <div className="mb-5">
+            <h2 className="text-2xl font-black text-white">
+              Compras en trámite
+            </h2>
+
+            <p className="mt-1 text-sm text-zinc-500">
+              Pagos pendientes y compras cuyo plazo de pago
+              ya venció.
+            </p>
+          </div>
+
+          <div className="space-y-5">
+            {pendingCheckouts.map(
+              (checkout) => (
+                <div
+                  key={checkout.id}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
+                >
+                  {/* CABECERA */}
+
+                  <div className="mb-6 grid gap-6 md:grid-cols-4">
+                    {/* REFERENCIA */}
+
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Referencia
+                      </p>
+
+                      <p className="mt-1 break-all font-semibold text-white">
+                        #{checkout.id}
+                      </p>
+
+                      <p className="mt-2 text-xs text-zinc-500">
+                        {formatDate(
+                          checkout.createdAt
+                        )}
+                      </p>
+                    </div>
+
+                    {/* CLIENTE */}
+
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Cliente
+                      </p>
+
+                      <p className="mt-1 font-semibold text-white">
+                        {checkout.user?.firstName}{" "}
+                        {checkout.user?.lastName}
+                      </p>
+
+                      <p className="mt-1 break-all text-sm text-zinc-500">
+                        {checkout.user?.email ||
+                          "Email no disponible"}
+                      </p>
+                    </div>
+
+                    {/* ESTADO */}
+
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Estado
+                      </p>
+
+                      <span
+                        className={`mt-2 inline-flex rounded-full border px-3 py-1 text-sm font-bold ${getCheckoutStatusStyle(
+                          checkout.status
+                        )}`}
+                      >
+                        {getCheckoutStatusLabel(
+                          checkout.status
+                        )}
+                      </span>
+                    </div>
+
+                    {/* TOTAL */}
+
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Total
+                      </p>
+
+                      <p className="mt-1 text-xl font-black text-white">
+                        UYU{" "}
+                        {Number(
+                          checkout.total
+                        ).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* INFORMACIÓN DEL PAGO */}
+
+                  <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+                    <h3 className="mb-4 font-bold text-white">
+                      Información del pago
+                    </h3>
+
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      {checkout.paymentMethod && (
+                        <div>
+                          <p className="text-sm text-zinc-500">
+                            Método
+                          </p>
+
+                          <p className="mt-1 font-semibold text-white">
+                            {checkout.paymentMethod ===
+                            "MERCADO_PAGO"
+                              ? "Mercado Pago"
+                              : checkout.paymentMethod}
+                          </p>
+                        </div>
+                      )}
+
+                      {checkout.paymentReferenceId && (
+                        <div>
+                          <p className="text-sm text-zinc-500">
+                            Código de pago
+                          </p>
+
+                          <p className="mt-1 break-all font-mono font-bold text-yellow-400">
+                            {
+                              checkout.paymentReferenceId
+                            }
+                          </p>
+                        </div>
+                      )}
+
+                      {checkout.paymentTransactionId && (
+                        <div>
+                          <p className="text-sm text-zinc-500">
+                            ID transacción
+                          </p>
+
+                          <p className="mt-1 break-all font-mono text-sm font-semibold text-zinc-300">
+                            {
+                              checkout.paymentTransactionId
+                            }
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {checkout.status ===
+                      "PAYMENT_PENDING" && (
+                      <p className="mt-4 text-sm text-yellow-400">
+                        El pago todavía no fue confirmado.
+                      </p>
+                    )}
+
+                    {checkout.status ===
+                      "EXPIRED" && (
+                      <p className="mt-4 text-sm text-red-400">
+                        El plazo para completar el pago
+                        venció. Esta compra no generó un
+                        pedido.
+                      </p>
+                    )}
+
+                    {checkout.paymentInstructionsUrl &&
+                      checkout.status ===
+                        "PAYMENT_PENDING" && (
+                        <a
+                          href={
+                            checkout.paymentInstructionsUrl
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-5 inline-flex rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                        >
+                          Ver instrucciones de pago
+                        </a>
+                      )}
+                  </div>
+
+                  {/* PRODUCTOS */}
+
+                  {Array.isArray(
+                    checkout.items
+                  ) &&
+                    checkout.items.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-zinc-400">
+                          Productos
+                        </p>
+
+                        {checkout.items.map(
+                          (item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-xl bg-zinc-950 p-4"
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div>
+                                  <p className="font-semibold text-white">
+                                    {item.product
+                                      ?.name ||
+                                      item.productName ||
+                                      "Producto no disponible"}
+                                  </p>
+
+                                  <p className="mt-1 text-sm text-zinc-500">
+                                    Cantidad:{" "}
+                                    {
+                                      item.quantity
+                                    }
+                                  </p>
+                                </div>
+
+                                <p className="shrink-0 font-semibold text-white">
+                                  UYU{" "}
+                                  {(
+                                    Number(
+                                      item.price
+                                    ) *
+                                    item.quantity
+                                  ).toFixed(
+                                    2
+                                  )}
+                                </p>
+                              </div>
+
+                              {item.productId && (
+                                <p className="mt-2 break-all text-xs text-zinc-600">
+                                  ID producto:{" "}
+                                  {
+                                    item.productId
+                                  }
+                                </p>
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
       {/* FILTROS */}
 
       {!error && orders.length > 0 && (
@@ -177,7 +484,9 @@ export default function AdminOrders() {
                 type="text"
                 value={search}
                 onChange={(event) =>
-                  setSearch(event.target.value)
+                  setSearch(
+                    event.target.value
+                  )
                 }
                 placeholder="ID pedido, ID producto o ID pago Mercado Pago..."
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500"
@@ -198,16 +507,14 @@ export default function AdminOrders() {
                 id="order-status"
                 value={statusFilter}
                 onChange={(event) =>
-                  setStatusFilter(event.target.value)
+                  setStatusFilter(
+                    event.target.value
+                  )
                 }
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-red-500"
               >
                 <option value="ALL">
                   Todos los estados
-                </option>
-
-                <option value="PENDING">
-                  Pendiente
                 </option>
 
                 <option value="CONFIRMED">
@@ -266,35 +573,13 @@ export default function AdminOrders() {
 
       {/* SIN PEDIDOS */}
 
-      {!error && orders.length === 0 && (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
-          <p className="text-zinc-400">
-            Todavía no hay pedidos registrados.
-          </p>
-        </div>
-      )}
-
-      {/* SIN RESULTADOS */}
-
       {!error &&
-        orders.length > 0 &&
-        filteredOrders.length === 0 && (
+        orders.length === 0 &&
+        pendingCheckouts.length === 0 && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
-            <p className="text-zinc-300">
-              No se encontraron pedidos.
+            <p className="text-zinc-400">
+              Todavía no hay pedidos ni compras en trámite.
             </p>
-
-            <p className="mt-2 text-sm text-zinc-500">
-              Probá con un ID de pedido, ID de producto o ID de pago de Mercado Pago.
-            </p>
-
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-5 rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
-            >
-              Limpiar filtros
-            </button>
           </div>
         )}
 
@@ -321,7 +606,9 @@ export default function AdminOrders() {
                 </p>
 
                 <p className="mt-2 text-xs text-zinc-500">
-                  {formatDate(order.createdAt)}
+                  {formatDate(
+                    order.createdAt
+                  )}
                 </p>
               </div>
 
@@ -361,7 +648,8 @@ export default function AdminOrders() {
                     SHIPPED: "Enviado",
                     DELIVERED: "Entregado",
                     CANCELLED: "Cancelado",
-                  }[order.status] || order.status}
+                  }[order.status] ||
+                    order.status}
                 </span>
               </div>
 
@@ -374,7 +662,9 @@ export default function AdminOrders() {
 
                 <p className="mt-1 text-xl font-black text-white">
                   UYU{" "}
-                  {Number(order.total).toFixed(2)}
+                  {Number(
+                    order.total
+                  ).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -387,55 +677,66 @@ export default function AdminOrders() {
               </p>
 
               <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-xl bg-zinc-950 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-white">
-                          {item.product?.name ||
-                            item.productName ||
-                            "Producto no disponible"}
-                        </p>
+                {order.items.map(
+                  (item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-xl bg-zinc-950 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {item.product
+                              ?.name ||
+                              item.productName ||
+                              "Producto no disponible"}
+                          </p>
 
-                        <p className="mt-1 text-sm text-zinc-500">
-                          Cantidad: {item.quantity}
+                          <p className="mt-1 text-sm text-zinc-500">
+                            Cantidad:{" "}
+                            {item.quantity}
+                          </p>
+                        </div>
+
+                        <p className="shrink-0 font-semibold text-white">
+                          UYU{" "}
+                          {(
+                            Number(
+                              item.price
+                            ) *
+                            item.quantity
+                          ).toFixed(2)}
                         </p>
                       </div>
 
-                      <p className="shrink-0 font-semibold text-white">
-                        UYU{" "}
-                        {(
-                          Number(item.price) *
-                          item.quantity
-                        ).toFixed(2)}
-                      </p>
+                      {/* ID PRODUCTO */}
+
+                      {item.productId && (
+                        <p className="mt-2 break-all text-xs text-zinc-600">
+                          ID producto:{" "}
+                          {item.productId}
+                        </p>
+                      )}
                     </div>
-
-                    {/* ID PRODUCTO */}
-
-                    {item.productId && (
-                      <p className="mt-2 break-all text-xs text-zinc-600">
-                        ID producto: {item.productId}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </div>
 
             {/* PAGO MERCADO PAGO */}
 
-            {order.payment?.transactionId && (
+            {order.payment
+              ?.transactionId && (
               <div className="mt-5 border-t border-zinc-800 pt-5">
                 <p className="text-sm text-zinc-500">
                   ID pago Mercado Pago
                 </p>
 
                 <p className="mt-1 break-all text-sm font-semibold text-zinc-300">
-                  {order.payment.transactionId}
+                  {
+                    order.payment
+                      .transactionId
+                  }
                 </p>
               </div>
             )}
@@ -453,6 +754,32 @@ export default function AdminOrders() {
           </div>
         ))}
       </div>
+
+      {/* SIN RESULTADOS */}
+
+      {!error &&
+        orders.length > 0 &&
+        filteredOrders.length === 0 && (
+          <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+            <p className="text-zinc-300">
+              No se encontraron pedidos.
+            </p>
+
+            <p className="mt-2 text-sm text-zinc-500">
+              Probá con un ID de pedido, ID de producto
+              o ID de pago de Mercado Pago.
+            </p>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-5 rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
     </div>
   );
 }
+

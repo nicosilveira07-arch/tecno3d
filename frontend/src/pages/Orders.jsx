@@ -4,26 +4,30 @@ import api from "@/services/api";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
+  const [pendingCheckouts, setPendingCheckouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const response =
-          await api.get("/orders/my-orders");
+        const [
+          ordersResponse,
+          pendingResponse,
+        ] = await Promise.all([
+          api.get("/orders/my-orders"),
+          api.get("/checkout-sessions/my-pending"),
+        ]);
 
         const ordersData =
-          Array.isArray(response.data.data)
-            ? response.data.data
+          Array.isArray(ordersResponse.data.data)
+            ? ordersResponse.data.data
             : [];
 
         // La nueva arquitectura ya no utiliza
         // Orders con estado PENDING.
         //
-        // Solo mostramos pedidos reales:
-        // CONFIRMED, PROCESSING, SHIPPED,
-        // DELIVERED y CANCELLED.
+        // Solo mostramos pedidos reales.
         const realOrders =
           ordersData.filter((order) =>
             [
@@ -35,7 +39,13 @@ export default function Orders() {
             ].includes(order.status)
           );
 
+        const pendingData =
+          Array.isArray(pendingResponse.data.data)
+            ? pendingResponse.data.data
+            : [];
+
         setOrders(realOrders);
+        setPendingCheckouts(pendingData);
       } catch (error) {
         console.error(
           "ERROR CARGANDO PEDIDOS:",
@@ -98,6 +108,30 @@ export default function Orders() {
     }
   };
 
+  const getCheckoutStatusStyle = (status) => {
+    if (status === "PAYMENT_PENDING") {
+      return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
+    }
+
+    if (status === "EXPIRED") {
+      return "bg-red-500/10 text-red-400 border-red-500/30";
+    }
+
+    return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
+  };
+
+  const getCheckoutStatusLabel = (status) => {
+    if (status === "PAYMENT_PENDING") {
+      return "Pago pendiente";
+    }
+
+    if (status === "EXPIRED") {
+      return "Cancelado por vencimiento";
+    }
+
+    return status;
+  };
+
   const formatDate = (date) => {
     if (!date) {
       return "Fecha no disponible";
@@ -135,160 +169,371 @@ export default function Orders() {
           </div>
         )}
 
-        {!error && orders.length === 0 && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
-            <p className="text-zinc-400">
-              Todavía no tenés pedidos.
-            </p>
-          </div>
-        )}
+        {/* ======================================================
+            COMPRAS EN TRÁMITE
+        ====================================================== */}
 
-        <div className="space-y-6">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
-            >
-              {/* CABECERA */}
+        {pendingCheckouts.length > 0 && (
+          <div className="mb-10">
+            <h2 className="mb-5 text-2xl font-black text-white">
+              Compras en trámite
+            </h2>
 
-              <div className="mb-6 grid gap-6 md:grid-cols-3">
-                <div>
-                  <p className="text-sm text-zinc-500">
-                    Pedido
-                  </p>
+            <div className="space-y-6">
+              {pendingCheckouts.map((checkout) => (
+                <div
+                  key={checkout.id}
+                  className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
+                >
+                  {/* CABECERA */}
 
-                  <p className="mt-1 font-semibold text-white">
-                    #{order.id}
-                  </p>
+                  <div className="mb-6 grid gap-6 md:grid-cols-3">
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Referencia
+                      </p>
 
-                  <p className="mt-2 text-sm text-zinc-500">
-                    {formatDate(order.createdAt)}
-                  </p>
-                </div>
+                      <p className="mt-1 font-semibold text-white">
+                        #{checkout.id}
+                      </p>
 
-                <div>
-                  <p className="text-sm text-zinc-500">
-                    Estado
-                  </p>
+                      <p className="mt-2 text-sm text-zinc-500">
+                        {formatDate(
+                          checkout.createdAt
+                        )}
+                      </p>
+                    </div>
 
-                  <span
-                    className={`mt-2 inline-flex rounded-full border px-3 py-1 text-sm font-bold ${getStatusStyle(
-                      order.status
-                    )}`}
-                  >
-                    {getStatusLabel(
-                      order.status
-                    )}
-                  </span>
-                </div>
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Estado
+                      </p>
 
-                <div>
-                  <p className="text-sm text-zinc-500">
-                    Total
-                  </p>
+                      <span
+                        className={`mt-2 inline-flex rounded-full border px-3 py-1 text-sm font-bold ${getCheckoutStatusStyle(
+                          checkout.status
+                        )}`}
+                      >
+                        {getCheckoutStatusLabel(
+                          checkout.status
+                        )}
+                      </span>
+                    </div>
 
-                  <p className="mt-1 text-xl font-black text-white">
-                    UYU{" "}
-                    {Number(order.total).toFixed(
-                      2
-                    )}
-                  </p>
-                </div>
-              </div>
+                    <div>
+                      <p className="text-sm text-zinc-500">
+                        Total
+                      </p>
 
-              {/* INFORMACIÓN DE ENVÍO */}
+                      <p className="mt-1 text-xl font-black text-white">
+                        UYU{" "}
+                        {Number(
+                          checkout.total
+                        ).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
 
-              {order.deliveryMethod ===
-                "SHIPPING" &&
-                (order.shippingCompany ||
-                  order.trackingNumber) && (
+                  {/* INFORMACIÓN DEL PAGO */}
+
                   <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
                     <h2 className="mb-4 font-bold text-white">
-                      Información de envío
+                      Información del pago
                     </h2>
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {order.shippingCompany && (
+                      {checkout.paymentMethod && (
                         <div>
                           <p className="text-sm text-zinc-500">
-                            Empresa de envío
+                            Método de pago
                           </p>
 
                           <p className="mt-1 font-semibold text-white">
-                            {
-                              order.shippingCompany
-                            }
+                            {checkout.paymentMethod ===
+                            "MERCADO_PAGO"
+                              ? "Mercado Pago"
+                              : checkout.paymentMethod}
                           </p>
                         </div>
                       )}
 
-                      {order.trackingNumber && (
+                      {checkout.paymentReferenceId && (
                         <div>
                           <p className="text-sm text-zinc-500">
-                            Número de rastreo
+                            Código de pago
                           </p>
 
-                          <p className="mt-1 font-mono font-bold text-red-500">
+                          <p className="mt-1 font-mono font-bold text-yellow-400">
                             {
-                              order.trackingNumber
+                              checkout.paymentReferenceId
                             }
                           </p>
                         </div>
                       )}
+
+                      {checkout.paymentVerificationCode &&
+                        checkout.paymentVerificationCode !==
+                          checkout.paymentReferenceId && (
+                          <div>
+                            <p className="text-sm text-zinc-500">
+                              Código de verificación
+                            </p>
+
+                            <p className="mt-1 font-mono font-bold text-yellow-400">
+                              {
+                                checkout.paymentVerificationCode
+                              }
+                            </p>
+                          </div>
+                        )}
                     </div>
+
+                    {checkout.status ===
+                      "PAYMENT_PENDING" && (
+                      <p className="mt-4 text-sm text-zinc-400">
+                        El pago todavía no fue confirmado.
+                        Una vez aprobado, esta compra se
+                        convertirá automáticamente en un
+                        pedido confirmado.
+                      </p>
+                    )}
+
+                    {checkout.status === "EXPIRED" && (
+                      <p className="mt-4 text-sm text-red-400">
+                        El plazo para completar el pago
+                        venció. Esta compra fue cancelada y
+                        no generó un pedido.
+                      </p>
+                    )}
+
+                    {checkout.paymentInstructionsUrl &&
+                      checkout.status ===
+                        "PAYMENT_PENDING" && (
+                        <a
+                          href={
+                            checkout.paymentInstructionsUrl
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-5 inline-flex rounded-xl bg-yellow-500 px-5 py-3 font-bold text-black transition hover:bg-yellow-400"
+                        >
+                          Ver instrucciones de pago
+                        </a>
+                      )}
                   </div>
-                )}
 
-              {/* RETIRO EN LOCAL */}
+                  {/* PRODUCTOS */}
 
-              {order.deliveryMethod ===
-                "PICKUP" && (
-                  <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
-                    <h2 className="font-bold text-white">
-                      Retiro en local
-                    </h2>
+                  {Array.isArray(
+                    checkout.items
+                  ) &&
+                    checkout.items.length > 0 && (
+                      <div className="space-y-4">
+                        <h2 className="font-bold text-white">
+                          Productos
+                        </h2>
 
-                    <p className="mt-1 text-sm text-zinc-500">
-                      Este pedido será retirado
-                      en el local.
+                        {checkout.items.map(
+                          (item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between border-t border-zinc-800 pt-4"
+                            >
+                              <div>
+                                <p className="font-semibold text-white">
+                                  {item.product?.name ||
+                                    item.productName ||
+                                    "Producto no disponible"}
+                                </p>
+
+                                <p className="text-sm text-zinc-500">
+                                  Cantidad:{" "}
+                                  {item.quantity}
+                                </p>
+                              </div>
+
+                              <p className="font-semibold text-white">
+                                UYU{" "}
+                                {(
+                                  Number(
+                                    item.price
+                                  ) *
+                                  item.quantity
+                                ).toFixed(2)}
+                              </p>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================
+            PEDIDOS REALES
+        ====================================================== */}
+
+        {!error &&
+          orders.length === 0 &&
+          pendingCheckouts.length === 0 && (
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+              <p className="text-zinc-400">
+                Todavía no tenés pedidos.
+              </p>
+            </div>
+          )}
+
+        {orders.length > 0 && (
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
+              >
+                {/* CABECERA */}
+
+                <div className="mb-6 grid gap-6 md:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-zinc-500">
+                      Pedido
+                    </p>
+
+                    <p className="mt-1 font-semibold text-white">
+                      #{order.id}
+                    </p>
+
+                    <p className="mt-2 text-sm text-zinc-500">
+                      {formatDate(order.createdAt)}
                     </p>
                   </div>
-                )}
 
-              {/* PRODUCTOS */}
+                  <div>
+                    <p className="text-sm text-zinc-500">
+                      Estado
+                    </p>
 
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between border-t border-zinc-800 pt-4"
-                  >
-                    <div>
-                      <p className="font-semibold text-white">
-                        {item.product?.name ||
-                          item.productName ||
-                          "Producto no disponible"}
-                      </p>
+                    <span
+                      className={`mt-2 inline-flex rounded-full border px-3 py-1 text-sm font-bold ${getStatusStyle(
+                        order.status
+                      )}`}
+                    >
+                      {getStatusLabel(
+                        order.status
+                      )}
+                    </span>
+                  </div>
 
-                      <p className="text-sm text-zinc-500">
-                        Cantidad:{" "}
-                        {item.quantity}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-sm text-zinc-500">
+                      Total
+                    </p>
 
-                    <p className="font-semibold text-white">
+                    <p className="mt-1 text-xl font-black text-white">
                       UYU{" "}
-                      {(
-                        Number(item.price) *
-                        item.quantity
+                      {Number(
+                        order.total
                       ).toFixed(2)}
                     </p>
                   </div>
-                ))}
+                </div>
+
+                {/* INFORMACIÓN DE ENVÍO */}
+
+                {order.deliveryMethod ===
+                  "SHIPPING" &&
+                  (order.shippingCompany ||
+                    order.trackingNumber) && (
+                    <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+                      <h2 className="mb-4 font-bold text-white">
+                        Información de envío
+                      </h2>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {order.shippingCompany && (
+                          <div>
+                            <p className="text-sm text-zinc-500">
+                              Empresa de envío
+                            </p>
+
+                            <p className="mt-1 font-semibold text-white">
+                              {
+                                order.shippingCompany
+                              }
+                            </p>
+                          </div>
+                        )}
+
+                        {order.trackingNumber && (
+                          <div>
+                            <p className="text-sm text-zinc-500">
+                              Número de rastreo
+                            </p>
+
+                            <p className="mt-1 font-mono font-bold text-red-500">
+                              {
+                                order.trackingNumber
+                              }
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* RETIRO EN LOCAL */}
+
+                {order.deliveryMethod ===
+                  "PICKUP" && (
+                    <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-5">
+                      <h2 className="font-bold text-white">
+                        Retiro en local
+                      </h2>
+
+                      <p className="mt-1 text-sm text-zinc-500">
+                        Este pedido será retirado
+                        en el local.
+                      </p>
+                    </div>
+                  )}
+
+                {/* PRODUCTOS */}
+
+                <div className="space-y-4">
+                  {order.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between border-t border-zinc-800 pt-4"
+                    >
+                      <div>
+                        <p className="font-semibold text-white">
+                          {item.product?.name ||
+                            item.productName ||
+                            "Producto no disponible"}
+                        </p>
+
+                        <p className="text-sm text-zinc-500">
+                          Cantidad:{" "}
+                          {item.quantity}
+                        </p>
+                      </div>
+
+                      <p className="font-semibold text-white">
+                        UYU{" "}
+                        {(
+                          Number(item.price) *
+                          item.quantity
+                        ).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

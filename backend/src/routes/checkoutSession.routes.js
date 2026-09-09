@@ -1,57 +1,94 @@
 import express from "express";
 
 import {
-authenticate,
+  allowRoles,
+} from "../middlewares/role.middleware.js";
+
+import {
+  authenticate,
 } from "../middlewares/auth.middleware.js";
 
 import {
-createCheckoutSessionController,
-getCheckoutSessionController,
-updateCheckoutSessionController,
-markCheckoutSessionPaymentPendingController,
-deleteCheckoutSessionController,
+  createCheckoutSessionController,
+  getCheckoutSessionController,
+  updateCheckoutSessionController,
+  markCheckoutSessionPaymentPendingController,
+  deleteCheckoutSessionController,
+  getPendingCheckoutSessionsByUserController,
+  getPendingCheckoutSessionsController,
 } from "../controllers/checkoutSession.controller.js";
 
 const router = express.Router();
 
-// Crear una sesión temporal de checkout
+// ======================================================
+// CREAR UNA SESIÓN TEMPORAL DE CHECKOUT
+// ======================================================
 
 router.post(
-"/",
-authenticate,
-createCheckoutSessionController
+  "/",
+  authenticate,
+  createCheckoutSessionController
 );
 
-// Obtener una sesión propia
+// ======================================================
+// CHECKOUTS EN TRÁMITE DEL USUARIO
+// ======================================================
 
 router.get(
-"/:id",
-authenticate,
-getCheckoutSessionController
+  "/my-pending",
+  authenticate,
+  getPendingCheckoutSessionsByUserController
 );
 
-// Actualizar una sesión propia
+// ======================================================
+// CHECKOUTS EN TRÁMITE PARA ADMIN
+// ======================================================
+
+router.get(
+  "/admin/pending",
+  authenticate,
+  allowRoles("ADMIN", "EMPLOYEE"),
+  getPendingCheckoutSessionsController
+);
+
+// ======================================================
+// OBTENER UNA SESIÓN PROPIA
+// ======================================================
+
+router.get(
+  "/:id",
+  authenticate,
+  getCheckoutSessionController
+);
+
+// ======================================================
+// ACTUALIZAR UNA SESIÓN PROPIA
+// ======================================================
 
 router.patch(
-"/:id",
-authenticate,
-updateCheckoutSessionController
+  "/:id",
+  authenticate,
+  updateCheckoutSessionController
 );
 
-// Marcar el pago como pendiente
+// ======================================================
+// MARCAR EL PAGO COMO PENDIENTE
+// ======================================================
 
 router.patch(
-"/:id/payment-pending",
-authenticate,
-markCheckoutSessionPaymentPendingController
+  "/:id/payment-pending",
+  authenticate,
+  markCheckoutSessionPaymentPendingController
 );
 
-// Eliminar una sesión propia
+// ======================================================
+// ELIMINAR UNA SESIÓN PROPIA
+// ======================================================
 
 router.delete(
-"/:id",
-authenticate,
-deleteCheckoutSessionController
+  "/:id",
+  authenticate,
+  deleteCheckoutSessionController
 );
 
 export default router;

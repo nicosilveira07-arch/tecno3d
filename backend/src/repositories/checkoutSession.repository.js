@@ -204,6 +204,79 @@ id,
 
 });
 };
+// ======================================================
+// CHECKOUTS EN TRÁMITE DEL USUARIO
+// ======================================================
+
+const getPendingCheckoutSessionsByUser =
+  async (userId) => {
+    return await prisma.checkoutSession.findMany({
+      where: {
+        userId,
+
+        status: {
+          in: [
+            "PAYMENT_PENDING",
+            "EXPIRED",
+          ],
+        },
+      },
+
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+
+        address: true,
+
+        coupon: true,
+
+        user: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  };
+
+// ======================================================
+// CHECKOUTS EN TRÁMITE PARA ADMIN
+// ======================================================
+
+const getPendingCheckoutSessions =
+  async () => {
+    return await prisma.checkoutSession.findMany({
+      where: {
+        status: {
+          in: [
+            "PAYMENT_PENDING",
+            "EXPIRED",
+          ],
+        },
+      },
+
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+
+        address: true,
+
+        coupon: true,
+
+        user: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  };
 
 const getExpiredCheckoutSessions =
 async () => {
@@ -606,15 +679,17 @@ id: checkoutSessionId,
 };
 
 export {
-createCheckoutSession,
-getCheckoutSessionById,
-getCheckoutSessionByIdForWebhook,
-getActiveCheckoutSessionByUser,
-updateCheckoutSession,
-updateCheckoutSessionStatus,
-deleteCheckoutSession,
-getExpiredCheckoutSessions,
-deleteCheckoutSessionItems,
-addCheckoutSessionItem,
-completeCheckoutSessionAsOrder,
+  createCheckoutSession,
+  getCheckoutSessionById,
+  getCheckoutSessionByIdForWebhook,
+  getActiveCheckoutSessionByUser,
+  getPendingCheckoutSessionsByUser,
+  getPendingCheckoutSessions,
+  updateCheckoutSession,
+  updateCheckoutSessionStatus,
+  deleteCheckoutSession,
+  getExpiredCheckoutSessions,
+  deleteCheckoutSessionItems,
+  addCheckoutSessionItem,
+  completeCheckoutSessionAsOrder,
 };

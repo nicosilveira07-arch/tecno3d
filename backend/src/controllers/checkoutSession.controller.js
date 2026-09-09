@@ -1,9 +1,11 @@
 import {
-createCheckoutSessionService,
-getCheckoutSessionService,
-updateCheckoutSessionService,
-markCheckoutSessionPaymentPendingService,
-deleteCheckoutSessionService,
+  createCheckoutSessionService,
+  getCheckoutSessionService,
+  updateCheckoutSessionService,
+  markCheckoutSessionPaymentPendingService,
+  deleteCheckoutSessionService,
+  getPendingCheckoutSessionsByUserService,
+  getPendingCheckoutSessionsService,
 } from "../services/checkoutSession.service.js";
 
 // ======================================================
@@ -133,7 +135,55 @@ const userId = req.user.id;
 
 
 };
+// ======================================================
+// CHECKOUTS EN TRÁMITE DEL USUARIO
+// ======================================================
 
+const getPendingCheckoutSessionsByUserController =
+async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const userId = req.user.id;
+
+    const sessions =
+      await getPendingCheckoutSessionsByUserService(
+        userId
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ======================================================
+// CHECKOUTS EN TRÁMITE PARA ADMIN
+// ======================================================
+
+const getPendingCheckoutSessionsController =
+async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const sessions =
+      await getPendingCheckoutSessionsService();
+
+    return res.status(200).json({
+      success: true,
+      data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // ======================================================
 // ELIMINAR CHECKOUT SESSION
 // ======================================================
@@ -172,4 +222,6 @@ getCheckoutSessionController,
 updateCheckoutSessionController,
 markCheckoutSessionPaymentPendingController,
 deleteCheckoutSessionController,
+getPendingCheckoutSessionsByUserController,
+getPendingCheckoutSessionsController,
 };

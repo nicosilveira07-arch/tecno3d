@@ -5,6 +5,8 @@ getActiveCheckoutSessionByUser,
 updateCheckoutSession,
 updateCheckoutSessionStatus,
 deleteCheckoutSession,
+getPendingCheckoutSessionsByUser,
+getPendingCheckoutSessions,
 } from "../repositories/checkoutSession.repository.js";
 
 // ======================================================
@@ -445,6 +447,34 @@ return await updateCheckoutSessionStatus(
 };
 
 // ======================================================
+// CHECKOUTS EN TRÁMITE DEL USUARIO
+// ======================================================
+
+const getPendingCheckoutSessionsByUserService =
+async (
+userId
+) => {
+const sessions =
+await getPendingCheckoutSessionsByUser(
+userId
+);
+
+return sessions;
+};
+
+// ======================================================
+// CHECKOUTS EN TRÁMITE PARA ADMIN
+// ======================================================
+
+const getPendingCheckoutSessionsService =
+async () => {
+const sessions =
+await getPendingCheckoutSessions();
+
+return sessions;
+};
+
+// ======================================================
 // ELIMINAR CHECKOUT SESSION
 // ======================================================
 
@@ -505,4 +535,6 @@ markCheckoutSessionPaymentPendingService,
 completeCheckoutSessionService,
 failCheckoutSessionService,
 deleteCheckoutSessionService,
+getPendingCheckoutSessionsByUserService,
+getPendingCheckoutSessionsService,
 };
