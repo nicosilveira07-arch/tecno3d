@@ -113,17 +113,17 @@ export default function ProductDetail() {
   const loadReviews = async () => {
     try {
       setReviewsLoading(true);
-    
+
       const result = await getProductReviews(id);
-    
+
       setReviews(
         result.data?.data?.reviews || []
       );
-    
+
       setAverageRating(
         result.data?.data?.averageRating || 0
       );
-    
+
       setTotalReviews(
         result.data?.data?.totalReviews || 0
       );
@@ -132,7 +132,7 @@ export default function ProductDetail() {
         "ERROR CARGANDO RESEÑAS:",
         error
       );
-    
+
       setReviews([]);
       setAverageRating(0);
       setTotalReviews(0);
@@ -140,13 +140,13 @@ export default function ProductDetail() {
       setReviewsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     if (id) {
       loadReviews();
     }
   }, [id]);
-  
+
   /*
    * GALERÍA
    *
@@ -179,9 +179,7 @@ export default function ProductDetail() {
          * Evitamos duplicar la imagen principal
          * si también está guardada en ProductImage.
          */
-        if (
-          image.url === product.image
-        ) {
+        if (image.url === product.image) {
           return;
         }
 
@@ -302,7 +300,6 @@ export default function ProductDetail() {
     const confirmed = window.confirm(
       "¿Seguro que querés eliminar tu opinión? Esta acción no se puede deshacer."
     );
-    
 
     if (!confirmed) {
       return;
@@ -334,9 +331,7 @@ export default function ProductDetail() {
     } finally {
       setDeletingReviewId(null);
     }
-    
   };
-  
 
   const renderStars = (rating, size = 18) => {
     return (
@@ -385,8 +380,8 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <section className="min-h-[60vh] bg-zinc-950 px-4 py-20">
-        <div className="mx-auto max-w-7xl text-center">
+      <section className="min-h-[60vh] w-full overflow-x-hidden bg-zinc-950 px-4 py-20">
+        <div className="w-full text-center">
           <p className="text-zinc-500">
             Cargando producto...
           </p>
@@ -397,8 +392,8 @@ export default function ProductDetail() {
 
   if (error || !product) {
     return (
-      <section className="min-h-[60vh] bg-zinc-950 px-4 py-20">
-        <div className="mx-auto max-w-7xl">
+      <section className="min-h-[60vh] w-full overflow-x-hidden bg-zinc-950 px-4 py-20">
+        <div className="w-full">
           <Link
             to="/products"
             className="mb-8 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-red-500"
@@ -407,7 +402,7 @@ export default function ProductDetail() {
             Volver a productos
           </Link>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+          <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
             <p className="text-red-500">
               {error ||
                 "Producto no encontrado."}
@@ -429,14 +424,14 @@ export default function ProductDetail() {
     : false;
 
   return (
-    <section className="min-h-screen bg-zinc-950 px-4 py-10">
-      <div className="mx-auto max-w-7xl">
+    <section className="min-h-screen w-full min-w-0 overflow-x-hidden bg-zinc-950 px-3 py-6 sm:px-4 sm:py-10">
+      <div className="w-full min-w-0">
 
         {/* VOLVER */}
 
         <button
           onClick={() => navigate(-1)}
-          className="mb-8 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-red-500"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-red-500 sm:mb-8"
         >
           <ArrowLeft size={18} />
           Volver
@@ -444,18 +439,18 @@ export default function ProductDetail() {
 
         {/* PRODUCTO */}
 
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid w-full min-w-0 gap-8 lg:grid-cols-2 lg:gap-10">
 
           {/* GALERÍA */}
 
-          <div>
+          <div className="w-full min-w-0">
 
-            <div className="flex min-w-0 gap-4">
+            <div className="flex w-full min-w-0 gap-3 sm:gap-4">
 
               {/* MINIATURAS */}
 
               {galleryImages.length > 1 && (
-                  <div className="hidden w-20 flex-col gap-3 lg:flex">
+                <div className="hidden w-20 shrink-0 flex-col gap-3 lg:flex">
 
                   {galleryImages.map(
                     (image, index) => (
@@ -463,13 +458,10 @@ export default function ProductDetail() {
                         key={`${image.url}-${index}`}
                         type="button"
                         onClick={() =>
-                          handleSelectImage(
-                            index
-                          )
+                          handleSelectImage(index)
                         }
-                        className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-zinc-900 transition ${
-                          selectedImageIndex ===
-                          index
+                        className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-zinc-900 transition ${
+                          selectedImageIndex === index
                             ? "border-red-600"
                             : "border-zinc-800 hover:border-zinc-600"
                         }`}
@@ -479,11 +471,10 @@ export default function ProductDetail() {
                           alt={`${product.name} - imagen ${
                             index + 1
                           }`}
-                          className="h-full w-full object-cover"
+                          className="block h-full w-full object-cover"
                         />
 
-                        {selectedImageIndex ===
-                          index && (
+                        {selectedImageIndex === index && (
                           <div className="absolute inset-0 bg-red-600/10" />
                         )}
                       </button>
@@ -495,13 +486,13 @@ export default function ProductDetail() {
 
               {/* IMAGEN GRANDE */}
 
-              <div className="relative flex h-[320px] w-full min-w-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 sm:h-[400px] lg:h-[500px]">
+              <div className="relative flex h-[300px] w-full min-w-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 sm:h-[400px] lg:h-[500px]">
 
                 {selectedImage ? (
                   <img
                     src={selectedImage}
                     alt={product.name}
-                    className="h-full w-full object-contain p-4 sm:p-6 lg:max-h-[600px] lg:p-8"
+                    className="block h-full w-full min-w-0 object-contain p-3 sm:p-6 lg:p-8"
                   />
                 ) : (
                   <div className="text-center">
@@ -521,11 +512,9 @@ export default function ProductDetail() {
                 {galleryImages.length > 1 && (
                   <button
                     type="button"
-                    onClick={
-                      handlePreviousImage
-                    }
+                    onClick={handlePreviousImage}
                     aria-label="Imagen anterior"
-                    className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-700 bg-black/70 text-white backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600"
+                    className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-700 bg-black/70 text-white backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600 sm:left-4 sm:h-11 sm:w-11"
                   >
                     <ChevronLeft size={24} />
                   </button>
@@ -536,11 +525,9 @@ export default function ProductDetail() {
                 {galleryImages.length > 1 && (
                   <button
                     type="button"
-                    onClick={
-                      handleNextImage
-                    }
+                    onClick={handleNextImage}
                     aria-label="Siguiente imagen"
-                    className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-700 bg-black/70 text-white backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600"
+                    className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-zinc-700 bg-black/70 text-white backdrop-blur-sm transition hover:border-red-600 hover:bg-red-600 sm:right-4 sm:h-11 sm:w-11"
                   >
                     <ChevronRight size={24} />
                   </button>
@@ -549,7 +536,7 @@ export default function ProductDetail() {
                 {/* CONTADOR */}
 
                 {galleryImages.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-white backdrop-blur-sm">
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm sm:bottom-4 sm:px-4 sm:py-2">
                     {selectedImageIndex + 1} /{" "}
                     {galleryImages.length}
                   </div>
@@ -562,7 +549,7 @@ export default function ProductDetail() {
             {/* MINIATURAS INFERIORES EN MOBILE */}
 
             {galleryImages.length > 1 && (
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-2 lg:hidden">
+              <div className="mt-4 flex w-full min-w-0 gap-3 overflow-x-auto pb-2 lg:hidden">
 
                 {galleryImages.map(
                   (image, index) => (
@@ -570,13 +557,10 @@ export default function ProductDetail() {
                       key={`mobile-${image.url}-${index}`}
                       type="button"
                       onClick={() =>
-                        handleSelectImage(
-                          index
-                        )
+                        handleSelectImage(index)
                       }
-                      className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 ${
-                        selectedImageIndex ===
-                        index
+                      className={`h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 ${
+                        selectedImageIndex === index
                           ? "border-red-600"
                           : "border-zinc-800"
                       }`}
@@ -586,7 +570,7 @@ export default function ProductDetail() {
                         alt={`${product.name} - imagen ${
                           index + 1
                         }`}
-                        className="h-full w-full object-cover"
+                        className="block h-full w-full object-cover"
                       />
                     </button>
                   )
@@ -599,22 +583,24 @@ export default function ProductDetail() {
 
           {/* INFORMACIÓN */}
 
-          <div className="flex flex-col justify-center">
+          <div className="w-full min-w-0">
 
             {/* MARCA / CATEGORÍA */}
 
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mb-4 flex min-w-0 flex-wrap gap-2">
 
               {product.brand?.name && (
-                <span className="rounded-full bg-red-950/40 px-3 py-1 text-xs font-semibold text-red-400">
+                <span className="max-w-full rounded-full bg-red-950/40 px-3 py-1 text-xs font-semibold text-red-400">
                   {product.brand.name}
                 </span>
               )}
 
               {product.category?.name && (
-                <span className="flex items-center gap-1 rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
+                <span className="flex max-w-full items-center gap-1 rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
                   <Tag size={12} />
-                  {product.category.name}
+                  <span className="break-words">
+                    {product.category.name}
+                  </span>
                 </span>
               )}
 
@@ -622,13 +608,13 @@ export default function ProductDetail() {
 
             {/* NOMBRE */}
 
-            <h1 className="text-4xl font-black text-white md:text-5xl">
+            <h1 className="break-words text-3xl font-black text-white sm:text-4xl md:text-5xl">
               {product.name}
             </h1>
 
             {/* CLASIFICACIÓN */}
 
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 flex min-w-0 flex-wrap items-center gap-3">
               {renderStars(
                 averageRating,
                 20
@@ -652,12 +638,12 @@ export default function ProductDetail() {
 
             {/* DESCRIPCIÓN */}
 
-            <div className="mt-8">
+            <div className="mt-8 min-w-0">
               <h2 className="mb-3 text-lg font-bold text-white">
                 Descripción
               </h2>
 
-              <p className="whitespace-pre-line leading-7 text-zinc-400">
+              <p className="whitespace-pre-line break-words leading-7 text-zinc-400">
                 {product.description ||
                   "Este producto no tiene una descripción disponible."}
               </p>
@@ -671,6 +657,7 @@ export default function ProductDetail() {
               Number(product.offerPrice) < Number(product.price) ? (
                 <div>
                   {/* DESCUENTO */}
+
                   {product.offerPercentage != null && (
                     <span className="mb-3 inline-flex rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white">
                       -{product.offerPercentage}%
@@ -678,27 +665,29 @@ export default function ProductDetail() {
                   )}
 
                   {/* PRECIO ORIGINAL */}
+
                   <p className="text-lg font-semibold text-zinc-500 line-through">
                     UYU{" "}
                     {Number(product.price).toLocaleString(
                       "es-UY"
                     )}
                   </p>
-                  
+
                   {/* PRECIO OFERTA */}
-                  <p className="text-4xl font-black text-green-500">
+
+                  <p className="text-3xl font-black text-green-500 sm:text-4xl">
                     UYU{" "}
                     {Number(product.offerPrice).toLocaleString(
                       "es-UY"
                     )}
                   </p>
-                  
+
                   <span className="mt-2 inline-block rounded-md bg-red-950/50 px-2 py-1 text-xs font-bold text-red-400">
                     OFERTA
                   </span>
                 </div>
               ) : (
-                <p className="text-4xl font-black text-red-500">
+                <p className="text-3xl font-black text-red-500 sm:text-4xl">
                   UYU{" "}
                   {Number(product.price).toLocaleString(
                     "es-UY"
@@ -729,27 +718,27 @@ export default function ProductDetail() {
 
         {/* RESEÑAS */}
 
-        <div className="mt-16 border-t border-zinc-800 pt-12">
+        <div className="mt-12 w-full min-w-0 border-t border-zinc-800 pt-10 sm:mt-16 sm:pt-12">
 
-          <div className="mb-8">
+          <div className="mb-8 w-full min-w-0">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-red-500">
               EXPERIENCIAS
             </p>
 
-            <h2 className="text-3xl font-black text-white">
+            <h2 className="break-words text-2xl font-black text-white sm:text-3xl">
               Opiniones de clientes
             </h2>
 
-            <p className="mt-2 text-zinc-500">
+            <p className="mt-2 break-words text-zinc-500">
               Conocé la experiencia de otros clientes con este producto.
             </p>
           </div>
 
           {/* RESUMEN */}
 
-          <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-10 w-full min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
 
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
 
               <div>
                 <p className="text-5xl font-black text-white">
@@ -786,13 +775,13 @@ export default function ProductDetail() {
           {/* MENSAJES */}
 
           {reviewError && (
-            <div className="mb-6 rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
+            <div className="mb-6 w-full break-words rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
               {reviewError}
             </div>
           )}
 
           {reviewSuccess && (
-            <div className="mb-6 rounded-xl border border-green-900/50 bg-green-950/30 p-4 text-sm text-green-400">
+            <div className="mb-6 w-full break-words rounded-xl border border-green-900/50 bg-green-950/30 p-4 text-sm text-green-400">
               {reviewSuccess}
             </div>
           )}
@@ -800,13 +789,13 @@ export default function ProductDetail() {
           {/* FORMULARIO */}
 
           {!user ? (
-            <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-10 w-full min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
 
               <h3 className="text-xl font-bold text-white">
                 ¿Compraste este producto?
               </h3>
 
-              <p className="mt-2 text-zinc-500">
+              <p className="mt-2 break-words text-zinc-500">
                 Iniciá sesión para compartir tu experiencia y calificarlo.
               </p>
 
@@ -821,19 +810,17 @@ export default function ProductDetail() {
 
             </div>
           ) : userAlreadyReviewed ? (
-            <div className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-10 w-full min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
 
-              <div className="flex items-center gap-3">
-
+              <div className="flex min-w-0 items-center gap-3">
                 <Star
                   size={22}
-                  className="fill-yellow-400 text-yellow-400"
+                  className="shrink-0 fill-yellow-400 text-yellow-400"
                 />
 
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="break-words text-xl font-bold text-white">
                   Ya calificaste este producto
                 </h3>
-
               </div>
 
               <p className="mt-2 text-zinc-500">
@@ -844,7 +831,7 @@ export default function ProductDetail() {
           ) : (
             <form
               onSubmit={handleSubmitReview}
-              className="mb-10 rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
+              className="mb-10 w-full min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6"
             >
 
               <h3 className="text-xl font-bold text-white">
@@ -885,7 +872,7 @@ export default function ProductDetail() {
                   maxLength={1000}
                   rows={5}
                   placeholder="Contanos tu experiencia con este producto..."
-                  className="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-600"
+                  className="w-full min-w-0 resize-none rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-white outline-none transition placeholder:text-zinc-600 focus:border-red-600"
                 />
 
                 <p className="mt-2 text-right text-xs text-zinc-600">
@@ -910,13 +897,13 @@ export default function ProductDetail() {
           {/* LISTA DE RESEÑAS */}
 
           {reviewsLoading ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+            <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
               <p className="text-zinc-500">
                 Cargando opiniones...
               </p>
             </div>
           ) : reviews.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+            <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
 
               <Star
                 size={40}
@@ -933,40 +920,33 @@ export default function ProductDetail() {
 
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="w-full min-w-0 space-y-4">
 
               {reviews.map((review) => {
-
                 const isOwnReview =
                   user &&
                   (
-                    review.userId ===
-                      user.id ||
-                    review.user?.id ===
-                      user.id
+                    review.userId === user.id ||
+                    review.user?.id === user.id
                   );
 
                 return (
                   <article
                     key={review.id}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
+                    className="w-full min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6"
                   >
 
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
 
-                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-zinc-800">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800">
 
                           {review.user?.avatar ? (
                             <img
-                              src={
-                                review.user
-                                  .avatar
-                              }
+                              src={review.user.avatar}
                               alt={
-                                review.user
-                                  .firstName ||
+                                review.user.firstName ||
                                 "Usuario"
                               }
                               className="h-full w-full object-cover"
@@ -982,14 +962,12 @@ export default function ProductDetail() {
 
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
 
-                          <p className="font-semibold text-white">
-                            {review.user
-                              ?.firstName ||
+                          <p className="break-words font-semibold text-white">
+                            {review.user?.firstName ||
                               "Usuario"}{" "}
-                            {review.user
-                              ?.lastName ||
+                            {review.user?.lastName ||
                               ""}
                           </p>
 
@@ -1005,7 +983,7 @@ export default function ProductDetail() {
 
                       </div>
 
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 flex-wrap items-center gap-4">
 
                         {renderStars(
                           review.rating,
@@ -1026,9 +1004,7 @@ export default function ProductDetail() {
                             }
                             className="inline-flex items-center gap-2 rounded-lg border border-red-900/50 px-3 py-2 text-xs font-semibold text-red-500 transition hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <Trash2
-                              size={15}
-                            />
+                            <Trash2 size={15} />
 
                             {deletingReviewId ===
                             review.id
@@ -1042,7 +1018,7 @@ export default function ProductDetail() {
                     </div>
 
                     {review.comment && (
-                      <p className="mt-5 leading-7 text-zinc-400">
+                      <p className="mt-5 break-words leading-7 text-zinc-400">
                         {review.comment}
                       </p>
                     )}

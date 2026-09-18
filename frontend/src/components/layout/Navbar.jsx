@@ -49,11 +49,9 @@ export default function Navbar() {
 
   const [search, setSearch] = useState("");
   const [categories, setCategories] = useState([]);
-  const [showCategories, setShowCategories] =
-    useState(false);
+  const [showCategories, setShowCategories] = useState(false);
 
-  const [showMobileMenu, setShowMobileMenu] =
-    useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const [showMobileCategories, setShowMobileCategories] =
     useState(false);
@@ -62,8 +60,7 @@ export default function Navbar() {
   // FAVORITOS
   // =========================
 
-  const [favoriteCount, setFavoriteCount] =
-    useState(0);
+  const [favoriteCount, setFavoriteCount] = useState(0);
 
   const [showFavoriteNotification, setShowFavoriteNotification] =
     useState(false);
@@ -87,10 +84,7 @@ export default function Navbar() {
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
       document.removeEventListener(
@@ -157,8 +151,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleFavoriteUpdated = async () => {
-      const currentToken =
-        localStorage.getItem("token");
+      const currentToken = localStorage.getItem("token");
 
       if (!currentToken) {
         setFavoriteCount(0);
@@ -175,9 +168,7 @@ export default function Navbar() {
         setShowFavoriteNotification(true);
 
         if (favoriteTimeoutRef.current) {
-          clearTimeout(
-            favoriteTimeoutRef.current
-          );
+          clearTimeout(favoriteTimeoutRef.current);
         }
 
         favoriteTimeoutRef.current = setTimeout(() => {
@@ -213,9 +204,7 @@ export default function Navbar() {
       );
 
       if (favoriteTimeoutRef.current) {
-        clearTimeout(
-          favoriteTimeoutRef.current
-        );
+        clearTimeout(favoriteTimeoutRef.current);
       }
     };
   }, []);
@@ -273,23 +262,21 @@ export default function Navbar() {
     <>
       {/* NAVBAR FIJO */}
 
-      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 shadow-lg backdrop-blur-md">
-
+      <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/95 shadow-lg backdrop-blur-md">
         {/* Barra superior */}
 
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-3 sm:h-20 sm:gap-6 sm:px-6">
-
+        <div className="flex w-full min-w-0 items-center gap-2 px-3 py-3 sm:h-20 sm:gap-4 sm:px-5 lg:px-6">
           {/* Logo */}
 
           <Link
             to="/"
             onClick={() => setShowMobileMenu(false)}
-            className="flex shrink-0 items-center gap-3"
+            className="flex shrink-0 items-center gap-2 sm:gap-3"
           >
             <img
               src="/logo.png"
               alt="Tecno3D"
-              className="h-10 w-auto sm:h-14"
+              className="h-9 w-auto sm:h-12 lg:h-14"
             />
 
             <div className="hidden lg:block">
@@ -307,13 +294,12 @@ export default function Navbar() {
 
           <form
             onSubmit={handleSearch}
-            className="flex min-w-0 flex-1"
+            className="min-w-0 flex-1"
           >
             <div className="relative w-full">
-
               <Search
                 size={20}
-                className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500 sm:left-4"
+                className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500"
               />
 
               <input
@@ -322,26 +308,22 @@ export default function Navbar() {
                   setSearch(event.target.value)
                 }
                 placeholder="Buscar productos..."
-                className="h-10 w-full rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-3 text-sm text-white outline-none transition focus:border-red-600 sm:h-12 sm:pl-12 sm:pr-4"
+                className="h-10 w-full min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-3 text-sm text-white outline-none transition focus:border-red-600 sm:h-12 sm:pl-12 sm:pr-4"
               />
-
             </div>
           </form>
 
           {/* Acciones desktop */}
 
-          <div className="hidden items-center gap-6 lg:flex">
-
+          <div className="hidden shrink-0 items-center gap-5 lg:flex">
             {/* Favoritos */}
 
             <Link
               to="/favorites"
               aria-label="Mis favoritos"
-              className="relative"
+              className="relative shrink-0"
             >
-              <Heart
-                className="cursor-pointer text-zinc-300 transition hover:text-red-600"
-              />
+              <Heart className="cursor-pointer text-zinc-300 transition hover:text-red-600" />
 
               {showFavoriteNotification && (
                 <span className="absolute -right-3 -top-3 flex h-5 min-w-5 animate-pulse items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold text-white">
@@ -354,7 +336,7 @@ export default function Navbar() {
 
             <Link
               to="/cart"
-              className="relative"
+              className="relative shrink-0"
             >
               <ShoppingCart className="cursor-pointer text-zinc-300 transition hover:text-red-600" />
 
@@ -370,11 +352,11 @@ export default function Navbar() {
             {token && isAdmin && (
               <Link
                 to="/admin"
-                className="flex items-center gap-2 text-sm font-semibold text-zinc-300 transition hover:text-red-500"
+                className="flex shrink-0 items-center gap-2 text-sm font-semibold text-zinc-300 transition hover:text-red-500"
               >
                 <Shield size={20} />
 
-                <span>
+                <span className="hidden xl:block">
                   Administrador
                 </span>
               </Link>
@@ -383,11 +365,10 @@ export default function Navbar() {
             {/* Usuario */}
 
             {token ? (
-              <div className="flex items-center gap-4">
-
+              <div className="flex shrink-0 items-center gap-4">
                 <Link
                   to="/orders"
-                  className="flex items-center gap-2 text-zinc-300 transition hover:text-red-500"
+                  className="flex shrink-0 items-center gap-2 text-zinc-300 transition hover:text-red-500"
                 >
                   <Package size={21} />
 
@@ -398,11 +379,11 @@ export default function Navbar() {
 
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 text-zinc-300 transition hover:text-red-500"
+                  className="flex shrink-0 items-center gap-2 text-zinc-300 transition hover:text-red-500"
                 >
                   <User size={22} />
 
-                  <span className="hidden xl:block text-sm font-medium">
+                  <span className="hidden xl:block max-w-32 truncate text-sm font-medium">
                     {user?.firstName || "Mi cuenta"}
                   </span>
                 </Link>
@@ -410,21 +391,20 @@ export default function Navbar() {
                 <button
                   onClick={handleLogout}
                   title="Cerrar sesión"
-                  className="text-zinc-300 transition hover:text-red-500"
+                  className="shrink-0 text-zinc-300 transition hover:text-red-500"
                 >
                   <LogOut size={21} />
                 </button>
-
               </div>
             ) : (
               <Link
                 to="/login"
                 aria-label="Iniciar sesión"
+                className="shrink-0"
               >
                 <User className="cursor-pointer text-zinc-300 transition hover:text-red-600" />
               </Link>
             )}
-
           </div>
 
           {/* Menú móvil */}
@@ -433,7 +413,7 @@ export default function Navbar() {
             onClick={() =>
               setShowMobileMenu(!showMobileMenu)
             }
-            className="shrink-0 text-zinc-300 transition hover:text-red-500"
+            className="shrink-0 text-zinc-300 transition hover:text-red-500 lg:hidden"
             aria-label="Abrir menú"
           >
             {showMobileMenu ? (
@@ -448,27 +428,21 @@ export default function Navbar() {
               />
             )}
           </button>
-
         </div>
 
         {/* Menú desktop */}
 
-        <div className="hidden border-t border-zinc-800 lg:block">
-
-          <div className="mx-auto flex h-14 max-w-7xl items-center gap-8 px-6 text-sm">
-
+        <div className="hidden w-full border-t border-zinc-800 lg:block">
+          <div className="flex h-14 w-full items-center gap-8 px-6 text-sm">
             {/* Categorías */}
 
             <div
               ref={categoriesRef}
               className="relative"
             >
-
               <button
                 onClick={() =>
-                  setShowCategories(
-                    !showCategories
-                  )
+                  setShowCategories(!showCategories)
                 }
                 className="flex items-center gap-2 text-white transition hover:text-red-500"
               >
@@ -486,7 +460,6 @@ export default function Navbar() {
 
               {showCategories && (
                 <div className="absolute left-0 top-12 z-50 w-64 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
-
                   {categories.length === 0 ? (
                     <div className="px-4 py-3 text-sm text-zinc-500">
                       No hay categorías.
@@ -496,9 +469,7 @@ export default function Navbar() {
                       <button
                         key={category.id}
                         onClick={() =>
-                          handleCategorySearch(
-                            category
-                          )
+                          handleCategorySearch(category)
                         }
                         className="block w-full px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-red-500"
                       >
@@ -506,10 +477,8 @@ export default function Navbar() {
                       </button>
                     ))
                   )}
-
                 </div>
               )}
-
             </div>
 
             {/* Productos */}
@@ -529,21 +498,17 @@ export default function Navbar() {
             >
               Ofertas
             </Link>
-
           </div>
         </div>
 
         {/* Menú móvil */}
 
         {showMobileMenu && (
-          <div className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-zinc-800 bg-zinc-950 lg:hidden">
-
-            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-
+          <div className="max-h-[calc(100vh-4rem)] w-full overflow-y-auto border-t border-zinc-800 bg-zinc-950 lg:hidden">
+            <div className="w-full px-4 py-4 sm:px-6">
               {/* Categorías */}
 
               <div ref={categoriesRef}>
-
                 <button
                   onClick={() =>
                     setShowMobileCategories(
@@ -552,9 +517,7 @@ export default function Navbar() {
                   }
                   className="flex w-full items-center justify-between border-b border-zinc-800 py-4 text-left text-white"
                 >
-                  <span>
-                    Categorías
-                  </span>
+                  <span>Categorías</span>
 
                   <ChevronDown
                     size={18}
@@ -568,7 +531,6 @@ export default function Navbar() {
 
                 {showMobileCategories && (
                   <div className="border-b border-zinc-800 py-2">
-
                     {categories.length === 0 ? (
                       <div className="px-2 py-3 text-sm text-zinc-500">
                         No hay categorías.
@@ -578,9 +540,7 @@ export default function Navbar() {
                         <button
                           key={category.id}
                           onClick={() =>
-                            handleCategorySearch(
-                              category
-                            )
+                            handleCategorySearch(category)
                           }
                           className="block w-full px-2 py-3 text-left text-sm text-zinc-400 transition hover:text-red-500"
                         >
@@ -588,10 +548,8 @@ export default function Navbar() {
                         </button>
                       ))
                     )}
-
                   </div>
                 )}
-
               </div>
 
               {/* Productos */}
@@ -720,12 +678,11 @@ export default function Navbar() {
                   Iniciar sesión
                 </Link>
               )}
-
             </div>
           </div>
         )}
-
       </header>
     </>
   );
 }
+
