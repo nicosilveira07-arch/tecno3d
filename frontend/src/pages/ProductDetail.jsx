@@ -450,7 +450,7 @@ export default function ProductDetail() {
 
           <div>
 
-            <div className="flex gap-4">
+            <div className="flex min-w-0 gap-4">
 
               {/* MINIATURAS */}
 
@@ -495,13 +495,13 @@ export default function ProductDetail() {
 
               {/* IMAGEN GRANDE */}
 
-              <div className="relative flex min-h-[500px] flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+              <div className="relative flex h-[320px] w-full min-w-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 sm:h-[400px] lg:h-[500px]">
 
                 {selectedImage ? (
                   <img
                     src={selectedImage}
                     alt={product.name}
-                    className="h-full max-h-[600px] w-full object-contain p-8"
+                    className="h-full w-full object-contain p-4 sm:p-6 lg:max-h-[600px] lg:p-8"
                   />
                 ) : (
                   <div className="text-center">

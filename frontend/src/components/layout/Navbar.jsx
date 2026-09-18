@@ -277,7 +277,7 @@ export default function Navbar() {
 
         {/* Barra superior */}
 
-        <div className="mx-auto flex h-20 max-w-7xl items-center gap-6 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-3 sm:h-20 sm:gap-6 sm:px-6">
 
           {/* Logo */}
 
@@ -289,7 +289,7 @@ export default function Navbar() {
             <img
               src="/logo.png"
               alt="Tecno3D"
-              className="h-12 sm:h-14"
+              className="h-10 w-auto sm:h-14"
             />
 
             <div className="hidden lg:block">
@@ -313,7 +313,7 @@ export default function Navbar() {
 
               <Search
                 size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+                className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500 sm:left-4"
               />
 
               <input
@@ -322,7 +322,7 @@ export default function Navbar() {
                   setSearch(event.target.value)
                 }
                 placeholder="Buscar productos..."
-                className="h-12 w-full rounded-xl border border-zinc-700 bg-zinc-900 pl-12 pr-4 text-sm text-white outline-none transition focus:border-red-600"
+                className="h-10 w-full rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-3 text-sm text-white outline-none transition focus:border-red-600 sm:h-12 sm:pl-12 sm:pr-4"
               />
 
             </div>
@@ -433,13 +433,19 @@ export default function Navbar() {
             onClick={() =>
               setShowMobileMenu(!showMobileMenu)
             }
-            className="shrink-0 text-zinc-300 transition hover:text-red-500 lg:hidden"
+            className="shrink-0 text-zinc-300 transition hover:text-red-500"
             aria-label="Abrir menú"
           >
             {showMobileMenu ? (
-              <X size={28} />
+              <X
+                size={28}
+                className="h-6 w-6 sm:h-7 sm:w-7"
+              />
             ) : (
-              <Menu size={28} />
+              <Menu
+                size={28}
+                className="h-6 w-6 sm:h-7 sm:w-7"
+              />
             )}
           </button>
 
@@ -530,9 +536,9 @@ export default function Navbar() {
         {/* Menú móvil */}
 
         {showMobileMenu && (
-          <div className="max-h-[calc(100vh-5rem)] overflow-y-auto border-t border-zinc-800 bg-zinc-950 lg:hidden">
+          <div className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-zinc-800 bg-zinc-950 lg:hidden">
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4">
+            <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
 
               {/* Categorías */}
 
@@ -723,4 +729,3 @@ export default function Navbar() {
     </>
   );
 }
-
