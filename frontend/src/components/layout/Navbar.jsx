@@ -14,7 +14,10 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
-import { useCart } from "@/features/cart/cart.store";
+import {
+  useCart,
+  loadUserCart,
+} from "@/features/cart/cart.store";
 import { getCategories } from "@/services/categories.api";
 import { getFavorites } from "@/services/favorites.api";
 
@@ -29,6 +32,28 @@ export default function Navbar() {
   );
 
   const token = localStorage.getItem("token");
+
+  // =========================
+  // SINCRONIZAR CARRITO
+  // =========================
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    // Sincronización inmediata al cargar
+    loadUserCart();
+
+    // Sincronización automática cada 5 segundos
+    const interval = setInterval(() => {
+      loadUserCart();
+    }, 7000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [token]);
 
   const storedUser = localStorage.getItem("user");
 
