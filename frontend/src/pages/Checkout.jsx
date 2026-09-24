@@ -22,13 +22,26 @@ import {
   createOrderPayment,
 } from "@/services/orders.api";
 
+const PHONE_COUNTRIES = [
+  {  code: "+598", iso: "UY" },
+  {  code: "+54", iso: "AR" },
+  {  code: "+55", iso: "BR" },
+  {  code: "+595", iso: "PY" },
+  {  code: "+56", iso: "CL" },
+  {  code: "+591", iso: "BO" },
+  {  code: "+51", iso: "PE" },
+  {  code: "+57", iso: "CO" },
+  {  code: "+593", iso: "EC" },
+];
+
 export default function Checkout() {
   const navigate = useNavigate();
 
   const cart = useCart();
 
   const [addresses, setAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedAddress, setSelectedAddress] =
+    useState(null);
 
   const [deliveryMethod, setDeliveryMethod] =
     useState("address");
@@ -68,7 +81,8 @@ export default function Checkout() {
     state: "",
     country: "Uruguay",
     zipCode: "",
-    phone: "",
+    phoneCountry: "+598",
+    phoneNumber: "",
     isDefault: false,
   });
 
@@ -191,10 +205,37 @@ export default function Checkout() {
       setSavingAddress(true);
       setError("");
 
+      const phone =
+        `${addressForm.phoneCountry} ${addressForm.phoneNumber.trim()}`.trim();
+
       const response =
-        await createAddress(
-          addressForm
-        );
+        await createAddress({
+          title:
+            addressForm.title,
+
+          street:
+            addressForm.street,
+
+          number:
+            addressForm.number,
+
+          city:
+            addressForm.city,
+
+          state:
+            addressForm.state,
+
+          country:
+            addressForm.country,
+
+          zipCode:
+            addressForm.zipCode,
+
+          phone,
+
+          isDefault:
+            addressForm.isDefault,
+        });
 
       const newAddress =
         response.data;
@@ -226,7 +267,8 @@ export default function Checkout() {
         state: "",
         country: "Uruguay",
         zipCode: "",
-        phone: "",
+        phoneCountry: "+598",
+        phoneNumber: "",
         isDefault: false,
       });
     } catch (error) {
@@ -344,10 +386,6 @@ export default function Checkout() {
         setLoading(true);
         setError("");
 
-        // ==================================================
-        // CREAR CHECKOUT SESSION
-        // ==================================================
-
         const expiresAt =
           new Date(
             Date.now() +
@@ -416,10 +454,6 @@ export default function Checkout() {
           session
         );
 
-        // ==================================================
-        // INICIAR MERCADO PAGO
-        // ==================================================
-
         const paymentResponse =
           await createOrderPayment(
             session.id
@@ -440,15 +474,7 @@ export default function Checkout() {
           );
         }
 
-        // ==================================================
-        // LIMPIAR CARRITO
-        // ==================================================
-
         clearCart();
-
-        // ==================================================
-        // REDIRECCIÓN A MERCADO PAGO
-        // ==================================================
 
         window.location.href =
           initPoint;
@@ -479,8 +505,6 @@ export default function Checkout() {
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
 
-          {/* ENTREGA */}
-
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
 
             <div className="mb-8">
@@ -494,8 +518,6 @@ export default function Checkout() {
               </p>
 
             </div>
-
-            {/* MÉTODO DE ENTREGA */}
 
             <div className="grid gap-4 md:grid-cols-2">
 
@@ -559,8 +581,6 @@ export default function Checkout() {
 
             </div>
 
-            {/* DIRECCIONES */}
-
             {deliveryMethod ===
               "address" && (
               <div className="mt-8">
@@ -587,8 +607,6 @@ export default function Checkout() {
                   </button>
 
                 </div>
-
-                {/* FORMULARIO */}
 
                 {showAddressForm && (
                   <form
@@ -682,33 +700,80 @@ export default function Checkout() {
                         className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                       />
 
-                      <input
-                        name="zipCode"
-                        value={
-                          addressForm.zipCode
-                        }
-                        onChange={
-                          handleAddressChange
-                        }
-                        placeholder="Código postal"
-                        required
-                        className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
-                      />
+                      <div className="md:col-span-2">
 
-                      <input
-                        name="phone"
-                        type="tel"
-                        value={
-                          addressForm.phone
-                        }
-                        onChange={
-                          handleAddressChange
-                        }
-                        placeholder="Teléfono de contacto"
-                        required
-                        autoComplete="tel"
-                        className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
-                      />
+                        <label className="mb-2 block text-sm font-semibold text-white">
+                          Código postal y teléfono de contacto
+                        </label>
+
+                        <div className="grid gap-3 md:grid-cols-[0.8fr_1.2fr_1fr]">
+
+                          <input
+                            name="zipCode"
+                            value={
+                              addressForm.zipCode
+                            }
+                            onChange={
+                              handleAddressChange
+                            }
+                            placeholder="Código postal"
+                            required
+                            inputMode="numeric"
+                            autoComplete="postal-code"
+                            className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+                          />
+
+                          <select
+                            name="phoneCountry"
+                            value={
+                              addressForm.phoneCountry
+                            }
+                            onChange={
+                              handleAddressChange
+                            }
+                            required
+                            className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+                          >
+                            {PHONE_COUNTRIES.map(
+                              (country) => (
+                                <option
+                                  key={`${country.iso}-${country.code}`}
+                                  value={
+                                    country.code
+                                  }
+                                  className="bg-zinc-900 text-white"
+                                >
+                                  {country.iso}{" "}
+                                  {country.name}{" "}
+                                  {country.code}
+                                </option>
+                              )
+                            )}
+                          </select>
+
+                          <input
+                            name="phoneNumber"
+                            type="tel"
+                            value={
+                              addressForm.phoneNumber
+                            }
+                            onChange={
+                              handleAddressChange
+                            }
+                            placeholder="Número de Contacto"
+                            required
+                            autoComplete="tel-national"
+                            inputMode="numeric"
+                            className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+                          />
+
+                        </div>
+
+                        <p className="mt-2 text-xs text-zinc-600">
+                          Ingresá solamente el número de teléfono, sin el código de país.
+                        </p>
+
+                      </div>
 
                       <label className="flex items-center gap-3 text-sm text-zinc-400">
 
@@ -760,8 +825,6 @@ export default function Checkout() {
 
                   </form>
                 )}
-
-                {/* LISTADO */}
 
                 {loadingAddresses ? (
                   <p className="text-zinc-500">
@@ -869,8 +932,6 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* RETIRO EN LOCAL */}
-
             {deliveryMethod ===
               "pickup" && (
               <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-6">
@@ -910,15 +971,11 @@ export default function Checkout() {
 
           </div>
 
-          {/* RESUMEN */}
-
           <div className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
 
             <h2 className="mb-6 text-2xl font-bold text-white">
               Resumen del pedido
             </h2>
-
-            {/* MÉTODO DE ENTREGA */}
 
             <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
@@ -980,8 +1037,6 @@ export default function Checkout() {
 
             </div>
 
-            {/* PRODUCTOS */}
-
             <div className="space-y-4">
 
               {cart.map(
@@ -1021,8 +1076,6 @@ export default function Checkout() {
               )}
 
             </div>
-
-            {/* CUPÓN */}
 
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
@@ -1113,8 +1166,6 @@ export default function Checkout() {
 
             </div>
 
-            {/* TOTALES */}
-
             <div className="mt-6 space-y-3">
 
               <div className="flex justify-between">
@@ -1190,3 +1241,4 @@ export default function Checkout() {
     </section>
   );
 }
+
