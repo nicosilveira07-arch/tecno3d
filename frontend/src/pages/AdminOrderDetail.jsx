@@ -750,6 +750,12 @@ export default function AdminOrderDetail() {
             <p className="mt-1 text-sm text-zinc-500">
               CP: {order.address.zipCode}
             </p>
+                    
+            {order.address.phone && (
+              <p className="mt-1 text-sm font-semibold text-zinc-300">
+                Teléfono de contacto: {order.address.phone}
+              </p>
+            )}
 
           </div>
         )}

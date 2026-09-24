@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-
 const addressSchema = z.object({
+
   title: z
     .string()
     .min(2, "El título es obligatorio."),
@@ -30,14 +30,17 @@ const addressSchema = z.object({
     .string()
     .min(2, "El código postal es obligatorio."),
 
+  phone: z
+    .string()
+    .min(7, "El teléfono es obligatorio."),
+
   isDefault: z
     .boolean()
     .optional(),
+
 });
 
-
 const updateAddressSchema = addressSchema.partial();
-
 
 export {
   addressSchema,

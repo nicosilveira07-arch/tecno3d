@@ -82,6 +82,21 @@ export async function processMercadoPagoWebhookService(data) {
     paymentMP.status
   );
 
+  console.log(
+    "TIPO DE PAGO MP:",
+    paymentMP.payment_type_id
+  );
+
+  console.log(
+    "MÉTODO DE PAGO MP:",
+    paymentMP.payment_method_id
+  );
+
+  console.log(
+    "VENCIMIENTO MP:",
+    paymentMP.date_of_expiration
+  );
+
   // =========================================================
   // OBTENER CHECKOUT SESSION ID
   // =========================================================
@@ -148,6 +163,58 @@ export async function processMercadoPagoWebhookService(data) {
     "EXTERNAL RESOURCE URL:",
     paymentInstructionsUrl
   );
+
+  // =========================================================
+  // DETERMINAR VENCIMIENTO REAL DE MERCADO PAGO
+  // =========================================================
+  //
+  // Para medios de pago tipo ticket, como Abitab,
+  // Mercado Pago informa la fecha real hasta la cual
+  // el ticket puede ser pagado.
+  //
+  // Respetamos esa fecha en lugar de utilizar los
+  // 30 minutos originales del CheckoutSession.
+  //
+  // Para otros medios de pago pendientes no modificamos
+  // expiresAt y se mantiene el vencimiento normal.
+  // =========================================================
+
+  let mercadoPagoExpirationDate = null;
+
+  if (
+    paymentMP.payment_type_id === "ticket" &&
+    paymentMP.date_of_expiration
+  ) {
+    const parsedExpirationDate =
+      new Date(
+        paymentMP.date_of_expiration
+      );
+
+    if (
+      !Number.isNaN(
+        parsedExpirationDate.getTime()
+      )
+    ) {
+      mercadoPagoExpirationDate =
+        parsedExpirationDate;
+
+      console.log(
+        "TICKET MERCADO PAGO DETECTADO."
+      );
+
+      console.log(
+        "SE RESPETARÁ EL VENCIMIENTO OFICIAL DE MERCADO PAGO:"
+      );
+
+      console.log(
+        mercadoPagoExpirationDate.toISOString()
+      );
+    } else {
+      console.warn(
+        "Mercado Pago devolvió una fecha de vencimiento inválida."
+      );
+    }
+  }
 
   // =========================================================
   // BUSCAR CHECKOUT SESSION
@@ -345,28 +412,47 @@ export async function processMercadoPagoWebhookService(data) {
       "=========================================="
     );
 
+    const pendingPaymentData = {
+      paymentStatus: "PENDING",
+
+      paymentMethod:
+        session.paymentMethod ||
+        "MERCADO_PAGO",
+
+      paymentPreferenceId:
+        session.paymentPreferenceId,
+
+      paymentTransactionId:
+        String(paymentMP.id),
+
+      paymentReferenceId,
+
+      paymentVerificationCode,
+
+      paymentInstructionsUrl,
+    };
+
+    // =======================================================
+    // RESPETAR VENCIMIENTO OFICIAL DE MERCADO PAGO
+    // =======================================================
+
+    if (mercadoPagoExpirationDate) {
+      pendingPaymentData.expiresAt =
+        mercadoPagoExpirationDate;
+
+      console.log(
+        "EXPIRES AT ACTUALIZADO SEGÚN MERCADO PAGO:"
+      );
+
+      console.log(
+        mercadoPagoExpirationDate.toISOString()
+      );
+    }
+
     await updateCheckoutSessionStatus(
       session.id,
       "PAYMENT_PENDING",
-      {
-        paymentStatus: "PENDING",
-
-        paymentMethod:
-          session.paymentMethod ||
-          "MERCADO_PAGO",
-
-        paymentPreferenceId:
-          session.paymentPreferenceId,
-
-        paymentTransactionId:
-          String(paymentMP.id),
-
-        paymentReferenceId,
-
-        paymentVerificationCode,
-
-        paymentInstructionsUrl,
-      }
+      pendingPaymentData
     );
 
     console.log(
@@ -390,4 +476,3 @@ export async function processMercadoPagoWebhookService(data) {
 
   return true;
 }
-

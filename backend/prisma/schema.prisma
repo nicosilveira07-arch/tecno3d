@@ -7,6 +7,297 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                         String            @id @default(cuid())
+  firstName                  String
+  lastName                   String
+  email                      String            @unique
+  password                   String
+  phone                      String?
+  avatar                     String?
+  role                       Role              @default(CUSTOMER)
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+  createdById                String?
+  googleId                   String?           @unique
+  phoneVerificationAttempts  Int               @default(0)
+  phoneVerificationCodeHash  String?
+  phoneVerificationExpiresAt DateTime?
+  phoneVerified              Boolean           @default(false)
+  addresses                  Address[]
+  cart                       Cart?
+  checkoutSessions           CheckoutSession[]
+  favorites                  Favorite[]
+  orders                     Order[]
+  products                   Product[]
+  reviews                    Review[]
+  createdBy                  User?             @relation("UserCreatedUsers", fields: [createdById], references: [id])
+  createdUsers               User[]            @relation("UserCreatedUsers")
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  buttonText  String   @default("Comprar ahora")
+  link        String
+  image       String
+  publicId    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+}
+
+model Address {
+  id               String            @id @default(cuid())
+  userId           String
+  title            String
+  street           String
+  number           String
+  city             String
+  state            String
+  country          String
+  zipCode          String
+  isDefault        Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  phone            String?
+  user             User              @relation(fields: [userId], references: [id])
+  checkoutSessions CheckoutSession[]
+  orders           Order[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  image    String?
+  featured Boolean   @default(false)
+  products Product[]
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  featured  Boolean   @default(false)
+  products  Product[]
+}
+
+model Product {
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String                @unique
+  description          String
+  price                Float
+  stock                Int
+  image                String?
+  status               ProductStatus         @default(ACTIVE)
+  categoryId           String
+  ownerId              String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  brandId              String?
+  offerActive          Boolean               @default(false)
+  offerPercentage      Int?
+  offerPrice           Float?
+  cartItems            CartItem[]
+  checkoutSessionItems CheckoutSessionItem[]
+  favorites            Favorite[]
+  orderItems           OrderItem[]
+  brand                Brand?                @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  owner                User?                 @relation(fields: [ownerId], references: [id])
+  images               ProductImage[]
+  reviews              Review[]
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model CheckoutSession {
+  id                      String                @id @default(cuid())
+  userId                  String
+  total                   Float
+  discount                Float                 @default(0)
+  couponId                String?
+  deliveryMethod          DeliveryMethod        @default(SHIPPING)
+  addressId               String?
+  status                  CheckoutSessionStatus @default(ACTIVE)
+  paymentStatus           PaymentStatus?
+  paymentMethod           PaymentMethod?
+  paymentPreferenceId     String?
+  paymentTransactionId    String?
+  expiresAt               DateTime
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  paymentInstructionsUrl  String?
+  paymentReferenceId      String?
+  paymentVerificationCode String?
+  address                 Address?              @relation(fields: [addressId], references: [id])
+  coupon                  Coupon?               @relation(fields: [couponId], references: [id])
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                   CheckoutSessionItem[]
+
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@index([paymentPreferenceId])
+}
+
+model CheckoutSessionItem {
+  id                String          @id @default(cuid())
+  quantity          Int
+  price             Float
+  productName       String
+  checkoutSessionId String
+  productId         String?
+  checkoutSession   CheckoutSession @relation(fields: [checkoutSessionId], references: [id], onDelete: Cascade)
+  product           Product?        @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  total           Float
+  status          OrderStatus    @default(PENDING)
+  userId          String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  addressId       String?
+  deliveryMethod  DeliveryMethod @default(SHIPPING)
+  shippingCompany String?
+  trackingNumber  String?
+  couponId        String?
+  discount        Float          @default(0)
+  address         Address?       @relation(fields: [addressId], references: [id])
+  coupon          Coupon?        @relation(fields: [couponId], references: [id])
+  user            User?          @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  payment         Payment?
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  quantity    Int
+  price       Float
+  orderId     String
+  productId   String?
+  productName String
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  order         Order         @relation(fields: [orderId], references: [id])
+}
+
+model Coupon {
+  id               String            @id @default(cuid())
+  code             String            @unique
+  type             CouponType
+  value            Float
+  maxUses          Int?
+  usedCount        Int               @default(0)
+  expiresAt        DateTime?
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  checkoutSessions CheckoutSession[]
+  orders           Order[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model StoreSettings {
+  id               String   @id @default(cuid())
+  storeName        String   @default("TECNO 3D")
+  description      String?
+  logo             String?
+  logoPublicId     String?
+  address          String?
+  city             String?
+  department       String?
+  country          String?
+  phone            String?
+  email            String?
+  whatsappNumber   String?
+  whatsappMessage  String?
+  instagram        String?
+  facebook         String?
+  tiktok           String?
+  youtube          String?
+  openingHours     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  offerButtonText  String?
+  offerButtonUrl   String?  @default("/offers")
+  offerDescription String?
+  offerEnabled     Boolean  @default(true)
+  offerEyebrow     String?
+  offerTitle       String?
+}
+
 enum Role {
   ADMIN
   EMPLOYEE
@@ -56,497 +347,4 @@ enum CheckoutSessionStatus {
   PAYMENT_PENDING
   COMPLETED
   FAILED
-  EXPIRED
-}
-
-model User {
-  id String @id @default(cuid())
-
-  firstName String
-
-  lastName String
-
-  email String @unique
-
-  googleId String? @unique
-
-  password String
-
-  phone String?
-
-  avatar String?
-
-  role Role @default(CUSTOMER)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  products Product[]
-
-  orders Order[]
-
-  addresses Address[]
-
-  cart Cart?
-
-  reviews Review[]
-
-  favorites Favorite[]
-
-  checkoutSessions CheckoutSession[]
-
-  createdUsers User[] @relation("UserCreatedUsers")
-
-  createdById String?
-
-  createdBy User? @relation("UserCreatedUsers", fields: [createdById], references: [id], onDelete: SetNull)
-}
-
-model Banner {
-  id String @id @default(cuid())
-
-  title String
-
-  description String?
-
-  buttonText String @default("Comprar ahora")
-
-  link String
-
-  image String
-
-  publicId String?
-
-  active Boolean @default(true)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-}
-
-model Cart {
-  id String @id @default(cuid())
-
-  userId String @unique
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-
-  items CartItem[]
-}
-
-model CartItem {
-  id String @id @default(cuid())
-
-  cartId String
-
-  productId String
-
-  quantity Int
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  cart Cart @relation(fields: [cartId], references: [id])
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([cartId, productId])
-}
-
-model Address {
-  id String @id @default(cuid())
-
-  userId String
-
-  title String
-
-  street String
-
-  number String
-
-  city String
-
-  state String
-
-  country String
-
-  zipCode String
-
-  isDefault Boolean @default(false)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-
-  orders Order[]
-
-  checkoutSessions CheckoutSession[]
-}
-
-model Category {
-  id String @id @default(cuid())
-
-  name String
-
-  slug String @unique
-
-  image String?
-
-  featured Boolean @default(false)
-
-  products Product[]
-}
-
-model Brand {
-  id String @id @default(cuid())
-
-  name String @unique
-
-  slug String @unique
-
-  image String?
-
-  featured Boolean @default(false)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  products Product[]
-}
-
-model Product {
-  id String @id @default(cuid())
-
-  name String
-
-  slug String @unique
-
-  description String
-
-  price Float
-
-  offerPrice Float?
-
-  offerPercentage Int?
-
-  offerActive Boolean @default(false)
-
-  stock Int
-
-  image String?
-
-  status ProductStatus @default(ACTIVE)
-
-  categoryId String
-
-  brandId String?
-
-  ownerId String?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  brand Brand? @relation(fields: [brandId], references: [id], onDelete: Cascade)
-
-  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-
-  orderItems OrderItem[]
-
-  cartItems CartItem[]
-
-  checkoutSessionItems CheckoutSessionItem[]
-
-  reviews Review[]
-
-  images ProductImage[]
-
-  favorites Favorite[]
-}
-
-model ProductImage {
-  id String @id @default(cuid())
-
-  url String
-
-  publicId String
-
-  productId String
-
-  createdAt DateTime @default(now())
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model CheckoutSession {
-  id String @id @default(cuid())
-
-  userId String
-
-  total Float
-
-  discount Float @default(0)
-
-  couponId String?
-
-  deliveryMethod DeliveryMethod @default(SHIPPING)
-
-  addressId String?
-
-  status CheckoutSessionStatus @default(ACTIVE)
-
-  paymentStatus PaymentStatus?
-
-  paymentMethod PaymentMethod?
-
-  paymentPreferenceId String?
-
-  paymentTransactionId String?
-
-  paymentReferenceId String?
-
-  paymentVerificationCode String?
-
-  paymentInstructionsUrl String?
-
-  expiresAt DateTime
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
-
-  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
-
-  items CheckoutSessionItem[]
-
-  @@index([userId, status])
-  @@index([status, expiresAt])
-  @@index([paymentPreferenceId])
-}
-
-model CheckoutSessionItem {
-  id String @id @default(cuid())
-
-  quantity Int
-
-  price Float
-
-  productName String
-
-  checkoutSessionId String
-
-  productId String?
-
-  checkoutSession CheckoutSession @relation(fields: [checkoutSessionId], references: [id], onDelete: Cascade)
-
-  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-}
-
-model Order {
-  id String @id @default(cuid())
-
-  total Float
-
-  discount Float @default(0)
-
-  couponId String?
-
-  status OrderStatus @default(PENDING)
-
-  deliveryMethod DeliveryMethod @default(SHIPPING)
-
-  addressId String?
-
-  userId String?
-
-  shippingCompany String?
-
-  trackingNumber String?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
-
-  items OrderItem[]
-
-  payment Payment?
-
-  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
-}
-
-model OrderItem {
-  id String @id @default(cuid())
-
-  quantity Int
-
-  price Float
-
-  productName String
-
-  orderId String
-
-  productId String?
-
-  order Order @relation(fields: [orderId], references: [id])
-
-  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-}
-
-model Payment {
-  id String @id @default(cuid())
-
-  orderId String @unique
-
-  amount Float
-
-  status PaymentStatus @default(PENDING)
-
-  method PaymentMethod
-
-  transactionId String?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id])
-}
-
-model Coupon {
-  id String @id @default(cuid())
-
-  code String @unique
-
-  type CouponType
-
-  value Float
-
-  maxUses Int?
-
-  usedCount Int @default(0)
-
-  expiresAt DateTime?
-
-  active Boolean @default(true)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  orders Order[]
-
-  checkoutSessions CheckoutSession[]
-}
-
-model Review {
-  id String @id @default(cuid())
-
-  rating Int
-
-  comment String?
-
-  userId String
-
-  productId String
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-}
-
-model Favorite {
-  id String @id @default(cuid())
-
-  userId String
-
-  productId String
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId])
-}
-
-model StoreSettings {
-  id String @id @default(cuid())
-
-  storeName String @default("TECNO 3D")
-
-  description String?
-
-  logo String?
-
-  logoPublicId String?
-
-  address String?
-
-  city String?
-
-  department String?
-
-  country String?
-
-  phone String?
-
-  email String?
-
-  whatsappNumber String?
-
-  whatsappMessage String?
-
-  instagram String?
-
-  facebook String?
-
-  tiktok String?
-
-  youtube String?
-
-  openingHours String?
-
-  // BANNER DE OFERTAS
-
-  offerEnabled Boolean @default(true)
-
-  offerEyebrow String?
-
-  offerTitle String?
-
-  offerDescription String?
-
-  offerButtonText String?
-
-  offerButtonUrl String? @default("/offers")
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
 }

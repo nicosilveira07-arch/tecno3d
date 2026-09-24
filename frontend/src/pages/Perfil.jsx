@@ -70,6 +70,7 @@ export default function Perfil() {
     state: "",
     country: "",
     zipCode: "",
+    phone: "",
     isDefault: false,
   });
 
@@ -119,6 +120,7 @@ export default function Perfil() {
       state: "",
       country: "",
       zipCode: "",
+      phone: "",
       isDefault: false,
     });
 
@@ -137,6 +139,7 @@ export default function Perfil() {
       state: "",
       country: "",
       zipCode: "",
+      phone: "",
       isDefault: addresses.length === 0,
     });
 
@@ -154,6 +157,7 @@ export default function Perfil() {
       state: address.state || "",
       country: address.country || "",
       zipCode: address.zipCode || "",
+      phone: address.phone || "",
       isDefault: address.isDefault || false,
     });
 
@@ -914,6 +918,11 @@ export default function Perfil() {
                               {address.zipCode}
                             </p>
 
+                            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
+                              <Phone size={14} />
+                              {address.phone || "Teléfono no especificado"}
+                            </p>
+
                           </div>
                         </div>
 
@@ -1100,6 +1109,27 @@ export default function Perfil() {
                       required
                       className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-red-600"
                     />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-sm font-semibold text-zinc-400">
+                      Teléfono de contacto
+                    </label>
+
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={addressForm.phone}
+                      onChange={handleAddressChange}
+                      placeholder="Ej: 099 123 456"
+                      required
+                      autoComplete="tel"
+                      className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-red-600"
+                    />
+
+                    <p className="mt-2 text-xs text-zinc-600">
+                      Necesario para coordinar y notificar la entrega.
+                    </p>
                   </div>
 
                 </div>

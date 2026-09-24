@@ -11,23 +11,23 @@ export default function Orders() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const [
-          ordersResponse,
-          pendingResponse,
-        ] = await Promise.all([
-          api.get("/orders/my-orders"),
-          api.get("/checkout-sessions/my-pending"),
-        ]);
-
+        setLoading(true);
+        setError("");
+      
+        const ordersResponse =
+          await api.get("/orders/my-orders");
+      
         const ordersData =
-          Array.isArray(ordersResponse.data.data)
+          Array.isArray(
+            ordersResponse.data.data
+          )
             ? ordersResponse.data.data
             : [];
-
-        // La nueva arquitectura ya no utiliza
-        // Orders con estado PENDING.
-        //
+        
         // Solo mostramos pedidos reales.
+        // Los pedidos PENDING ya no forman parte
+        // de la arquitectura actual.
+        
         const realOrders =
           ordersData.filter((order) =>
             [
@@ -38,20 +38,47 @@ export default function Orders() {
               "CANCELLED",
             ].includes(order.status)
           );
-
-        const pendingData =
-          Array.isArray(pendingResponse.data.data)
-            ? pendingResponse.data.data
-            : [];
-
+        
         setOrders(realOrders);
-        setPendingCheckouts(pendingData);
+        
+        // ======================================================
+        // COMPRAS EN TRÁMITE
+        // ======================================================
+        //
+        // Esta consulta es independiente.
+        // Si falla, NO debe impedir mostrar los pedidos reales.
+        
+        try {
+          const pendingResponse =
+            await api.get(
+              "/checkout-sessions/my-pending"
+            );
+          
+          const pendingData =
+            Array.isArray(
+              pendingResponse.data.data
+            )
+              ? pendingResponse.data.data
+              : [];
+          
+          setPendingCheckouts(
+            pendingData
+          );
+        } catch (pendingError) {
+          console.error(
+            "ERROR CARGANDO COMPRAS EN TRÁMITE:",
+            pendingError
+          );
+        
+          // No hacemos fallar la pantalla completa.
+          setPendingCheckouts([]);
+        }
       } catch (error) {
         console.error(
           "ERROR CARGANDO PEDIDOS:",
           error
         );
-
+      
         setError(
           error.response?.data?.message ||
             "No se pudieron cargar los pedidos."
@@ -60,7 +87,7 @@ export default function Orders() {
         setLoading(false);
       }
     };
-
+  
     loadOrders();
   }, []);
 
@@ -113,20 +140,12 @@ export default function Orders() {
       return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
     }
 
-    if (status === "EXPIRED") {
-      return "bg-red-500/10 text-red-400 border-red-500/30";
-    }
-
     return "bg-zinc-500/10 text-zinc-400 border-zinc-500/30";
   };
 
   const getCheckoutStatusLabel = (status) => {
     if (status === "PAYMENT_PENDING") {
       return "Pago pendiente";
-    }
-
-    if (status === "EXPIRED") {
-      return "Cancelado por vencimiento";
     }
 
     return status;
@@ -295,14 +314,6 @@ export default function Orders() {
                         Una vez aprobado, esta compra se
                         convertirá automáticamente en un
                         pedido confirmado.
-                      </p>
-                    )}
-
-                    {checkout.status === "EXPIRED" && (
-                      <p className="mt-4 text-sm text-red-400">
-                        El plazo para completar el pago
-                        venció. Esta compra fue cancelada y
-                        no generó un pedido.
                       </p>
                     )}
 
@@ -538,4 +549,3 @@ export default function Orders() {
     </section>
   );
 }
-

@@ -29,11 +29,7 @@ export async function createMercadoPagoPreference(
     notification_url:
       notificationUrl,
 
-    // La referencia externa ahora identifica
-    // la sesión temporal de checkout.
-    //
-    // Todavía NO utilizamos Order porque el pedido
-    // definitivo se creará posteriormente.
+
 
     external_reference:
       data.checkoutSessionId,

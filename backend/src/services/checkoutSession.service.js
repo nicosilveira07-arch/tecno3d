@@ -1,164 +1,231 @@
 import {
-createCheckoutSession,
-getCheckoutSessionById,
-getActiveCheckoutSessionByUser,
-updateCheckoutSession,
-updateCheckoutSessionStatus,
-deleteCheckoutSession,
-getPendingCheckoutSessionsByUser,
-getPendingCheckoutSessions,
+  createCheckoutSession,
+  getCheckoutSessionById,
+  getActiveCheckoutSessionByUser,
+  updateCheckoutSession,
+  updateCheckoutSessionStatus,
+  deleteCheckoutSession,
+  deleteCheckoutSessionItems,
+  getPendingCheckoutSessionsByUser,
+  getPendingCheckoutSessions,
 } from "../repositories/checkoutSession.repository.js";
+
+import {
+  findById,
+} from "../repositories/address.repository.js";
+
+const deleteExpiredCheckoutSession =
+  async (
+    sessionId,
+    userId
+  ) => {
+    await deleteCheckoutSessionItems(
+      sessionId
+    );
+
+    await deleteCheckoutSession(
+      sessionId,
+      userId
+    );
+  };
 
 // ======================================================
 // CREAR CHECKOUT SESSION
 // ======================================================
 
 const createCheckoutSessionService = async (
-data
+  data
 ) => {
-const {
-userId,
-total,
-discount = 0,
-couponId = null,
-deliveryMethod = "SHIPPING",
-addressId = null,
-items,
-expiresAt,
-} = data;
+  const {
+    userId,
+    total,
+    discount = 0,
+    couponId = null,
+    deliveryMethod = "SHIPPING",
+    addressId = null,
+    items,
+    expiresAt,
+  } = data;
 
-if (!userId) {
-throw new Error(
-"El usuario es obligatorio."
-);
-}
+  if (!userId) {
+    throw new Error(
+      "El usuario es obligatorio."
+    );
+  }
 
-if (
-!Array.isArray(items) ||
-items.length === 0
-) {
-throw new Error(
-"La sesión de checkout debe contener al menos un producto."
-);
-}
+  if (
+    !Array.isArray(items) ||
+    items.length === 0
+  ) {
+    throw new Error(
+      "La sesión de checkout debe contener al menos un producto."
+    );
+  }
 
-if (
-!Number.isFinite(Number(total)) ||
-Number(total) < 0
-) {
-throw new Error(
-"El total del checkout no es válido."
-);
-}
+  if (
+    !Number.isFinite(Number(total)) ||
+    Number(total) < 0
+  ) {
+    throw new Error(
+      "El total del checkout no es válido."
+    );
+  }
 
-if (
-!["SHIPPING", "PICKUP"].includes(
-deliveryMethod
-)
-) {
-throw new Error(
-"Método de entrega inválido."
-);
-}
+  if (
+    !["SHIPPING", "PICKUP"].includes(
+      deliveryMethod
+    )
+  ) {
+    throw new Error(
+      "Método de entrega inválido."
+    );
+  }
 
-if (
-deliveryMethod === "SHIPPING" &&
-!addressId
-) {
-throw new Error(
-"Debes seleccionar una dirección de envío."
-);
-}
+  // ======================================================
+  // VALIDAR DIRECCIÓN DE ENVÍO
+  // ======================================================
 
-if (
-deliveryMethod === "PICKUP" &&
-addressId
-) {
-throw new Error(
-"El retiro en local no debe tener una dirección."
-);
-}
+  if (
+    deliveryMethod === "SHIPPING" &&
+    !addressId
+  ) {
+    throw new Error(
+      "Debes seleccionar una dirección de envío."
+    );
+  }
 
-if (!expiresAt) {
-throw new Error(
-"La sesión de checkout debe tener una fecha de vencimiento."
-);
-}
+  if (deliveryMethod === "SHIPPING") {
+    const address = await findById(addressId);
 
-const expirationDate =
-new Date(expiresAt);
+    if (!address) {
+      throw new Error(
+        "La dirección de envío no existe."
+      );
+    }
 
-if (
-Number.isNaN(
-expirationDate.getTime()
-)
-) {
-throw new Error(
-"La fecha de vencimiento no es válida."
-);
-}
+    if (address.userId !== userId) {
+      throw new Error(
+        "La dirección de envío no pertenece al usuario."
+      );
+    }
 
-if (
-expirationDate <= new Date()
-) {
-throw new Error(
-"La sesión de checkout ya está vencida."
-);
-}
+    if (
+      !address.phone ||
+      !address.phone.trim()
+    ) {
+      throw new Error(
+        "La dirección de envío debe tener un teléfono de contacto."
+      );
+    }
 
-const activeSession =
-await getActiveCheckoutSessionByUser(
-userId
-);
+    if (
+      !address.city ||
+      !address.city.trim()
+    ) {
+      throw new Error(
+        "La dirección de envío debe tener una ciudad."
+      );
+    }
 
-// Si ya existe una sesión activa, reutilizarla
-// en lugar de crear otra sesión temporal.
+    if (
+      !address.state ||
+      !address.state.trim()
+    ) {
+      throw new Error(
+        "La dirección de envío debe tener un departamento."
+      );
+    }
+  }
 
-if (activeSession) {
-return await updateCheckoutSession(
-activeSession.id,
-{
-total: Number(total),
-discount: Number(discount),
-couponId,
-deliveryMethod,
-addressId:
-deliveryMethod === "SHIPPING"
-? addressId
-: null,
-expiresAt:
-expirationDate,
-}
-);
-}
+  if (
+    deliveryMethod === "PICKUP" &&
+    addressId
+  ) {
+    throw new Error(
+      "El retiro en local no debe tener una dirección."
+    );
+  }
 
-return await createCheckoutSession({
-userId,
-total: Number(total),
-discount: Number(discount),
-couponId,
-deliveryMethod,
-addressId:
-deliveryMethod === "SHIPPING"
-? addressId
-: null,
-status: "ACTIVE",
-expiresAt: expirationDate,
-items: {
-create: items.map(
-(item) => ({
-quantity:
-Number(item.quantity),
-price:
-Number(item.price),
-productName:
-item.productName,
-productId:
-item.productId || null,
-})
-),
-},
-});
+  if (!expiresAt) {
+    throw new Error(
+      "La sesión de checkout debe tener una fecha de vencimiento."
+    );
+  }
+
+  const expirationDate =
+    new Date(expiresAt);
+
+  if (
+    Number.isNaN(
+      expirationDate.getTime()
+    )
+  ) {
+    throw new Error(
+      "La fecha de vencimiento no es válida."
+    );
+  }
+
+  if (
+    expirationDate <= new Date()
+  ) {
+    throw new Error(
+      "La sesión de checkout ya está vencida."
+    );
+  }
+
+  const activeSession =
+    await getActiveCheckoutSessionByUser(
+      userId
+    );
+
+  // Si ya existe una sesión activa, reutilizarla
+  // en lugar de crear otra sesión temporal.
+
+  if (activeSession) {
+    return await updateCheckoutSession(
+      activeSession.id,
+      {
+        total: Number(total),
+        discount: Number(discount),
+        couponId,
+        deliveryMethod,
+        addressId:
+          deliveryMethod === "SHIPPING"
+            ? addressId
+            : null,
+        expiresAt:
+          expirationDate,
+      }
+    );
+  }
+
+  return await createCheckoutSession({
+    userId,
+    total: Number(total),
+    discount: Number(discount),
+    couponId,
+    deliveryMethod,
+    addressId:
+      deliveryMethod === "SHIPPING"
+        ? addressId
+        : null,
+    status: "ACTIVE",
+    expiresAt: expirationDate,
+    items: {
+      create: items.map(
+        (item) => ({
+          quantity:
+            Number(item.quantity),
+          price:
+            Number(item.price),
+          productName:
+            item.productName,
+          productId:
+            item.productId || null,
+        })
+      ),
+    },
+  });
 };
 
 // ======================================================
@@ -166,42 +233,41 @@ item.productId || null,
 // ======================================================
 
 const getCheckoutSessionService = async (
-id,
-userId
+  id,
+  userId
 ) => {
-const session =
-await getCheckoutSessionById(
-id,
-userId
-);
+  const session =
+    await getCheckoutSessionById(
+      id,
+      userId
+    );
 
-if (!session) {
-throw new Error(
-"Sesión de checkout no encontrada."
-);
-}
-
-if (
-session.expiresAt <= new Date() &&
-(
-session.status === "ACTIVE" ||
-session.status === "PAYMENT_PENDING"
-)
-) {
-await updateCheckoutSessionStatus(
-session.id,
-"EXPIRED"
-);
+  if (!session) {
+    throw new Error(
+      "Sesión de checkout no encontrada."
+    );
+  }
 
 
-throw new Error(
-  "La sesión de checkout ha vencido."
-);
 
+  if (
+    session.expiresAt <= new Date() &&
+    (
+      session.status === "ACTIVE" ||
+      session.status === "PAYMENT_PENDING"
+    )
+  ) {
+    await deleteExpiredCheckoutSession(
+      session.id,
+      userId
+    );
 
-}
+    throw new Error(
+      "La sesión de checkout ha vencido."
+    );
+  }
 
-return session;
+  return session;
 };
 
 // ======================================================
@@ -209,58 +275,64 @@ return session;
 // ======================================================
 
 const updateCheckoutSessionService = async (
-id,
-userId,
-data
+  id,
+  userId,
+  data
 ) => {
-const session =
-await getCheckoutSessionById(
-id,
-userId
-);
+  const session =
+    await getCheckoutSessionById(
+      id,
+      userId
+    );
 
-if (!session) {
-throw new Error(
-"Sesión de checkout no encontrada."
-);
-}
+  if (!session) {
+    throw new Error(
+      "Sesión de checkout no encontrada."
+    );
+  }
 
-if (
-session.status ===
-"PAYMENT_PENDING"
-) {
-throw new Error(
-"La sesión tiene un pago pendiente y no puede modificarse."
-);
-}
+  if (
+    session.status ===
+    "PAYMENT_PENDING"
+  ) {
+    throw new Error(
+      "La sesión tiene un pago pendiente y no puede modificarse."
+    );
+  }
 
-if (
-session.status !== "ACTIVE"
-) {
-throw new Error(
-"La sesión de checkout ya no puede modificarse."
-);
-}
+  if (
+    session.status !== "ACTIVE"
+  ) {
+    throw new Error(
+      "La sesión de checkout ya no puede modificarse."
+    );
+  }
 
-if (
-session.expiresAt <= new Date()
-) {
-await updateCheckoutSessionStatus(
-session.id,
-"EXPIRED"
-);
+  // ====================================================
+  // SESIÓN VENCIDA
+  // ====================================================
+  //
+  // Se elimina físicamente.
+  // No se marca como EXPIRED.
+  // ====================================================
 
-throw new Error(
-  "La sesión de checkout ha vencido."
-);
+  if (
+    session.expiresAt <= new Date()
+  ) {
+    await deleteExpiredCheckoutSession(
+      session.id,
+      userId
+    );
 
+    throw new Error(
+      "La sesión de checkout ha vencido."
+    );
+  }
 
-}
-
-return await updateCheckoutSession(
-session.id,
-data
-);
+  return await updateCheckoutSession(
+    session.id,
+    data
+  );
 };
 
 // ======================================================
@@ -268,273 +340,263 @@ data
 // ======================================================
 
 const markCheckoutSessionPaymentPendingService =
-async (
-id,
-userId,
-paymentData
-) => {
-const session =
-await getCheckoutSessionById(
-id,
-userId
-);
+  async (
+    id,
+    userId,
+    paymentData
+  ) => {
+    const session =
+      await getCheckoutSessionById(
+        id,
+        userId
+      );
 
+    if (!session) {
+      throw new Error(
+        "Sesión de checkout no encontrada."
+      );
+    }
 
-if (!session) {
-  throw new Error(
-    "Sesión de checkout no encontrada."
-  );
-}
+    if (
+      session.status === "COMPLETED"
+    ) {
+      throw new Error(
+        "La sesión de checkout ya fue completada."
+      );
+    }
 
-if (
-  session.status === "COMPLETED"
-) {
-  throw new Error(
-    "La sesión de checkout ya fue completada."
-  );
-}
+    if (
+      session.status ===
+      "EXPIRED"
+    ) {
+      throw new Error(
+        "La sesión de checkout ha vencido."
+      );
+    }
 
-if (
-  session.status === "EXPIRED"
-) {
-  throw new Error(
-    "La sesión de checkout ha vencido."
-  );
-}
+    return await updateCheckoutSessionStatus(
+      id,
+      "PAYMENT_PENDING",
+      {
+        paymentStatus:
+          paymentData?.paymentStatus ||
+          "PENDING",
 
-return await updateCheckoutSessionStatus(
-  id,
-  "PAYMENT_PENDING",
-  {
-    paymentStatus:
-      paymentData?.paymentStatus ||
-      "PENDING",
+        paymentMethod:
+          paymentData?.paymentMethod ||
+          null,
 
-    paymentMethod:
-      paymentData?.paymentMethod ||
-      null,
+        paymentPreferenceId:
+          paymentData?.paymentPreferenceId ||
+          null,
 
-    paymentPreferenceId:
-      paymentData?.paymentPreferenceId ||
-      null,
-
-    paymentTransactionId:
-      paymentData?.paymentTransactionId ||
-      null,
-  }
-);
-
-
-};
+        paymentTransactionId:
+          paymentData?.paymentTransactionId ||
+          null,
+      }
+    );
+  };
 
 // ======================================================
 // COMPLETAR CHECKOUT
 // ======================================================
 
 const completeCheckoutSessionService =
-async (
-id,
-paymentData = {}
-) => {
-const session =
-await getCheckoutSessionById(
-id,
-null
-);
+  async (
+    id,
+    paymentData = {}
+  ) => {
+    const session =
+      await getCheckoutSessionById(
+        id,
+        null
+      );
 
+    if (!session) {
+      throw new Error(
+        "Sesión de checkout no encontrada."
+      );
+    }
 
-if (!session) {
-  throw new Error(
-    "Sesión de checkout no encontrada."
-  );
-}
+    if (
+      session.status ===
+      "COMPLETED"
+    ) {
+      return session;
+    }
 
-if (
-  session.status ===
-  "COMPLETED"
-) {
-  return session;
-}
+    if (
+      session.status ===
+      "EXPIRED"
+    ) {
+      throw new Error(
+        "La sesión de checkout ha vencido."
+      );
+    }
 
-if (
-  session.status ===
-  "EXPIRED"
-) {
-  throw new Error(
-    "La sesión de checkout ha vencido."
-  );
-}
+    return await updateCheckoutSessionStatus(
+      id,
+      "COMPLETED",
+      {
+        paymentStatus:
+          paymentData.paymentStatus ||
+          "PAID",
 
-return await updateCheckoutSessionStatus(
-  id,
-  "COMPLETED",
-  {
-    paymentStatus:
-      paymentData.paymentStatus ||
-      "PAID",
+        paymentMethod:
+          paymentData.paymentMethod ||
+          session.paymentMethod,
 
-    paymentMethod:
-      paymentData.paymentMethod ||
-      session.paymentMethod,
+        paymentPreferenceId:
+          paymentData.paymentPreferenceId ||
+          session.paymentPreferenceId,
 
-    paymentPreferenceId:
-      paymentData.paymentPreferenceId ||
-      session.paymentPreferenceId,
-
-    paymentTransactionId:
-      paymentData.paymentTransactionId ||
-      session.paymentTransactionId,
-  }
-);
-
-
-};
+        paymentTransactionId:
+          paymentData.paymentTransactionId ||
+          session.paymentTransactionId,
+      }
+    );
+  };
 
 // ======================================================
 // MARCAR CHECKOUT COMO FALLIDO
 // ======================================================
 
 const failCheckoutSessionService =
-async (
-id,
-paymentData = {}
-) => {
-const session =
-await getCheckoutSessionById(
-id,
-null
-);
+  async (
+    id,
+    paymentData = {}
+  ) => {
+    const session =
+      await getCheckoutSessionById(
+        id,
+        null
+      );
 
+    if (!session) {
+      throw new Error(
+        "Sesión de checkout no encontrada."
+      );
+    }
 
-if (!session) {
-  throw new Error(
-    "Sesión de checkout no encontrada."
-  );
-}
+    if (
+      session.status ===
+      "COMPLETED"
+    ) {
+      throw new Error(
+        "La sesión ya fue completada."
+      );
+    }
 
-if (
-  session.status ===
-  "COMPLETED"
-) {
-  throw new Error(
-    "La sesión ya fue completada."
-  );
-}
-
-return await updateCheckoutSessionStatus(
-  id,
-  "FAILED",
-  {
-    paymentStatus:
-      paymentData.paymentStatus ||
+    return await updateCheckoutSessionStatus(
+      id,
       "FAILED",
+      {
+        paymentStatus:
+          paymentData.paymentStatus ||
+          "FAILED",
 
-    paymentMethod:
-      paymentData.paymentMethod ||
-      session.paymentMethod,
+        paymentMethod:
+          paymentData.paymentMethod ||
+          session.paymentMethod,
 
-    paymentPreferenceId:
-      paymentData.paymentPreferenceId ||
-      session.paymentPreferenceId,
+        paymentPreferenceId:
+          paymentData.paymentPreferenceId ||
+          session.paymentPreferenceId,
 
-    paymentTransactionId:
-      paymentData.paymentTransactionId ||
-      session.paymentTransactionId,
-  }
-);
-
-
-};
+        paymentTransactionId:
+          paymentData.paymentTransactionId ||
+          session.paymentTransactionId,
+      }
+    );
+  };
 
 // ======================================================
 // CHECKOUTS EN TRÁMITE DEL USUARIO
 // ======================================================
 
 const getPendingCheckoutSessionsByUserService =
-async (
-userId
-) => {
-const sessions =
-await getPendingCheckoutSessionsByUser(
-userId
-);
+  async (
+    userId
+  ) => {
+    const sessions =
+      await getPendingCheckoutSessionsByUser(
+        userId
+      );
 
-return sessions;
-};
+    return sessions;
+  };
 
 // ======================================================
 // CHECKOUTS EN TRÁMITE PARA ADMIN
 // ======================================================
 
 const getPendingCheckoutSessionsService =
-async () => {
-const sessions =
-await getPendingCheckoutSessions();
+  async () => {
+    const sessions =
+      await getPendingCheckoutSessions();
 
-return sessions;
-};
+    return sessions;
+  };
 
 // ======================================================
 // ELIMINAR CHECKOUT SESSION
 // ======================================================
 
 const deleteCheckoutSessionService =
-async (
-id,
-userId
-) => {
-const session =
-await getCheckoutSessionById(
-id,
-userId
-);
+  async (
+    id,
+    userId
+  ) => {
+    const session =
+      await getCheckoutSessionById(
+        id,
+        userId
+      );
 
+    if (!session) {
+      throw new Error(
+        "Sesión de checkout no encontrada."
+      );
+    }
 
-if (!session) {
-  throw new Error(
-    "Sesión de checkout no encontrada."
-  );
-}
+    if (
+      session.status ===
+      "PAYMENT_PENDING"
+    ) {
+      throw new Error(
+        "La sesión tiene un pago pendiente y no puede eliminarse."
+      );
+    }
 
-if (
-  session.status ===
-  "PAYMENT_PENDING"
-) {
-  throw new Error(
-    "La sesión tiene un pago pendiente y no puede eliminarse."
-  );
-}
+    if (
+      session.status ===
+      "COMPLETED"
+    ) {
+      throw new Error(
+        "La sesión ya fue completada y no puede eliminarse."
+      );
+    }
 
-if (
-  session.status ===
-  "COMPLETED"
-) {
-  throw new Error(
-    "La sesión ya fue completada y no puede eliminarse."
-  );
-}
+    await deleteCheckoutSession(
+      id,
+      userId
+    );
 
-await deleteCheckoutSession(
-  id,
-  userId
-);
-
-return {
-  id,
-  deleted: true,
-};
-
-
-};
+    return {
+      id,
+      deleted: true,
+    };
+  };
 
 export {
-createCheckoutSessionService,
-getCheckoutSessionService,
-updateCheckoutSessionService,
-markCheckoutSessionPaymentPendingService,
-completeCheckoutSessionService,
-failCheckoutSessionService,
-deleteCheckoutSessionService,
-getPendingCheckoutSessionsByUserService,
-getPendingCheckoutSessionsService,
+  createCheckoutSessionService,
+  getCheckoutSessionService,
+  updateCheckoutSessionService,
+  markCheckoutSessionPaymentPendingService,
+  completeCheckoutSessionService,
+  failCheckoutSessionService,
+  deleteCheckoutSessionService,
+  getPendingCheckoutSessionsByUserService,
+  getPendingCheckoutSessionsService,
 };
+

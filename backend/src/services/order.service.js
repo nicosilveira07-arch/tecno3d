@@ -19,6 +19,20 @@ import {
   incrementCouponUsageRepository,
 } from "../repositories/coupon.repository.js";
 
+import { sendEmail } from "./email.service.js";
+
+const FRONTEND_URL = "https://www.tecno3d.net";
+const LOGO_URL = `${FRONTEND_URL}/logo.png`;
+
+const escapeHtml = (value) => {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 const createOrderService = async (data) => {
   const {
     items,
@@ -758,11 +772,485 @@ const updateOrderStatusService = async (
         }
       : {};
 
-  return await updateOrderStatus(
-    id,
-    status,
-    shippingData
-  );
+  // ACTUALIZAR EL PEDIDO PRIMERO
+
+  const updatedOrder =
+    await updateOrderStatus(
+      id,
+      status,
+      shippingData
+    );
+
+  // ======================================================
+  // NOTIFICACIÓN POR EMAIL
+  // PROCESSING → SHIPPED
+  // ======================================================
+
+  if (
+    currentStatus === "PROCESSING" &&
+    status === "SHIPPED"
+  ) {
+    try {
+      const customerEmail =
+        updatedOrder.user?.email;
+
+      if (!customerEmail) {
+        console.warn(
+          `⚠️ Pedido ${updatedOrder.id}: el cliente no tiene email.`
+        );
+      } else {
+        const customerName =
+          updatedOrder.user?.firstName ||
+          "cliente";
+
+        const orderNumber =
+          updatedOrder.id;
+
+        const company =
+          updatedOrder.shippingCompany ||
+          shippingCompany;
+
+        const tracking =
+          updatedOrder.trackingNumber ||
+          trackingNumber;
+
+        const ordersUrl =
+          `${FRONTEND_URL}/orders`;
+
+        const safeCustomerName =
+          escapeHtml(customerName);
+
+        const safeOrderNumber =
+          escapeHtml(orderNumber);
+
+        const safeCompany =
+          escapeHtml(company);
+
+        const safeTracking =
+          escapeHtml(tracking);
+
+        await sendEmail({
+          to: customerEmail,
+
+          subject:
+            `Tu pedido #${orderNumber} ya fue enviado - TECNO 3D`,
+
+          html: `
+            <!DOCTYPE html>
+            <html lang="es">
+              <head>
+                <meta charset="UTF-8">
+                <meta
+                  name="viewport"
+                  content="width=device-width, initial-scale=1.0"
+                >
+                <title>Pedido enviado - TECNO 3D</title>
+              </head>
+
+              <body
+                style="
+                  margin: 0;
+                  padding: 0;
+                  background-color: #f1f5f9;
+                  font-family: Arial, Helvetica, sans-serif;
+                  color: #111827;
+                "
+              >
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    width: 100%;
+                    background-color: #f1f5f9;
+                    margin: 0;
+                    padding: 0;
+                  "
+                >
+                  <tr>
+                    <td
+                      align="center"
+                      style="
+                        padding: 32px 16px;
+                      "
+                    >
+                      <table
+                        role="presentation"
+                        width="600"
+                        cellpadding="0"
+                        cellspacing="0"
+                        border="0"
+                        style="
+                          width: 100%;
+                          max-width: 600px;
+                          background-color: #ffffff;
+                          border-radius: 16px;
+                          overflow: hidden;
+                        "
+                      >
+
+                        <!-- HEADER -->
+                        <tr>
+                          <td
+                            align="center"
+                            style="
+                              background-color: #18181b;
+                              padding: 28px 24px;
+                            "
+                          >
+                            <img
+                              src="${LOGO_URL}"
+                              alt="TECNO 3D"
+                              width="170"
+                              style="
+                                display: block;
+                                width: 170px;
+                                max-width: 100%;
+                                height: auto;
+                                margin: 0 auto 18px;
+                              "
+                            >
+
+                            <p
+                              style="
+                                margin: 0;
+                                color: #ffffff;
+                                font-size: 18px;
+                                font-weight: bold;
+                              "
+                            >
+                              Tu pedido está en camino
+                            </p>
+
+                            <p
+                              style="
+                                margin: 8px 0 0;
+                                color: #a1a1aa;
+                                font-size: 13px;
+                              "
+                            >
+                              TECNO 3D
+                            </p>
+                          </td>
+                        </tr>
+
+                        <!-- CONTENIDO -->
+                        <tr>
+                          <td
+                            style="
+                              padding: 36px 32px;
+                            "
+                          >
+
+                            <h1
+                              style="
+                                margin: 0 0 16px;
+                                color: #111827;
+                                font-size: 24px;
+                                line-height: 1.3;
+                              "
+                            >
+                              ¡Hola ${safeCustomerName}! 👋
+                            </h1>
+
+                            <p
+                              style="
+                                margin: 0 0 24px;
+                                color: #4b5563;
+                                font-size: 16px;
+                                line-height: 1.7;
+                              "
+                            >
+                              Tu pedido
+                              <strong style="color: #111827;">
+                                #${safeOrderNumber}
+                              </strong>
+                              ya fue despachado y se encuentra
+                              en camino.
+                            </p>
+
+                            <!-- ESTADO -->
+                            <table
+                              role="presentation"
+                              width="100%"
+                              cellpadding="0"
+                              cellspacing="0"
+                              border="0"
+                              style="
+                                width: 100%;
+                                background-color: #f8fafc;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 12px;
+                              "
+                            >
+                              <tr>
+                                <td
+                                  style="
+                                    padding: 24px;
+                                  "
+                                >
+
+                                  <p
+                                    style="
+                                      margin: 0 0 8px;
+                                      color: #64748b;
+                                      font-size: 12px;
+                                      font-weight: bold;
+                                      letter-spacing: 1px;
+                                    "
+                                  >
+                                    ESTADO DEL PEDIDO
+                                  </p>
+
+                                  <p
+                                    style="
+                                      margin: 0 0 22px;
+                                      color: #111827;
+                                      font-size: 20px;
+                                      font-weight: bold;
+                                    "
+                                  >
+                                    🚚 Enviado
+                                  </p>
+
+                                  <!-- EMPRESA -->
+                                  <table
+                                    role="presentation"
+                                    width="100%"
+                                    cellpadding="0"
+                                    cellspacing="0"
+                                    border="0"
+                                  >
+                                    <tr>
+                                      <td
+                                        width="48"
+                                        valign="top"
+                                        style="
+                                          padding-right: 12px;
+                                          font-size: 24px;
+                                        "
+                                      >
+                                        🚛
+                                      </td>
+
+                                      <td
+                                        valign="top"
+                                      >
+                                        <p
+                                          style="
+                                            margin: 0 0 4px;
+                                            color: #64748b;
+                                            font-size: 12px;
+                                          "
+                                        >
+                                          EMPRESA DE ENVÍO
+                                        </p>
+
+                                        <p
+                                          style="
+                                            margin: 0;
+                                            color: #111827;
+                                            font-size: 16px;
+                                            font-weight: bold;
+                                          "
+                                        >
+                                          ${safeCompany}
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  </table>
+
+                                  <div
+                                    style="
+                                      height: 1px;
+                                      background-color: #e2e8f0;
+                                      margin: 20px 0;
+                                    "
+                                  ></div>
+
+                                  <!-- TRACKING -->
+                                  <table
+                                    role="presentation"
+                                    width="100%"
+                                    cellpadding="0"
+                                    cellspacing="0"
+                                    border="0"
+                                  >
+                                    <tr>
+                                      <td
+                                        width="48"
+                                        valign="top"
+                                        style="
+                                          padding-right: 12px;
+                                          font-size: 24px;
+                                        "
+                                      >
+                                        🔎
+                                      </td>
+
+                                      <td
+                                        valign="top"
+                                      >
+                                        <p
+                                          style="
+                                            margin: 0 0 4px;
+                                            color: #64748b;
+                                            font-size: 12px;
+                                          "
+                                        >
+                                          NÚMERO DE SEGUIMIENTO
+                                        </p>
+
+                                        <p
+                                          style="
+                                            margin: 0;
+                                            color: #111827;
+                                            font-size: 16px;
+                                            font-weight: bold;
+                                            word-break: break-all;
+                                          "
+                                        >
+                                          ${safeTracking}
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  </table>
+
+                                </td>
+                              </tr>
+                            </table>
+
+                            <!-- MENSAJE -->
+                            <p
+                              style="
+                                margin: 28px 0 0;
+                                color: #4b5563;
+                                font-size: 15px;
+                                line-height: 1.7;
+                              "
+                            >
+                              Podés consultar el estado de tu pedido
+                              y revisar todos los detalles de tu compra
+                              desde tu cuenta de TECNO 3D.
+                            </p>
+
+                            <!-- BOTÓN -->
+                            <table
+                              role="presentation"
+                              width="100%"
+                              cellpadding="0"
+                              cellspacing="0"
+                              border="0"
+                              style="
+                                margin-top: 28px;
+                              "
+                            >
+                              <tr>
+                                <td align="center">
+
+                                  <a
+                                    href="${ordersUrl}"
+                                    style="
+                                      display: inline-block;
+                                      padding: 15px 28px;
+                                      background-color: #18181b;
+                                      color: #ffffff;
+                                      text-decoration: none;
+                                      border-radius: 8px;
+                                      font-size: 14px;
+                                      font-weight: bold;
+                                    "
+                                  >
+                                    VER MIS COMPRAS
+                                  </a>
+
+                                </td>
+                              </tr>
+                            </table>
+
+                            <!-- AYUDA -->
+                            <p
+                              style="
+                                margin: 28px 0 0;
+                                color: #64748b;
+                                font-size: 13px;
+                                line-height: 1.6;
+                                text-align: center;
+                              "
+                            >
+                              Si tenés alguna consulta sobre tu envío,
+                              podés comunicarte con TECNO 3D.
+                            </p>
+
+                          </td>
+                        </tr>
+
+                        <!-- FOOTER -->
+                        <tr>
+                          <td
+                            align="center"
+                            style="
+                              padding: 24px 32px;
+                              background-color: #fafafa;
+                              border-top: 1px solid #e5e7eb;
+                            "
+                          >
+                            <p
+                              style="
+                                margin: 0 0 6px;
+                                color: #374151;
+                                font-size: 13px;
+                                font-weight: bold;
+                              "
+                            >
+                              TECNO 3D
+                            </p>
+
+                            <p
+                              style="
+                                margin: 0;
+                                color: #9ca3af;
+                                font-size: 12px;
+                                line-height: 1.5;
+                              "
+                            >
+                              Este correo fue enviado automáticamente.
+                            </p>
+                          </td>
+                        </tr>
+
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+            </html>
+          `,
+        });
+
+        console.log(
+          `📧 Notificación de envío enviada para el pedido ${updatedOrder.id}.`
+        );
+      }
+    } catch (emailError) {
+      // IMPORTANTE:
+      // El correo es una notificación secundaria.
+      // Si Gmail falla, NO hacemos rollback del pedido.
+
+      console.error(
+        `⚠️ El pedido ${updatedOrder.id} quedó en SHIPPED, pero no se pudo enviar el email.`
+      );
+
+      console.error(
+        "Error de Gmail:",
+        emailError
+      );
+    }
+  }
+
+  return updatedOrder;
 };
 
 export {
@@ -774,4 +1262,3 @@ export {
   getOrderByIdService,
   updateOrderStatusService,
 };
-
