@@ -474,7 +474,6 @@ export default function Checkout() {
           );
         }
 
-        clearCart();
 
         window.location.href =
           initPoint;
