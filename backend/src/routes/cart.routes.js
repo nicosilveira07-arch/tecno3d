@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   getCartController,
   addToCartController,
+  updateCartItemController,
   removeFromCartController,
   clearCartController,
 } from "../controllers/cart.controller.js";
@@ -17,8 +18,11 @@ router.get("/", getCartController);
 
 router.post("/", addToCartController);
 
+router.patch("/:productId", updateCartItemController);
+
 router.delete("/:productId", removeFromCartController);
 
 router.delete("/", clearCartController);
 
 export default router;
+

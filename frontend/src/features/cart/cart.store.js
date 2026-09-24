@@ -1,5 +1,13 @@
 import { useSyncExternalStore } from "react";
 
+import {
+  getCart,
+  addCartItem,
+  updateCartItem,
+  removeCartItem,
+  clearServerCart,
+} from "../../services/cart.api";
+
 const BASE_STORAGE_KEY = "tecno3d_cart";
 
 let cart = [];
@@ -7,14 +15,19 @@ let cart = [];
 const listeners = new Set();
 
 function getUserId() {
-  const storedUser = localStorage.getItem("user");
+  const storedUser =
+    localStorage.getItem("user");
 
-  if (!storedUser || storedUser === "undefined") {
+  if (
+    !storedUser ||
+    storedUser === "undefined"
+  ) {
     return null;
   }
 
   try {
-    const user = JSON.parse(storedUser);
+    const user =
+      JSON.parse(storedUser);
 
     return user?.id || null;
   } catch {
@@ -23,7 +36,8 @@ function getUserId() {
 }
 
 function getStorageKey() {
-  const userId = getUserId();
+  const userId =
+    getUserId();
 
   if (!userId) {
     return null;
@@ -32,8 +46,9 @@ function getStorageKey() {
   return `${BASE_STORAGE_KEY}_${userId}`;
 }
 
-function loadCart() {
-  const storageKey = getStorageKey();
+function loadLocalCart() {
+  const storageKey =
+    getStorageKey();
 
   if (!storageKey) {
     return [];
@@ -41,17 +56,18 @@ function loadCart() {
 
   try {
     return JSON.parse(
-      localStorage.getItem(storageKey) || "[]"
+      localStorage.getItem(
+        storageKey
+      ) || "[]"
     );
   } catch {
     return [];
   }
 }
 
-cart = loadCart();
-
-function saveCart() {
-  const storageKey = getStorageKey();
+function saveLocalCart() {
+  const storageKey =
+    getStorageKey();
 
   if (!storageKey) {
     return;
@@ -63,12 +79,14 @@ function saveCart() {
   );
 }
 
-function emitChange() {
-  saveCart();
+function notifyListeners() {
+  saveLocalCart();
 
-  listeners.forEach((listener) => {
-    listener();
-  });
+  listeners.forEach(
+    (listener) => {
+      listener();
+    }
+  );
 }
 
 function subscribe(listener) {
@@ -83,102 +101,308 @@ function getSnapshot() {
   return cart;
 }
 
-export function loadUserCart() {
-  cart = loadCart();
+function normalizeBackendCart(
+  backendCart
+) {
+  if (
+    !backendCart ||
+    !Array.isArray(
+      backendCart.items
+    )
+  ) {
+    return [];
+  }
 
-  listeners.forEach((listener) => {
-    listener();
-  });
+  return backendCart.items.map(
+    (item) => {
+      const product =
+        item.product;
+
+      return {
+        productId:
+          item.productId,
+
+        name:
+          product?.name ||
+          "Producto",
+
+        price:
+          Number(
+            product?.price ??
+              item.price ??
+              0
+          ),
+
+        image:
+          product?.image ||
+          product?.mainImage ||
+          "",
+
+        quantity:
+          item.quantity,
+      };
+    }
+  );
 }
 
-export function clearCart() {
+export async function loadUserCart() {
+  const userId =
+    getUserId();
+
+  if (!userId) {
+    cart = [];
+
+    notifyListeners();
+
+    return;
+  }
+
+  try {
+    const response =
+      await getCart();
+
+    const backendCart =
+      response.data?.data;
+
+    cart =
+      normalizeBackendCart(
+        backendCart
+      );
+
+    notifyListeners();
+  } catch (error) {
+    console.error(
+      "Error cargando carrito:",
+      error
+    );
+
+    cart =
+      loadLocalCart();
+
+    notifyListeners();
+  }
+}
+
+export async function clearCart() {
+  const userId =
+    getUserId();
+
   cart = [];
 
-  emitChange();
+  notifyListeners();
+
+  if (!userId) {
+    return;
+  }
+
+  try {
+    await clearServerCart();
+  } catch (error) {
+    console.error(
+      "Error vaciando carrito del servidor:",
+      error
+    );
+  }
 }
 
-export function addToCart(product) {
+export async function addToCart(
+  product
+) {
   const productId =
-    product.productId ?? product.id;
+    product.productId ??
+    product.id;
 
-  const originalPrice = Number(product.price);
+  const originalPrice =
+    Number(product.price);
 
   const offerPrice =
     product.offerActive &&
     product.offerPrice != null
-      ? Number(product.offerPrice)
+      ? Number(
+          product.offerPrice
+        )
       : null;
 
   const effectivePrice =
     offerPrice != null &&
     offerPrice > 0 &&
-    offerPrice < originalPrice
+    offerPrice <
+      originalPrice
       ? offerPrice
       : originalPrice;
 
-  const existingProduct = cart.find(
-    (item) => item.productId === productId
-  );
-
-  if (existingProduct) {
-    cart = cart.map((item) =>
-      item.productId === productId
-        ? {
-            ...item,
-            quantity: item.quantity + 1,
-            price: effectivePrice,
-          }
-        : item
+  const existingProduct =
+    cart.find(
+      (item) =>
+        item.productId ===
+        productId
     );
+
+  if (
+    existingProduct
+  ) {
+    cart =
+      cart.map(
+        (item) =>
+          item.productId ===
+          productId
+            ? {
+                ...item,
+                quantity:
+                  item.quantity +
+                  1,
+                price:
+                  effectivePrice,
+              }
+            : item
+      );
   } else {
     cart = [
       ...cart,
       {
         productId,
-        name: product.name,
-        price: effectivePrice,
-        image: product.image,
+        name:
+          product.name,
+        price:
+          effectivePrice,
+        image:
+          product.image,
         quantity: 1,
       },
     ];
   }
 
-  emitChange();
-}
+  notifyListeners();
 
-export function decreaseQuantity(productId) {
-  const existingProduct = cart.find(
-    (item) => item.productId === productId
-  );
+  const userId =
+    getUserId();
 
-  if (!existingProduct) {
+  if (!userId) {
     return;
   }
 
-  if (existingProduct.quantity === 1) {
-    cart = cart.filter(
-      (item) => item.productId !== productId
+  try {
+    await addCartItem(
+      productId,
+      1
     );
-  } else {
-    cart = cart.map((item) =>
-      item.productId === productId
-        ? {
-            ...item,
-            quantity: item.quantity - 1,
-          }
-        : item
+  } catch (error) {
+    console.error(
+      "Error agregando producto al carrito del servidor:",
+      error
     );
-  }
 
-  emitChange();
+    await loadUserCart();
+  }
 }
 
-export function removeFromCart(productId) {
-  cart = cart.filter(
-    (item) => item.productId !== productId
-  );
+export async function decreaseQuantity(
+  productId
+) {
+  const existingProduct =
+    cart.find(
+      (item) =>
+        item.productId ===
+        productId
+    );
 
-  emitChange();
+  if (
+    !existingProduct
+  ) {
+    return;
+  }
+
+  const newQuantity =
+    existingProduct.quantity -
+    1;
+
+  if (
+    newQuantity <= 0
+  ) {
+    cart =
+      cart.filter(
+        (item) =>
+          item.productId !==
+          productId
+      );
+  } else {
+    cart =
+      cart.map(
+        (item) =>
+          item.productId ===
+          productId
+            ? {
+                ...item,
+                quantity:
+                  newQuantity,
+              }
+            : item
+      );
+  }
+
+  notifyListeners();
+
+  const userId =
+    getUserId();
+
+  if (!userId) {
+    return;
+  }
+
+  try {
+    if (
+      newQuantity <= 0
+    ) {
+      await removeCartItem(
+        productId
+      );
+    } else {
+      await updateCartItem(
+        productId,
+        newQuantity
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Error actualizando cantidad del carrito:",
+      error
+    );
+
+    await loadUserCart();
+  }
+}
+
+export async function removeFromCart(
+  productId
+) {
+  cart =
+    cart.filter(
+      (item) =>
+        item.productId !==
+        productId
+    );
+
+  notifyListeners();
+
+  const userId =
+    getUserId();
+
+  if (!userId) {
+    return;
+  }
+
+  try {
+    await removeCartItem(
+      productId
+    );
+  } catch (error) {
+    console.error(
+      "Error eliminando producto del carrito del servidor:",
+      error
+    );
+
+    await loadUserCart();
+  }
 }
 
 export function useCart() {
@@ -188,3 +412,4 @@ export function useCart() {
     getSnapshot
   );
 }
+

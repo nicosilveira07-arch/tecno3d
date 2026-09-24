@@ -21,29 +21,54 @@ export async function getCartService(userId) {
   return cart;
 }
 
-export async function addToCartService(userId, productId, quantity) {
+export async function addToCartService(
+  userId,
+  productId,
+  quantity
+) {
   let cart = await findCartByUserId(userId);
 
   if (!cart) {
     cart = await createCart(userId);
   }
 
-  const product = await getProductByIdForOrder(productId);
+  const product =
+    await getProductByIdForOrder(productId);
 
   if (!product) {
-    throw new Error("Producto no encontrado.");
+    throw new Error(
+      "Producto no encontrado."
+    );
   }
 
   if (product.stock < quantity) {
-    throw new Error("Stock insuficiente.");
+    throw new Error(
+      "Stock insuficiente."
+    );
   }
 
-  const item = await findCartItem(cart.id, productId);
+  const item =
+    await findCartItem(
+      cart.id,
+      productId
+    );
 
   if (item) {
+    const newQuantity =
+      item.quantity + quantity;
+
+    if (
+      product.stock <
+      newQuantity
+    ) {
+      throw new Error(
+        "Stock insuficiente."
+      );
+    }
+
     return await updateCartItem(
       item.id,
-      item.quantity + quantity
+      newQuantity
     );
   }
 
@@ -54,20 +79,86 @@ export async function addToCartService(userId, productId, quantity) {
   });
 }
 
-export async function removeFromCartService(userId, productId) {
-  const cart = await getCartService(userId);
+export async function updateCartItemService(
+  userId,
+  productId,
+  quantity
+) {
+  const cart =
+    await getCartService(userId);
 
-  const item = await findCartItem(cart.id, productId);
+  const item =
+    await findCartItem(
+      cart.id,
+      productId
+    );
 
   if (!item) {
-    throw new Error("Producto no encontrado en el carrito.");
+    throw new Error(
+      "Producto no encontrado en el carrito."
+    );
   }
 
-  return await deleteCartItem(item.id);
+  if (quantity === 0) {
+    return await deleteCartItem(
+      item.id
+    );
+  }
+
+  const product =
+    await getProductByIdForOrder(
+      productId
+    );
+
+  if (!product) {
+    throw new Error(
+      "Producto no encontrado."
+    );
+  }
+
+  if (product.stock < quantity) {
+    throw new Error(
+      "Stock insuficiente."
+    );
+  }
+
+  return await updateCartItem(
+    item.id,
+    quantity
+  );
 }
 
-export async function clearCartService(userId) {
-  const cart = await getCartService(userId);
+export async function removeFromCartService(
+  userId,
+  productId
+) {
+  const cart =
+    await getCartService(userId);
 
-  return await clearCart(cart.id);
+  const item =
+    await findCartItem(
+      cart.id,
+      productId
+    );
+
+  if (!item) {
+    throw new Error(
+      "Producto no encontrado en el carrito."
+    );
+  }
+
+  return await deleteCartItem(
+    item.id
+  );
+}
+
+export async function clearCartService(
+  userId
+) {
+  const cart =
+    await getCartService(userId);
+
+  return await clearCart(
+    cart.id
+  );
 }
