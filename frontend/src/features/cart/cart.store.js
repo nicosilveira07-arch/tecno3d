@@ -10,8 +10,6 @@ import {
 
 const BASE_STORAGE_KEY = "tecno3d_cart";
 
-let cart = [];
-
 const listeners = new Set();
 
 function getUserId() {
@@ -64,6 +62,10 @@ function loadLocalCart() {
     return [];
   }
 }
+
+
+let cart =
+  loadLocalCart();
 
 function saveLocalCart() {
   const storageKey =
@@ -412,4 +414,3 @@ export function useCart() {
     getSnapshot
   );
 }
-
