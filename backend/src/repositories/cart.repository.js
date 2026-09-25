@@ -5,6 +5,7 @@ export async function findCartByUserId(userId) {
     where: {
       userId,
     },
+
     include: {
       items: {
         include: {
@@ -12,6 +13,12 @@ export async function findCartByUserId(userId) {
             include: {
               category: true,
               brand: true,
+            },
+          },
+
+          variant: {
+            include: {
+              images: true,
             },
           },
         },
@@ -28,13 +35,26 @@ export async function createCart(userId) {
   });
 }
 
-export async function findCartItem(cartId, productId) {
-  return await prisma.cartItem.findUnique({
-    where: {
-      cartId_productId: {
+export async function findCartItem(
+  cartId,
+  productId,
+  variantId = null
+) {
+  if (variantId) {
+    return await prisma.cartItem.findFirst({
+      where: {
         cartId,
         productId,
+        variantId,
       },
+    });
+  }
+
+  return await prisma.cartItem.findFirst({
+    where: {
+      cartId,
+      productId,
+      variantId: null,
     },
   });
 }
@@ -45,11 +65,15 @@ export async function addCartItem(data) {
   });
 }
 
-export async function updateCartItem(id, quantity) {
+export async function updateCartItem(
+  id,
+  quantity
+) {
   return await prisma.cartItem.update({
     where: {
       id,
     },
+
     data: {
       quantity,
     },
@@ -71,3 +95,4 @@ export async function clearCart(cartId) {
     },
   });
 }
+

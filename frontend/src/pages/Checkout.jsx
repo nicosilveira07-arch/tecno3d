@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
   useCart,
-  clearCart,
 } from "@/features/cart/cart.store";
 
 import {
@@ -33,6 +32,7 @@ const PHONE_COUNTRIES = [
   {  code: "+57", iso: "CO" },
   {  code: "+593", iso: "EC" },
 ];
+
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -386,6 +386,10 @@ export default function Checkout() {
         setLoading(true);
         setError("");
 
+        // ==================================================
+        // CREAR CHECKOUT SESSION
+        // ==================================================
+
         const expiresAt =
           new Date(
             Date.now() +
@@ -425,6 +429,10 @@ export default function Checkout() {
                   productId:
                     item.productId,
 
+                  variantId:
+                    item.variantId ||
+                    null,
+
                   quantity:
                     item.quantity,
 
@@ -454,6 +462,10 @@ export default function Checkout() {
           session
         );
 
+        // ==================================================
+        // INICIAR MERCADO PAGO
+        // ==================================================
+
         const paymentResponse =
           await createOrderPayment(
             session.id
@@ -474,6 +486,23 @@ export default function Checkout() {
           );
         }
 
+        // ==================================================
+        // REDIRECCIÓN A MERCADO PAGO
+        // ==================================================
+        //
+        // IMPORTANTE:
+        // NO limpiamos el carrito acá.
+        //
+        // El carrito se mantiene mientras el usuario
+        // está realizando el pago.
+        //
+        // Si cancela o vuelve atrás desde Mercado Pago,
+        // los productos y sus variantes siguen disponibles.
+        //
+        // La limpieza definitiva del carrito se hará
+        // únicamente después de confirmar correctamente
+        // el pago.
+        // ==================================================
 
         window.location.href =
           initPoint;
@@ -504,6 +533,8 @@ export default function Checkout() {
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
 
+          {/* ENTREGA */}
+
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
 
             <div className="mb-8">
@@ -517,6 +548,8 @@ export default function Checkout() {
               </p>
 
             </div>
+
+            {/* MÉTODO DE ENTREGA */}
 
             <div className="grid gap-4 md:grid-cols-2">
 
@@ -580,6 +613,8 @@ export default function Checkout() {
 
             </div>
 
+            {/* DIRECCIONES */}
+
             {deliveryMethod ===
               "address" && (
               <div className="mt-8">
@@ -606,6 +641,8 @@ export default function Checkout() {
                   </button>
 
                 </div>
+
+                {/* FORMULARIO */}
 
                 {showAddressForm && (
                   <form
@@ -699,6 +736,8 @@ export default function Checkout() {
                         className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                       />
 
+                      {/* CÓDIGO POSTAL + PAÍS/CÓDIGO + TELÉFONO */}
+
                       <div className="md:col-span-2">
 
                         <label className="mb-2 block text-sm font-semibold text-white">
@@ -706,6 +745,8 @@ export default function Checkout() {
                         </label>
 
                         <div className="grid gap-3 md:grid-cols-[0.8fr_1.2fr_1fr]">
+
+                          {/* CÓDIGO POSTAL */}
 
                           <input
                             name="zipCode"
@@ -722,6 +763,8 @@ export default function Checkout() {
                             className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                           />
 
+                          {/* PAÍS + CÓDIGO */}
+
                           <select
                             name="phoneCountry"
                             value={
@@ -736,19 +779,21 @@ export default function Checkout() {
                             {PHONE_COUNTRIES.map(
                               (country) => (
                                 <option
-                                  key={`${country.iso}-${country.code}`}
+                                  key={`${country.name}-${country.code}`}
                                   value={
                                     country.code
                                   }
                                   className="bg-zinc-900 text-white"
                                 >
-                                  {country.iso}{" "}
+                                  {country.flag}{" "}
                                   {country.name}{" "}
                                   {country.code}
                                 </option>
                               )
                             )}
                           </select>
+
+                          {/* TELÉFONO */}
 
                           <input
                             name="phoneNumber"
@@ -759,7 +804,7 @@ export default function Checkout() {
                             onChange={
                               handleAddressChange
                             }
-                            placeholder="Número de Contacto"
+                            placeholder="981344545"
                             required
                             autoComplete="tel-national"
                             inputMode="numeric"
@@ -773,6 +818,8 @@ export default function Checkout() {
                         </p>
 
                       </div>
+
+                      {/* DIRECCIÓN PRINCIPAL */}
 
                       <label className="flex items-center gap-3 text-sm text-zinc-400">
 
@@ -824,6 +871,8 @@ export default function Checkout() {
 
                   </form>
                 )}
+
+                {/* LISTADO */}
 
                 {loadingAddresses ? (
                   <p className="text-zinc-500">
@@ -931,6 +980,8 @@ export default function Checkout() {
               </div>
             )}
 
+            {/* RETIRO EN LOCAL */}
+
             {deliveryMethod ===
               "pickup" && (
               <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-6">
@@ -970,11 +1021,15 @@ export default function Checkout() {
 
           </div>
 
+          {/* RESUMEN */}
+
           <div className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
 
             <h2 className="mb-6 text-2xl font-bold text-white">
               Resumen del pedido
             </h2>
+
+            {/* MÉTODO DE ENTREGA */}
 
             <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
@@ -1036,15 +1091,15 @@ export default function Checkout() {
 
             </div>
 
+            {/* PRODUCTOS */}
+
             <div className="space-y-4">
 
               {cart.map(
                 (item) => (
 
                   <div
-                    key={
-                      item.productId
-                    }
+                    key={`${item.productId}-${item.variantId || "base"}`}
                     className="flex justify-between gap-4 border-b border-zinc-800 pb-4"
                   >
 
@@ -1053,6 +1108,13 @@ export default function Checkout() {
                       <p className="font-semibold text-white">
                         {item.name}
                       </p>
+
+                      {item.variantName && (
+                        <p className="text-sm text-zinc-400">
+                          Color:{" "}
+                          {item.variantName}
+                        </p>
+                      )}
 
                       <p className="text-sm text-zinc-500">
                         Cantidad:{" "}
@@ -1075,6 +1137,8 @@ export default function Checkout() {
               )}
 
             </div>
+
+            {/* CUPÓN */}
 
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
@@ -1165,6 +1229,8 @@ export default function Checkout() {
 
             </div>
 
+            {/* TOTALES */}
+
             <div className="mt-6 space-y-3">
 
               <div className="flex justify-between">
@@ -1240,4 +1306,3 @@ export default function Checkout() {
     </section>
   );
 }
-

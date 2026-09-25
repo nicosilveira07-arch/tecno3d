@@ -55,104 +55,160 @@ export default function Cart() {
 
             <div className="space-y-4">
 
-              {cart.map((item) => (
+              {cart.map((item) => {
 
-                <div
-                  key={item.productId}
-                  className="flex flex-col gap-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 sm:flex-row sm:items-center sm:justify-between"
-                >
+                const cartItemKey =
+                  item.variantId
+                    ? `${item.productId}-${item.variantId}`
+                    : `${item.productId}-base`;
 
-                  {/* Producto */}
+                return (
+                  <div
+                    key={cartItemKey}
+                    className="flex flex-col gap-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 sm:flex-row sm:items-center sm:justify-between"
+                  >
 
-                  <div className="flex items-center gap-5">
+                    {/* Producto */}
 
-                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl bg-zinc-800">
+                    <div className="flex items-center gap-5">
 
-                      {item.image ? (
+                      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl bg-zinc-800">
 
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
+                        {item.image ? (
 
-                      ) : (
+                          <img
+                            src={item.image}
+                            alt={
+                              item.variantName
+                                ? `${item.name} - ${item.variantName}`
+                                : item.name
+                            }
+                            className="h-full w-full object-cover"
+                          />
 
-                        <span className="text-xs text-zinc-500">
-                          Sin imagen
-                        </span>
+                        ) : (
 
-                      )}
+                          <span className="text-xs text-zinc-500">
+                            Sin imagen
+                          </span>
+
+                        )}
+
+                      </div>
+
+                      <div>
+
+                        <h2 className="font-bold text-white">
+                          {item.name}
+                        </h2>
+
+                        {item.variantName && (
+                          <div className="mt-2 flex items-center gap-2">
+
+                            {item.variantColorHex && (
+                              <span
+                                className="h-4 w-4 rounded-full border border-zinc-600"
+                                style={{
+                                  backgroundColor:
+                                    item.variantColorHex,
+                                }}
+                              />
+                            )}
+
+                            <p className="text-sm font-semibold text-zinc-300">
+                              Color:{" "}
+                              {item.variantName}
+                            </p>
+
+                          </div>
+                        )}
+
+                        <p className="mt-1 text-zinc-400">
+                          UYU {item.price}
+                        </p>
+
+                      </div>
 
                     </div>
 
-                    <div>
 
-                      <h2 className="font-bold text-white">
-                        {item.name}
-                      </h2>
+                    {/* Controles */}
 
-                      <p className="mt-1 text-zinc-400">
-                        UYU {item.price}
-                      </p>
+                    <div className="flex items-center gap-4">
+
+                      <button
+                        onClick={() =>
+                          decreaseQuantity(
+                            item.productId,
+                            item.variantId || null
+                          )
+                        }
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-white transition hover:bg-zinc-700"
+                      >
+                        <Minus size={16} />
+                      </button>
+
+                      <span className="w-6 text-center font-bold text-white">
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        onClick={() =>
+                          addToCart(
+                            {
+                              productId:
+                                item.productId,
+                              id:
+                                item.productId,
+                              name:
+                                item.name,
+                              price:
+                                item.price,
+                            },
+                            item.variantId
+                              ? {
+                                  id:
+                                    item.variantId,
+                                  name:
+                                    item.variantName,
+                                  colorHex:
+                                    item.variantColorHex,
+                                  stock:
+                                    item.variantStock,
+                                }
+                              : null
+                          )
+                        }
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-white transition hover:bg-zinc-700"
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          removeFromCart(
+                            item.productId,
+                            item.variantId || null
+                          )
+                        }
+                        className="ml-3 flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+                      >
+                        <Trash2 size={18} />
+                      </button>
 
                     </div>
 
-                  </div>
 
+                    {/* Subtotal */}
 
-                  {/* Controles */}
-
-                  <div className="flex items-center gap-4">
-
-                    <button
-                      onClick={() =>
-                        decreaseQuantity(
-                          item.productId
-                        )
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-white transition hover:bg-zinc-700"
-                    >
-                      <Minus size={16} />
-                    </button>
-
-                    <span className="w-6 text-center font-bold text-white">
-                      {item.quantity}
-                    </span>
-
-                    <button
-                      onClick={() =>
-                        addToCart(item)
-                      }
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-white transition hover:bg-zinc-700"
-                    >
-                      <Plus size={16} />
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        removeFromCart(
-                          item.productId
-                        )
-                      }
-                      className="ml-3 flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <p className="text-xl font-bold text-red-500">
+                      UYU{" "}
+                      {(item.price * item.quantity).toFixed(2)}
+                    </p>
 
                   </div>
-
-
-                  {/* Subtotal */}
-
-                  <p className="text-xl font-bold text-red-500">
-                    UYU{" "}
-                    {(item.price * item.quantity).toFixed(2)}
-                  </p>
-
-                </div>
-
-              ))}
+                );
+              })}
 
             </div>
 
@@ -192,7 +248,9 @@ export default function Cart() {
 
 
               <button
-                onClick={() => navigate("/checkout")}
+                onClick={() =>
+                  navigate("/checkout")
+                }
                 className="mt-6 w-full rounded-xl bg-red-600 py-4 font-bold text-white transition hover:bg-red-700"
               >
                 Ir al checkout
@@ -208,3 +266,4 @@ export default function Cart() {
     </section>
   );
 }
+

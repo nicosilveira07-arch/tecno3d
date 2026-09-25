@@ -10,6 +10,11 @@ const createCheckoutSession = async (
       items: {
         include: {
           product: true,
+          variant: {
+            include: {
+              images: true,
+            },
+          },
         },
       },
 
@@ -36,6 +41,11 @@ const getCheckoutSessionById = async (
       items: {
         include: {
           product: true,
+          variant: {
+            include: {
+              images: true,
+            },
+          },
         },
       },
 
@@ -71,6 +81,11 @@ const getCheckoutSessionByIdForWebhook =
         items: {
           include: {
             product: true,
+            variant: {
+              include: {
+                images: true,
+              },
+            },
           },
         },
 
@@ -96,6 +111,11 @@ const getActiveCheckoutSessionByUser =
         items: {
           include: {
             product: true,
+            variant: {
+              include: {
+                images: true,
+              },
+            },
           },
         },
 
@@ -127,6 +147,11 @@ const updateCheckoutSession = async (
       items: {
         include: {
           product: true,
+          variant: {
+            include: {
+              images: true,
+            },
+          },
         },
       },
 
@@ -159,6 +184,11 @@ const updateCheckoutSessionStatus = async (
       items: {
         include: {
           product: true,
+          variant: {
+            include: {
+              images: true,
+            },
+          },
         },
       },
 
@@ -207,6 +237,11 @@ const getPendingCheckoutSessionsByUser =
         items: {
           include: {
             product: true,
+            variant: {
+              include: {
+                images: true,
+              },
+            },
           },
         },
 
@@ -244,6 +279,11 @@ const getPendingCheckoutSessions =
         items: {
           include: {
             product: true,
+            variant: {
+              include: {
+                images: true,
+              },
+            },
           },
         },
 
@@ -281,10 +321,19 @@ const getExpiredCheckoutSessions =
       },
 
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+            variant: true,
+          },
+        },
       },
     });
   };
+
+// ======================================================
+// ELIMINAR CHECKOUTS ACTIVE VENCIDOS
+// ======================================================
 
 const expireCheckoutSessions = async () => {
   const now = new Date();
@@ -370,9 +419,18 @@ const addCheckoutSessionItem =
 
       include: {
         product: true,
+        variant: {
+          include: {
+            images: true,
+          },
+        },
       },
     });
   };
+
+// ======================================================
+// ELIMINAR CHECKOUTS PAYMENT_PENDING VENCIDOS
+// ======================================================
 
 const expirePendingPaymentCheckoutSessions =
   async () => {
@@ -443,7 +501,27 @@ const expirePendingPaymentCheckoutSessions =
     );
   };
 
-
+// ======================================================
+// FINALIZAR CHECKOUT SESSION → ORDER REAL
+// ======================================================
+//
+// Esta operación se ejecuta dentro de UNA transacción.
+//
+// Soporta:
+//
+// - Productos normales
+// - Productos con variantes por color
+// - Producto con variantes comprado sin seleccionar
+//   variante desde Home/categorías
+// - Stock general
+// - Stock individual por variante
+// - Preservación de variante en OrderItem
+// - Mercado Pago
+// - Cupones
+// - Idempotencia del webhook
+//
+// Si cualquier paso falla, Prisma revierte TODO.
+// ======================================================
 
 const completeCheckoutSessionAsOrder =
   async (
@@ -459,7 +537,12 @@ const completeCheckoutSessionAsOrder =
             },
 
             include: {
-              items: true,
+              items: {
+                include: {
+                  product: true,
+                  variant: true,
+                },
+              },
 
               coupon: true,
 
@@ -497,16 +580,6 @@ const completeCheckoutSessionAsOrder =
 
         // ==================================================
         // VALIDAR ESTADO DE LA CHECKOUT SESSION
-        // ==================================================
-        //
-        // ACTIVE:
-        // El pago fue aprobado directamente por Mercado Pago.
-        //
-        // PAYMENT_PENDING:
-        // Era un ticket Abitab/Redpagos que ahora fue
-        // aprobado.
-        //
-        // No permitimos ningún otro estado.
         // ==================================================
 
         const validActiveSession =
@@ -574,6 +647,7 @@ const completeCheckoutSessionAsOrder =
                 id: true,
                 name: true,
                 stock: true,
+                hasVariants: true,
               },
             });
 
@@ -582,6 +656,93 @@ const completeCheckoutSessionAsOrder =
               `El producto "${item.productName}" ya no existe.`
             );
           }
+
+          // ================================================
+          // PRODUCTO CON VARIANTE SELECCIONADA
+          // ================================================
+
+          if (item.variantId) {
+            const variant =
+              await tx.productVariant.findUnique({
+                where: {
+                  id: item.variantId,
+                },
+
+                select: {
+                  id: true,
+                  productId: true,
+                  name: true,
+                  stock: true,
+                },
+              });
+
+            if (!variant) {
+              throw new Error(
+                `La variante "${item.variantName || "seleccionada"}" ya no existe.`
+              );
+            }
+
+            if (
+              variant.productId !==
+              product.id
+            ) {
+              throw new Error(
+                `La variante "${variant.name}" no pertenece al producto "${product.name}".`
+              );
+            }
+
+            if (
+              variant.stock <
+              item.quantity
+            ) {
+              throw new Error(
+                `Stock insuficiente para ${product.name} - ${variant.name}.`
+              );
+            }
+
+            continue;
+          }
+
+          // ================================================
+          // PRODUCTO CON VARIANTES SIN VARIANTE
+          // ================================================
+          //
+          // Permitido.
+          //
+          // Significa que el usuario agregó el producto
+          // principal desde Home/categorías sin entrar
+          // a ProductDetail.
+          //
+          // En este caso se utiliza el stock general
+          // del producto.
+          // ================================================
+
+          if (
+            product.hasVariants
+          ) {
+            if (
+              product.stock <= 0
+            ) {
+              throw new Error(
+                `Stock insuficiente para ${product.name}.`
+              );
+            }
+
+            if (
+              product.stock <
+              item.quantity
+            ) {
+              throw new Error(
+                `Stock insuficiente para ${product.name}.`
+              );
+            }
+
+            continue;
+          }
+
+          // ================================================
+          // PRODUCTO NORMAL
+          // ================================================
 
           if (
             product.stock <
@@ -636,6 +797,14 @@ const completeCheckoutSessionAsOrder =
 
                       productId:
                         item.productId,
+
+                      variantId:
+                        item.variantId ||
+                        null,
+
+                      variantName:
+                        item.variantName ||
+                        null,
                     })
                   ),
               },
@@ -645,6 +814,7 @@ const completeCheckoutSessionAsOrder =
               items: {
                 include: {
                   product: true,
+                  variant: true,
                 },
               },
 
@@ -710,6 +880,56 @@ const completeCheckoutSessionAsOrder =
         for (
           const item of session.items
         ) {
+          // ================================================
+          // STOCK DE VARIANTE
+          // ================================================
+
+          if (item.variantId) {
+            const result =
+              await tx.productVariant.updateMany({
+                where: {
+                  id:
+                    item.variantId,
+
+                  productId:
+                    item.productId,
+
+                  stock: {
+                    gte:
+                      item.quantity,
+                  },
+                },
+
+                data: {
+                  stock: {
+                    decrement:
+                      item.quantity,
+                  },
+                },
+              });
+
+            if (
+              result.count === 0
+            ) {
+              throw new Error(
+                `No se pudo actualizar el stock de ${item.productName} - ${item.variantName || "variante"}.`
+              );
+            }
+
+            continue;
+          }
+
+          // ================================================
+          // STOCK DEL PRODUCTO PRINCIPAL
+          // ================================================
+          //
+          // Se utiliza tanto para:
+          //
+          // - productos sin variantes
+          // - productos con variantes comprados
+          //   sin seleccionar una variante
+          // ================================================
+
           const result =
             await tx.product.updateMany({
               where: {
@@ -778,6 +998,7 @@ const completeCheckoutSessionAsOrder =
               items: {
                 include: {
                   product: true,
+                  variant: true,
                 },
               },
 
@@ -818,3 +1039,4 @@ export {
   completeCheckoutSessionAsOrder,
   expirePendingPaymentCheckoutSessions,
 };
+

@@ -24,6 +24,9 @@ import { sendEmail } from "./email.service.js";
 const FRONTEND_URL = "https://www.tecno3d.net";
 const LOGO_URL = `${FRONTEND_URL}/logo.png`;
 
+const DAC_TRACKING_URL =
+  "https://www.dac.com.uy/envios/rastrear";
+
 const escapeHtml = (value) => {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -1136,7 +1139,7 @@ const updateOrderStatusService = async (
                               desde tu cuenta de TECNO 3D.
                             </p>
 
-                            <!-- BOTÓN -->
+                            <!-- BOTONES -->
                             <table
                               role="presentation"
                               width="100%"
@@ -1150,6 +1153,7 @@ const updateOrderStatusService = async (
                               <tr>
                                 <td align="center">
 
+                                  <!-- VER MIS COMPRAS -->
                                   <a
                                     href="${ordersUrl}"
                                     style="
@@ -1164,6 +1168,34 @@ const updateOrderStatusService = async (
                                     "
                                   >
                                     VER MIS COMPRAS
+                                  </a>
+
+                                  <div
+                                    style="
+                                      height: 12px;
+                                      line-height: 12px;
+                                    "
+                                  >
+                                    &nbsp;
+                                  </div>
+
+                                  <!-- RASTREAR ENVÍO DAC -->
+                                  <a
+                                    href="${DAC_TRACKING_URL}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style="
+                                      display: inline-block;
+                                      padding: 15px 28px;
+                                      background-color: #dc2626;
+                                      color: #ffffff;
+                                      text-decoration: none;
+                                      border-radius: 8px;
+                                      font-size: 14px;
+                                      font-weight: bold;
+                                    "
+                                  >
+                                    📦 RASTREAR MI ENVÍO
                                   </a>
 
                                 </td>
@@ -1262,3 +1294,4 @@ export {
   getOrderByIdService,
   updateOrderStatusService,
 };
+

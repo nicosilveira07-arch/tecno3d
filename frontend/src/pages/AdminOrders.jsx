@@ -302,8 +302,6 @@ export default function AdminOrders() {
       {!error && (
         <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
           <div className="grid gap-4 md:grid-cols-[1fr_220px_auto]">
-            {/* BUSCAR */}
-
             <div>
               <label
                 htmlFor="order-search"
@@ -325,8 +323,6 @@ export default function AdminOrders() {
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-red-500"
               />
             </div>
-
-            {/* ESTADO */}
 
             <div>
               <label
@@ -376,8 +372,6 @@ export default function AdminOrders() {
               </select>
             </div>
 
-            {/* LIMPIAR */}
-
             <div className="flex items-end">
               <button
                 type="button"
@@ -389,8 +383,6 @@ export default function AdminOrders() {
               </button>
             </div>
           </div>
-
-          {/* RESULTADOS */}
 
           <div className="mt-4 border-t border-zinc-800 pt-4">
             <p className="text-sm text-zinc-500">
@@ -422,6 +414,7 @@ export default function AdminOrders() {
       {/* REGISTROS */}
 
       <div className="space-y-6">
+
         {/* PAGOS PENDIENTES */}
 
         {filteredPendingCheckouts.map(
@@ -430,10 +423,7 @@ export default function AdminOrders() {
               key={`checkout-${checkout.id}`}
               className="rounded-2xl border border-yellow-500/20 bg-zinc-900 p-6"
             >
-              {/* CABECERA */}
-
               <div className="mb-6 grid gap-6 md:grid-cols-4">
-                {/* REFERENCIA */}
 
                 <div>
                   <p className="text-sm text-zinc-500">
@@ -451,8 +441,6 @@ export default function AdminOrders() {
                   </p>
                 </div>
 
-                {/* CLIENTE */}
-
                 <div>
                   <p className="text-sm text-zinc-500">
                     Cliente
@@ -469,8 +457,6 @@ export default function AdminOrders() {
                   </p>
                 </div>
 
-                {/* ESTADO */}
-
                 <div>
                   <p className="text-sm text-zinc-500">
                     Estado
@@ -484,8 +470,6 @@ export default function AdminOrders() {
                     Pago pendiente
                   </span>
                 </div>
-
-                {/* TOTAL */}
 
                 <div>
                   <p className="text-sm text-zinc-500">
@@ -509,6 +493,7 @@ export default function AdminOrders() {
                 </h3>
 
                 <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+
                   {checkout.paymentMethod && (
                     <div>
                       <p className="text-sm text-zinc-500">
@@ -551,6 +536,7 @@ export default function AdminOrders() {
                       </p>
                     </div>
                   )}
+
                 </div>
 
                 <p className="mt-4 text-sm text-yellow-400">
@@ -558,13 +544,14 @@ export default function AdminOrders() {
                 </p>
               </div>
 
-              {/* PRODUCTOS */}
+              {/* PRODUCTOS PENDIENTES */}
 
               {Array.isArray(
                 checkout.items
               ) &&
                 checkout.items.length > 0 && (
                   <div className="space-y-3">
+
                     <p className="text-sm font-semibold text-zinc-400">
                       Productos
                     </p>
@@ -576,6 +563,7 @@ export default function AdminOrders() {
                           className="rounded-xl bg-zinc-950 p-4"
                         >
                           <div className="flex items-center justify-between gap-4">
+
                             <div>
                               <p className="font-semibold text-white">
                                 {item.product
@@ -584,11 +572,35 @@ export default function AdminOrders() {
                                   "Producto no disponible"}
                               </p>
 
+                              {/* VARIANTE */}
+
+                              {item.variantName ? (
+                                <div className="mt-2 flex items-center gap-2">
+                                  {item.variant?.colorHex && (
+                                    <span
+                                      className="h-4 w-4 rounded-full border border-zinc-600"
+                                      style={{
+                                        backgroundColor:
+                                          item.variant
+                                            .colorHex,
+                                      }}
+                                    />
+                                  )}
+
+                                  <span className="text-sm font-semibold text-zinc-300">
+                                    Color:{" "}
+                                    {item.variantName}
+                                  </span>
+                                </div>
+                              ) : (
+                                <p className="mt-2 text-sm text-zinc-500">
+                                  Producto base
+                                </p>
+                              )}
+
                               <p className="mt-1 text-sm text-zinc-500">
                                 Cantidad:{" "}
-                                {
-                                  item.quantity
-                                }
+                                {item.quantity}
                               </p>
                             </div>
 
@@ -608,14 +620,13 @@ export default function AdminOrders() {
                           {item.productId && (
                             <p className="mt-2 break-all text-xs text-zinc-600">
                               ID producto:{" "}
-                              {
-                                item.productId
-                              }
+                              {item.productId}
                             </p>
                           )}
                         </div>
                       )
                     )}
+
                   </div>
                 )}
             </div>
@@ -629,10 +640,10 @@ export default function AdminOrders() {
             key={order.id}
             className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
           >
+
             {/* CABECERA */}
 
             <div className="mb-6 grid gap-6 md:grid-cols-4">
-              {/* PEDIDO */}
 
               <div>
                 <p className="text-sm text-zinc-500">
@@ -650,8 +661,6 @@ export default function AdminOrders() {
                 </p>
               </div>
 
-              {/* CLIENTE */}
-
               <div>
                 <p className="text-sm text-zinc-500">
                   Cliente
@@ -666,8 +675,6 @@ export default function AdminOrders() {
                   {order.user?.email}
                 </p>
               </div>
-
-              {/* ESTADO */}
 
               <div>
                 <p className="text-sm text-zinc-500">
@@ -684,8 +691,6 @@ export default function AdminOrders() {
                   )}
                 </span>
               </div>
-
-              {/* TOTAL */}
 
               <div>
                 <p className="text-sm text-zinc-500">
@@ -704,11 +709,13 @@ export default function AdminOrders() {
             {/* PRODUCTOS */}
 
             <div className="border-t border-zinc-800 pt-5">
+
               <p className="mb-4 text-sm font-semibold text-zinc-400">
                 Productos
               </p>
 
               <div className="space-y-3">
+
                 {order.items.map(
                   (item) => (
                     <div
@@ -716,7 +723,9 @@ export default function AdminOrders() {
                       className="rounded-xl bg-zinc-950 p-4"
                     >
                       <div className="flex items-center justify-between gap-4">
+
                         <div>
+
                           <p className="font-semibold text-white">
                             {item.product
                               ?.name ||
@@ -724,10 +733,39 @@ export default function AdminOrders() {
                               "Producto no disponible"}
                           </p>
 
+                          {/* VARIANTE / COLOR */}
+
+                          {item.variantName ? (
+                            <div className="mt-2 flex items-center gap-2">
+
+                              {item.variant?.colorHex && (
+                                <span
+                                  className="h-4 w-4 rounded-full border border-zinc-600"
+                                  style={{
+                                    backgroundColor:
+                                      item.variant
+                                        .colorHex,
+                                  }}
+                                />
+                              )}
+
+                              <span className="text-sm font-semibold text-zinc-300">
+                                Color:{" "}
+                                {item.variantName}
+                              </span>
+
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-sm text-zinc-500">
+                              Producto base
+                            </p>
+                          )}
+
                           <p className="mt-1 text-sm text-zinc-500">
                             Cantidad:{" "}
                             {item.quantity}
                           </p>
+
                         </div>
 
                         <p className="shrink-0 font-semibold text-white">
@@ -741,6 +779,7 @@ export default function AdminOrders() {
                             2
                           )}
                         </p>
+
                       </div>
 
                       {item.productId && (
@@ -752,6 +791,7 @@ export default function AdminOrders() {
                     </div>
                   )
                 )}
+
               </div>
             </div>
 
@@ -760,6 +800,7 @@ export default function AdminOrders() {
             {order.payment
               ?.transactionId && (
               <div className="mt-5 border-t border-zinc-800 pt-5">
+
                 <p className="text-sm text-zinc-500">
                   ID pago Mercado Pago
                 </p>
@@ -770,19 +811,23 @@ export default function AdminOrders() {
                       .transactionId
                   }
                 </p>
+
               </div>
             )}
 
             {/* ACCIONES */}
 
             <div className="mt-6 flex justify-end border-t border-zinc-800 pt-5">
+
               <Link
                 to={`/admin/orders/${order.id}`}
                 className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-bold text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
               >
                 Ver pedido
               </Link>
+
             </div>
+
           </div>
         ))}
       </div>
@@ -793,6 +838,7 @@ export default function AdminOrders() {
         totalResults > 0 &&
         totalFilteredResults === 0 && (
           <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+
             <p className="text-zinc-300">
               No se encontraron registros.
             </p>
@@ -809,8 +855,10 @@ export default function AdminOrders() {
             >
               Limpiar filtros
             </button>
+
           </div>
         )}
+
     </div>
   );
 }

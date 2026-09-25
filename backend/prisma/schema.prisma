@@ -61,13 +61,17 @@ model CartItem {
   id        String   @id @default(cuid())
   cartId    String
   productId String
+  variantId String?
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([cartId, productId])
+  cart    Cart            @relation(fields: [cartId], references: [id])
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId, variantId])
+  @@index([variantId])
 }
 
 model Address {
@@ -126,6 +130,7 @@ model Product {
   offerActive          Boolean               @default(false)
   offerPercentage      Int?
   offerPrice           Float?
+  hasVariants          Boolean               @default(false)
   cartItems            CartItem[]
   checkoutSessionItems CheckoutSessionItem[]
   favorites            Favorite[]
@@ -135,6 +140,7 @@ model Product {
   owner                User?                 @relation(fields: [ownerId], references: [id])
   images               ProductImage[]
   reviews              Review[]
+  variants             ProductVariant[]
 }
 
 model ProductImage {
@@ -144,6 +150,34 @@ model ProductImage {
   productId String
   createdAt DateTime @default(now())
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVariant {
+  id                   String                @id @default(cuid())
+  productId            String
+  name                 String
+  colorHex             String?
+  stock                Int                   @default(0)
+  sku                  String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images               ProductVariantImage[]
+  cartItems            CartItem[]
+  checkoutSessionItems CheckoutSessionItem[]
+  orderItems           OrderItem[]
+
+  @@unique([productId, name])
+  @@index([productId])
+}
+
+model ProductVariantImage {
+  id        String         @id @default(cuid())
+  url       String
+  publicId  String
+  variantId String
+  createdAt DateTime       @default(now())
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 }
 
 model CheckoutSession {
@@ -180,10 +214,15 @@ model CheckoutSessionItem {
   quantity          Int
   price             Float
   productName       String
+  variantId         String?
+  variantName       String?
   checkoutSessionId String
   productId         String?
   checkoutSession   CheckoutSession @relation(fields: [checkoutSessionId], references: [id], onDelete: Cascade)
   product           Product?        @relation(fields: [productId], references: [id])
+  variant           ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([variantId])
 }
 
 model Order {
@@ -207,14 +246,19 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   quantity    Int
   price       Float
   orderId     String
   productId   String?
   productName String
-  order       Order    @relation(fields: [orderId], references: [id])
-  product     Product? @relation(fields: [productId], references: [id])
+  variantId   String?
+  variantName String?
+  order       Order          @relation(fields: [orderId], references: [id])
+  product     Product?       @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([variantId])
 }
 
 model Payment {

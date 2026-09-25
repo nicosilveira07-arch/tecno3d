@@ -26,13 +26,17 @@ export async function getCartController(req, res) {
 
 export async function addToCartController(req, res) {
   try {
-    const { productId, quantity } =
-      addToCartSchema.parse(req.body);
+    const {
+      productId,
+      quantity,
+      variantId,
+    } = addToCartSchema.parse(req.body);
 
     const item = await addToCartService(
       req.user.id,
       productId,
-      quantity
+      quantity,
+      variantId
     );
 
     return res.status(201).json({
@@ -53,7 +57,12 @@ export async function updateCartItemController(
   res
 ) {
   try {
-    const quantity = Number(req.body.quantity);
+    const quantity = Number(
+      req.body.quantity
+    );
+
+    const variantId =
+      req.body.variantId || null;
 
     if (
       !Number.isInteger(quantity) ||
@@ -70,7 +79,8 @@ export async function updateCartItemController(
       await updateCartItemService(
         req.user.id,
         req.params.productId,
-        quantity
+        quantity,
+        variantId
       );
 
     return res.json({
@@ -92,14 +102,19 @@ export async function removeFromCartController(
   res
 ) {
   try {
+    const variantId =
+      req.body?.variantId || null;
+
     await removeFromCartService(
       req.user.id,
-      req.params.productId
+      req.params.productId,
+      variantId
     );
 
     return res.json({
       success: true,
-      message: "Producto eliminado del carrito.",
+      message:
+        "Producto eliminado del carrito.",
     });
   } catch (error) {
     return res.status(400).json({
@@ -114,16 +129,20 @@ export async function clearCartController(
   res
 ) {
   try {
-    await clearCartService(req.user.id);
+    await clearCartService(
+      req.user.id
+    );
 
     return res.json({
       success: true,
-      message: "Carrito vaciado correctamente.",
+      message:
+        "Carrito vaciado correctamente.",
     });
   } catch (error) {
     return res.status(400).json({
       success: false,
-      message: error.message,
+      message:
+        error.message,
     });
   }
 }

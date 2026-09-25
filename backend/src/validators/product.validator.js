@@ -2,7 +2,45 @@ import { z } from "zod";
 
 const productImageSchema = z.object({
   url: z.string().url("La URL de la imagen no es válida."),
+
   publicId: z.string().optional().default(""),
+});
+
+const productVariantImageSchema = z.object({
+  url: z.string().url("La URL de la imagen no es válida."),
+
+  publicId: z.string().optional().default(""),
+});
+
+const productVariantSchema = z.object({
+  name: z
+    .string()
+    .min(1, "El nombre del color es obligatorio."),
+
+  colorHex: z
+    .string()
+    .regex(
+      /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+      "El color debe tener un formato hexadecimal válido."
+    )
+    .nullable()
+    .optional(),
+
+  stock: z
+    .number()
+    .int("El stock debe ser un número entero.")
+    .nonnegative("El stock no puede ser negativo."),
+
+  sku: z
+    .string()
+    .min(1, "El SKU no puede estar vacío.")
+    .nullable()
+    .optional(),
+
+  images: z
+    .array(productVariantImageSchema)
+    .optional()
+    .default([]),
 });
 
 const productSchema = z.object({
@@ -56,6 +94,16 @@ const productSchema = z.object({
     .optional()
     .default([]),
 
+  hasVariants: z
+    .boolean()
+    .optional()
+    .default(false),
+
+  variants: z
+    .array(productVariantSchema)
+    .optional()
+    .default([]),
+
   categoryId: z
     .string()
     .min(1, "La categoría es obligatoria."),
@@ -68,3 +116,4 @@ const productSchema = z.object({
 export {
   productSchema,
 };
+

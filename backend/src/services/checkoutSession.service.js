@@ -14,6 +14,10 @@ import {
   findById,
 } from "../repositories/address.repository.js";
 
+import {
+  getProductByIdForOrder,
+} from "../repositories/product.repository.js";
+
 const deleteExpiredCheckoutSession =
   async (
     sessionId,
@@ -28,6 +32,174 @@ const deleteExpiredCheckoutSession =
       userId
     );
   };
+
+// ======================================================
+// PREPARAR ITEMS DEL CHECKOUT
+// ======================================================
+//
+// Permite:
+//
+// - Producto normal sin variante
+// - Producto con variantes SIN variante seleccionada
+//   → se compra el producto principal/base
+// - Producto con variante seleccionada
+//   → se compra esa variante
+//
+// El variantName se obtiene del backend.
+// ======================================================
+
+const prepareCheckoutItems = async (
+  items
+) => {
+  const preparedItems = [];
+
+  for (
+    const item of items
+  ) {
+    if (!item.productId) {
+      throw new Error(
+        `El producto "${item.productName || "seleccionado"}" no es válido.`
+      );
+    }
+
+    const product =
+      await getProductByIdForOrder(
+        item.productId
+      );
+
+    if (!product) {
+      throw new Error(
+        `El producto "${item.productName || "seleccionado"}" ya no existe.`
+      );
+    }
+
+    const quantity =
+      Number(item.quantity);
+
+    const price =
+      Number(item.price);
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity <= 0
+    ) {
+      throw new Error(
+        `La cantidad de ${product.name} no es válida.`
+      );
+    }
+
+    if (
+      !Number.isFinite(price) ||
+      price < 0
+    ) {
+      throw new Error(
+        `El precio de ${product.name} no es válido.`
+      );
+    }
+
+    // ==================================================
+    // PRODUCTO CON VARIANTES
+    // ==================================================
+    //
+    // Si viene variantId:
+    //   → validar y guardar la variante.
+    //
+    // Si NO viene variantId:
+    //   → permitir comprar el producto principal/base.
+    // ==================================================
+
+    if (product.hasVariants) {
+      if (item.variantId) {
+        const variant =
+          product.variants.find(
+            (currentVariant) =>
+              currentVariant.id ===
+              item.variantId
+          );
+
+        if (!variant) {
+          throw new Error(
+            `La variante seleccionada no pertenece al producto ${product.name}.`
+          );
+        }
+
+        preparedItems.push({
+          quantity,
+
+          price,
+
+          productName:
+            product.name,
+
+          productId:
+            product.id,
+
+          variantId:
+            variant.id,
+
+          variantName:
+            variant.name,
+        });
+
+        continue;
+      }
+
+      // ================================================
+      // PRODUCTO PRINCIPAL SIN VARIANTE
+      // ================================================
+
+      preparedItems.push({
+        quantity,
+
+        price,
+
+        productName:
+          product.name,
+
+        productId:
+          product.id,
+
+        variantId:
+          null,
+
+        variantName:
+          null,
+      });
+
+      continue;
+    }
+
+    // ==================================================
+    // PRODUCTO NORMAL SIN VARIANTES
+    // ==================================================
+
+    if (item.variantId) {
+      throw new Error(
+        `El producto ${product.name} no utiliza variantes.`
+      );
+    }
+
+    preparedItems.push({
+      quantity,
+
+      price,
+
+      productName:
+        product.name,
+
+      productId:
+        product.id,
+
+      variantId:
+        null,
+
+      variantName:
+        null,
+    });
+  }
+
+  return preparedItems;
+};
 
 // ======================================================
 // CREAR CHECKOUT SESSION
@@ -94,8 +266,13 @@ const createCheckoutSessionService = async (
     );
   }
 
-  if (deliveryMethod === "SHIPPING") {
-    const address = await findById(addressId);
+  if (
+    deliveryMethod === "SHIPPING"
+  ) {
+    const address =
+      await findById(
+        addressId
+      );
 
     if (!address) {
       throw new Error(
@@ -103,7 +280,10 @@ const createCheckoutSessionService = async (
       );
     }
 
-    if (address.userId !== userId) {
+    if (
+      address.userId !==
+      userId
+    ) {
       throw new Error(
         "La dirección de envío no pertenece al usuario."
       );
@@ -146,6 +326,10 @@ const createCheckoutSessionService = async (
     );
   }
 
+  // ======================================================
+  // VALIDAR VENCIMIENTO
+  // ======================================================
+
   if (!expiresAt) {
     throw new Error(
       "La sesión de checkout debe tener una fecha de vencimiento."
@@ -173,57 +357,138 @@ const createCheckoutSessionService = async (
     );
   }
 
+  // ======================================================
+  // PREPARAR ITEMS
+  // ======================================================
+
+  const preparedItems =
+    await prepareCheckoutItems(
+      items
+    );
+
+  // ======================================================
+  // BUSCAR SESIÓN ACTIVA EXISTENTE
+  // ======================================================
+
   const activeSession =
     await getActiveCheckoutSessionByUser(
       userId
     );
 
-  // Si ya existe una sesión activa, reutilizarla
-  // en lugar de crear otra sesión temporal.
+  // ======================================================
+  // REUTILIZAR SESIÓN ACTIVA
+  // ======================================================
+  //
+  // IMPORTANTE:
+  // Se reemplazan sus items para evitar que una variante
+  // anterior quede almacenada en la sesión.
+  // ======================================================
 
   if (activeSession) {
+    await deleteCheckoutSessionItems(
+      activeSession.id
+    );
+
     return await updateCheckoutSession(
       activeSession.id,
       {
-        total: Number(total),
-        discount: Number(discount),
+        total:
+          Number(total),
+
+        discount:
+          Number(discount),
+
         couponId,
+
         deliveryMethod,
+
         addressId:
           deliveryMethod === "SHIPPING"
             ? addressId
             : null,
+
         expiresAt:
           expirationDate,
+
+        items: {
+          create:
+            preparedItems.map(
+              (item) => ({
+                quantity:
+                  item.quantity,
+
+                price:
+                  item.price,
+
+                productName:
+                  item.productName,
+
+                productId:
+                  item.productId,
+
+                variantId:
+                  item.variantId,
+
+                variantName:
+                  item.variantName,
+              })
+            ),
+        },
       }
     );
   }
 
+  // ======================================================
+  // CREAR NUEVA CHECKOUT SESSION
+  // ======================================================
+
   return await createCheckoutSession({
     userId,
-    total: Number(total),
-    discount: Number(discount),
+
+    total:
+      Number(total),
+
+    discount:
+      Number(discount),
+
     couponId,
+
     deliveryMethod,
+
     addressId:
       deliveryMethod === "SHIPPING"
         ? addressId
         : null,
-    status: "ACTIVE",
-    expiresAt: expirationDate,
+
+    status:
+      "ACTIVE",
+
+    expiresAt:
+      expirationDate,
+
     items: {
-      create: items.map(
-        (item) => ({
-          quantity:
-            Number(item.quantity),
-          price:
-            Number(item.price),
-          productName:
-            item.productName,
-          productId:
-            item.productId || null,
-        })
-      ),
+      create:
+        preparedItems.map(
+          (item) => ({
+            quantity:
+              item.quantity,
+
+            price:
+              item.price,
+
+            productName:
+              item.productName,
+
+            productId:
+              item.productId,
+
+            variantId:
+              item.variantId,
+
+            variantName:
+              item.variantName,
+          })
+        ),
     },
   });
 };
@@ -247,8 +512,6 @@ const getCheckoutSessionService = async (
       "Sesión de checkout no encontrada."
     );
   }
-
-
 
   if (
     session.expiresAt <= new Date() &&
@@ -311,10 +574,6 @@ const updateCheckoutSessionService = async (
   // ====================================================
   // SESIÓN VENCIDA
   // ====================================================
-  //
-  // Se elimina físicamente.
-  // No se marca como EXPIRED.
-  // ====================================================
 
   if (
     session.expiresAt <= new Date()
@@ -358,7 +617,8 @@ const markCheckoutSessionPaymentPendingService =
     }
 
     if (
-      session.status === "COMPLETED"
+      session.status ===
+      "COMPLETED"
     ) {
       throw new Error(
         "La sesión de checkout ya fue completada."

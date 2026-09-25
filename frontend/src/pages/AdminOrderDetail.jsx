@@ -11,7 +11,6 @@ export default function AdminOrderDetail() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [error, setError] = useState("");
 
-  const [shippingCompany, setShippingCompany] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
 
   const loadOrder = async () => {
@@ -24,10 +23,6 @@ export default function AdminOrderDetail() {
       const loadedOrder = response.data.data;
 
       setOrder(loadedOrder);
-
-      setShippingCompany(
-        loadedOrder.shippingCompany || ""
-      );
 
       setTrackingNumber(
         loadedOrder.trackingNumber || ""
@@ -241,21 +236,13 @@ export default function AdminOrderDetail() {
     }
   };
 
-  const handleShipOrder = async () => {
-    const company = String(
-      shippingCompany
-    ).trim();
+  // ENVIAR PEDIDO
+  // EMPRESA FIJA: DAC
 
+  const handleShipOrder = async () => {
     const tracking = String(
       trackingNumber
     ).trim();
-
-    if (!company) {
-      setError(
-        "Debes ingresar la empresa de envío."
-      );
-      return;
-    }
 
     if (!tracking) {
       setError(
@@ -272,7 +259,11 @@ export default function AdminOrderDetail() {
         `/orders/${id}/status`,
         {
           status: "SHIPPED",
-          shippingCompany: company,
+
+          // La empresa de envío queda fija
+          // porque TECNO 3D utiliza DAC.
+          shippingCompany: "DAC",
+
           trackingNumber: tracking,
         }
       );
@@ -564,30 +555,26 @@ export default function AdminOrderDetail() {
           </p>
 
           <p className="mt-2 text-sm text-zinc-400">
-            El paquete está preparado. Ingresá la
-            empresa de envío y el número de rastreo
-            para marcarlo como enviado.
+            El paquete está preparado y será enviado
+            por DAC. Ingresá solamente el número
+            de rastreo para marcarlo como enviado.
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
+
+            {/* EMPRESA FIJA */}
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-zinc-400">
                 Empresa de envío
               </label>
 
-              <input
-                type="text"
-                value={shippingCompany}
-                onChange={(event) =>
-                  setShippingCompany(
-                    String(event.target.value)
-                  )
-                }
-                placeholder="Ej: DAC, UES, Mirtrans..."
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500"
-              />
+              <div className="flex h-[50px] items-center rounded-xl border border-zinc-700 bg-zinc-950 px-4 font-bold text-white">
+                🚚 DAC
+              </div>
             </div>
+
+            {/* TRACKING */}
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-zinc-400">
@@ -603,7 +590,7 @@ export default function AdminOrderDetail() {
                   )
                 }
                 placeholder="Ej: 171981981051"
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500"
+                className="h-[50px] w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500"
               />
             </div>
 
@@ -645,8 +632,7 @@ export default function AdminOrderDetail() {
               </p>
 
               <p className="mt-1 font-bold text-white">
-                {order.shippingCompany ||
-                  "No informado"}
+                DAC
               </p>
             </div>
 
@@ -679,7 +665,7 @@ export default function AdminOrderDetail() {
           {order.items?.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between rounded-xl bg-zinc-950 p-4"
+              className="flex items-center justify-between gap-4 rounded-xl bg-zinc-950 p-4"
             >
 
               <div>
@@ -688,12 +674,22 @@ export default function AdminOrderDetail() {
                     item.productName}
                 </p>
 
+                {item.variantName ? (
+                  <p className="mt-1 text-sm font-semibold text-red-400">
+                    Color: {item.variantName}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-600">
+                    Producto base
+                  </p>
+                )}
+
                 <p className="mt-1 text-sm text-zinc-500">
                   Cantidad: {item.quantity}
                 </p>
               </div>
 
-              <p className="font-bold text-white">
+              <p className="shrink-0 font-bold text-white">
                 UYU{" "}
                 {(
                   Number(item.price) *
@@ -750,7 +746,7 @@ export default function AdminOrderDetail() {
             <p className="mt-1 text-sm text-zinc-500">
               CP: {order.address.zipCode}
             </p>
-                    
+
             {order.address.phone && (
               <p className="mt-1 text-sm font-semibold text-zinc-300">
                 Teléfono de contacto: {order.address.phone}

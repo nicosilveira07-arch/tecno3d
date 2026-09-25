@@ -10,7 +10,12 @@ import {
 
 const BASE_STORAGE_KEY = "tecno3d_cart";
 
+const CART_SYNC_INTERVAL = 7000;
+
 const listeners = new Set();
+
+let syncInterval = null;
+let eventsInitialized = false;
 
 function getUserId() {
   const storedUser =
@@ -63,7 +68,6 @@ function loadLocalCart() {
   }
 }
 
-
 let cart =
   loadLocalCart();
 
@@ -103,6 +107,10 @@ function getSnapshot() {
   return cart;
 }
 
+// ======================================================
+// NORMALIZAR CARRITO DEL BACKEND
+// ======================================================
+
 function normalizeBackendCart(
   backendCart
 ) {
@@ -120,9 +128,25 @@ function normalizeBackendCart(
       const product =
         item.product;
 
+      const variant =
+        item.variant ||
+        null;
+
       return {
         productId:
           item.productId,
+
+        variantId:
+          item.variantId ||
+          null,
+
+        variantName:
+          variant?.name ||
+          null,
+
+        variantColorHex:
+          variant?.colorHex ||
+          null,
 
         name:
           product?.name ||
@@ -136,6 +160,8 @@ function normalizeBackendCart(
           ),
 
         image:
+          variant?.images?.[0]
+            ?.url ||
           product?.image ||
           product?.mainImage ||
           "",
@@ -146,6 +172,10 @@ function normalizeBackendCart(
     }
   );
 }
+
+// ======================================================
+// CARGAR CARRITO DEL USUARIO
+// ======================================================
 
 export async function loadUserCart() {
   const userId =
@@ -185,6 +215,95 @@ export async function loadUserCart() {
   }
 }
 
+// ======================================================
+// SINCRONIZACIÓN AUTOMÁTICA
+// ======================================================
+//
+// Mantiene sincronizado el carrito entre:
+//
+// PC ↔ celular
+// PC ↔ otra PC
+// celular ↔ otra pestaña
+//
+// No reemplaza la actualización inmediata.
+// Solamente vuelve a consultar el backend
+// periódicamente para detectar cambios realizados
+// desde otro dispositivo.
+//
+// Además:
+// - sincroniza al volver a la pestaña
+// - sincroniza cuando la ventana recupera el foco
+// ======================================================
+
+function startCartSync() {
+  if (
+    typeof window ===
+      "undefined"
+  ) {
+    return;
+  }
+
+  if (
+    eventsInitialized
+  ) {
+    return;
+  }
+
+  eventsInitialized = true;
+
+  const sync = () => {
+    const userId =
+      getUserId();
+
+    if (!userId) {
+      return;
+    }
+
+    loadUserCart();
+  };
+
+  // ====================================================
+  // CADA 15 SEGUNDOS
+  // ====================================================
+
+  syncInterval =
+    window.setInterval(
+      sync,
+      CART_SYNC_INTERVAL
+    );
+
+  // ====================================================
+  // AL VOLVER A LA PESTAÑA
+  // ====================================================
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        sync();
+      }
+    }
+  );
+
+  // ====================================================
+  // AL VOLVER A LA VENTANA
+  // ====================================================
+
+  window.addEventListener(
+    "focus",
+    sync
+  );
+}
+
+startCartSync();
+
+// ======================================================
+// VACIAR CARRITO
+// ======================================================
+
 export async function clearCart() {
   const userId =
     getUserId();
@@ -207,12 +326,28 @@ export async function clearCart() {
   }
 }
 
+// ======================================================
+// AGREGAR AL CARRITO
+// ======================================================
+//
+// variant = null
+// → producto base / sin color
+//
+// variant = objeto
+// → variante seleccionada
+// ======================================================
+
 export async function addToCart(
-  product
+  product,
+  variant = null
 ) {
   const productId =
     product.productId ??
     product.id;
+
+  const variantId =
+    variant?.id ||
+    null;
 
   const originalPrice =
     Number(product.price);
@@ -233,11 +368,18 @@ export async function addToCart(
       ? offerPrice
       : originalPrice;
 
+  // ==================================================
+  // BUSCAR PRODUCTO + MISMA VARIANTE
+  // ==================================================
+
   const existingProduct =
     cart.find(
       (item) =>
         item.productId ===
-        productId
+          productId &&
+        (item.variantId ||
+          null) ===
+          variantId
     );
 
   if (
@@ -247,12 +389,17 @@ export async function addToCart(
       cart.map(
         (item) =>
           item.productId ===
-          productId
+            productId &&
+          (item.variantId ||
+            null) ===
+            variantId
             ? {
                 ...item,
+
                 quantity:
                   item.quantity +
                   1,
+
                 price:
                   effectivePrice,
               }
@@ -261,14 +408,31 @@ export async function addToCart(
   } else {
     cart = [
       ...cart,
+
       {
         productId,
+
+        variantId,
+
+        variantName:
+          variant?.name ||
+          null,
+
+        variantColorHex:
+          variant?.colorHex ||
+          null,
+
         name:
           product.name,
+
         price:
           effectivePrice,
+
         image:
+          variant?.images?.[0]
+            ?.url ||
           product.image,
+
         quantity: 1,
       },
     ];
@@ -286,7 +450,8 @@ export async function addToCart(
   try {
     await addCartItem(
       productId,
-      1
+      1,
+      variantId
     );
   } catch (error) {
     console.error(
@@ -298,14 +463,22 @@ export async function addToCart(
   }
 }
 
+// ======================================================
+// DISMINUIR CANTIDAD
+// ======================================================
+
 export async function decreaseQuantity(
-  productId
+  productId,
+  variantId = null
 ) {
   const existingProduct =
     cart.find(
       (item) =>
         item.productId ===
-        productId
+          productId &&
+        (item.variantId ||
+          null) ===
+          variantId
     );
 
   if (
@@ -324,17 +497,26 @@ export async function decreaseQuantity(
     cart =
       cart.filter(
         (item) =>
-          item.productId !==
-          productId
+          !(
+            item.productId ===
+              productId &&
+            (item.variantId ||
+              null) ===
+              variantId
+          )
       );
   } else {
     cart =
       cart.map(
         (item) =>
           item.productId ===
-          productId
+            productId &&
+          (item.variantId ||
+            null) ===
+            variantId
             ? {
                 ...item,
+
                 quantity:
                   newQuantity,
               }
@@ -356,12 +538,14 @@ export async function decreaseQuantity(
       newQuantity <= 0
     ) {
       await removeCartItem(
-        productId
+        productId,
+        variantId
       );
     } else {
       await updateCartItem(
         productId,
-        newQuantity
+        newQuantity,
+        variantId
       );
     }
   } catch (error) {
@@ -374,14 +558,24 @@ export async function decreaseQuantity(
   }
 }
 
+// ======================================================
+// ELIMINAR DEL CARRITO
+// ======================================================
+
 export async function removeFromCart(
-  productId
+  productId,
+  variantId = null
 ) {
   cart =
     cart.filter(
       (item) =>
-        item.productId !==
-        productId
+        !(
+          item.productId ===
+            productId &&
+          (item.variantId ||
+            null) ===
+            variantId
+        )
     );
 
   notifyListeners();
@@ -395,7 +589,8 @@ export async function removeFromCart(
 
   try {
     await removeCartItem(
-      productId
+      productId,
+      variantId
     );
   } catch (error) {
     console.error(
@@ -406,6 +601,10 @@ export async function removeFromCart(
     await loadUserCart();
   }
 }
+
+// ======================================================
+// HOOK
+// ======================================================
 
 export function useCart() {
   return useSyncExternalStore(

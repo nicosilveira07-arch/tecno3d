@@ -6,31 +6,41 @@ export const getCart = async () => {
 
 export const addCartItem = async (
   productId,
-  quantity = 1
+  quantity = 1,
+  variantId = null
 ) => {
   return await api.post("/cart", {
     productId,
     quantity,
+    variantId,
   });
 };
 
 export const updateCartItem = async (
   productId,
-  quantity
+  quantity,
+  variantId = null
 ) => {
   return await api.patch(
     `/cart/${productId}`,
     {
       quantity,
+      variantId,
     }
   );
 };
 
 export const removeCartItem = async (
-  productId
+  productId,
+  variantId = null
 ) => {
   return await api.delete(
-    `/cart/${productId}`
+    `/cart/${productId}`,
+    {
+      data: {
+        variantId,
+      },
+    }
   );
 };
 

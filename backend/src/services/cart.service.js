@@ -8,32 +8,56 @@ import {
   clearCart,
 } from "../repositories/cart.repository.js";
 
-import { getProductByIdForOrder } from "../repositories/product.repository.js";
+import {
+  getProductByIdForOrder,
+} from "../repositories/product.repository.js";
 
-export async function getCartService(userId) {
-  let cart = await findCartByUserId(userId);
+export async function getCartService(
+  userId
+) {
+  let cart =
+    await findCartByUserId(
+      userId
+    );
 
   if (!cart) {
     await createCart(userId);
-    cart = await findCartByUserId(userId);
+
+    cart =
+      await findCartByUserId(
+        userId
+      );
   }
 
   return cart;
 }
 
+// ======================================================
+// AGREGAR AL CARRITO
+// ======================================================
+
 export async function addToCartService(
   userId,
   productId,
-  quantity
+  quantity,
+  variantId = null
 ) {
-  let cart = await findCartByUserId(userId);
+  let cart =
+    await findCartByUserId(
+      userId
+    );
 
   if (!cart) {
-    cart = await createCart(userId);
+    cart =
+      await createCart(
+        userId
+      );
   }
 
   const product =
-    await getProductByIdForOrder(productId);
+    await getProductByIdForOrder(
+      productId
+    );
 
   if (!product) {
     throw new Error(
@@ -41,24 +65,64 @@ export async function addToCartService(
     );
   }
 
-  if (product.stock < quantity) {
+  let availableStock =
+    product.stock;
+
+  // ==================================================
+  // VALIDAR VARIANTE
+  // ==================================================
+
+  if (variantId) {
+    if (!product.hasVariants) {
+      throw new Error(
+        "El producto no utiliza variantes."
+      );
+    }
+
+    const variant =
+      product.variants?.find(
+        (item) =>
+          item.id ===
+          variantId
+      );
+
+    if (!variant) {
+      throw new Error(
+        "La variante seleccionada no existe."
+      );
+    }
+
+    availableStock =
+      variant.stock;
+  }
+
+  if (
+    availableStock <
+    quantity
+  ) {
     throw new Error(
       "Stock insuficiente."
     );
   }
 
+  // ==================================================
+  // BUSCAR PRODUCTO + VARIANTE
+  // ==================================================
+
   const item =
     await findCartItem(
       cart.id,
-      productId
+      productId,
+      variantId
     );
 
   if (item) {
     const newQuantity =
-      item.quantity + quantity;
+      item.quantity +
+      quantity;
 
     if (
-      product.stock <
+      availableStock <
       newQuantity
     ) {
       throw new Error(
@@ -72,25 +136,43 @@ export async function addToCartService(
     );
   }
 
+  // ==================================================
+  // CREAR NUEVA LÍNEA
+  // ==================================================
+
   return await addCartItem({
-    cartId: cart.id,
+    cartId:
+      cart.id,
+
     productId,
+
+    variantId:
+      variantId || null,
+
     quantity,
   });
 }
 
+// ======================================================
+// ACTUALIZAR CANTIDAD
+// ======================================================
+
 export async function updateCartItemService(
   userId,
   productId,
-  quantity
+  quantity,
+  variantId = null
 ) {
   const cart =
-    await getCartService(userId);
+    await getCartService(
+      userId
+    );
 
   const item =
     await findCartItem(
       cart.id,
-      productId
+      productId,
+      variantId
     );
 
   if (!item) {
@@ -99,7 +181,9 @@ export async function updateCartItemService(
     );
   }
 
-  if (quantity === 0) {
+  if (
+    quantity === 0
+  ) {
     return await deleteCartItem(
       item.id
     );
@@ -116,7 +200,41 @@ export async function updateCartItemService(
     );
   }
 
-  if (product.stock < quantity) {
+  let availableStock =
+    product.stock;
+
+  // ==================================================
+  // VALIDAR STOCK DE VARIANTE
+  // ==================================================
+
+  if (variantId) {
+    if (!product.hasVariants) {
+      throw new Error(
+        "El producto no utiliza variantes."
+      );
+    }
+
+    const variant =
+      product.variants?.find(
+        (item) =>
+          item.id ===
+          variantId
+      );
+
+    if (!variant) {
+      throw new Error(
+        "La variante seleccionada no existe."
+      );
+    }
+
+    availableStock =
+      variant.stock;
+  }
+
+  if (
+    availableStock <
+    quantity
+  ) {
     throw new Error(
       "Stock insuficiente."
     );
@@ -128,17 +246,25 @@ export async function updateCartItemService(
   );
 }
 
+// ======================================================
+// ELIMINAR DEL CARRITO
+// ======================================================
+
 export async function removeFromCartService(
   userId,
-  productId
+  productId,
+  variantId = null
 ) {
   const cart =
-    await getCartService(userId);
+    await getCartService(
+      userId
+    );
 
   const item =
     await findCartItem(
       cart.id,
-      productId
+      productId,
+      variantId
     );
 
   if (!item) {
@@ -152,13 +278,20 @@ export async function removeFromCartService(
   );
 }
 
+// ======================================================
+// VACIAR CARRITO
+// ======================================================
+
 export async function clearCartService(
   userId
 ) {
   const cart =
-    await getCartService(userId);
+    await getCartService(
+      userId
+    );
 
   return await clearCart(
     cart.id
   );
 }
+

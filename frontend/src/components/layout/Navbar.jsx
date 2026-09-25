@@ -18,6 +18,7 @@ import {
   useCart,
   loadUserCart,
 } from "@/features/cart/cart.store";
+
 import { getCategories } from "@/services/categories.api";
 import { getFavorites } from "@/services/favorites.api";
 
@@ -36,23 +37,22 @@ export default function Navbar() {
   // =========================
   // SINCRONIZAR CARRITO
   // =========================
+  //
+  // Se carga solamente al iniciar
+  // la sesión del usuario.
+  //
+  // No hacemos polling cada 7 segundos,
+  // porque podría sobrescribir cambios
+  // locales del carrito mientras el usuario
+  // está agregando o modificando variantes.
+  // =========================
 
   useEffect(() => {
     if (!token) {
       return;
     }
 
-    // Sincronización inmediata al cargar
     loadUserCart();
-
-    // Sincronización automática cada 5 segundos
-    const interval = setInterval(() => {
-      loadUserCart();
-    }, 7000);
-
-    return () => {
-      clearInterval(interval);
-    };
   }, [token]);
 
   const storedUser = localStorage.getItem("user");
@@ -109,7 +109,10 @@ export default function Navbar() {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () => {
       document.removeEventListener(
@@ -176,7 +179,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleFavoriteUpdated = async () => {
-      const currentToken = localStorage.getItem("token");
+      const currentToken =
+        localStorage.getItem("token");
 
       if (!currentToken) {
         setFavoriteCount(0);
@@ -193,12 +197,15 @@ export default function Navbar() {
         setShowFavoriteNotification(true);
 
         if (favoriteTimeoutRef.current) {
-          clearTimeout(favoriteTimeoutRef.current);
+          clearTimeout(
+            favoriteTimeoutRef.current
+          );
         }
 
-        favoriteTimeoutRef.current = setTimeout(() => {
-          setShowFavoriteNotification(false);
-        }, 3000);
+        favoriteTimeoutRef.current =
+          setTimeout(() => {
+            setShowFavoriteNotification(false);
+          }, 3000);
       } catch (error) {
         console.error(
           "ERROR ACTUALIZANDO FAVORITOS DEL NAVBAR:",
@@ -229,7 +236,9 @@ export default function Navbar() {
       );
 
       if (favoriteTimeoutRef.current) {
-        clearTimeout(favoriteTimeoutRef.current);
+        clearTimeout(
+          favoriteTimeoutRef.current
+        );
       }
     };
   }, []);
@@ -288,14 +297,18 @@ export default function Navbar() {
       {/* NAVBAR FIJO */}
 
       <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/95 shadow-lg backdrop-blur-md">
+
         {/* Barra superior */}
 
         <div className="flex w-full min-w-0 items-center gap-2 px-3 py-3 sm:h-20 sm:gap-4 sm:px-5 lg:px-6">
+
           {/* Logo */}
 
           <Link
             to="/"
-            onClick={() => setShowMobileMenu(false)}
+            onClick={() =>
+              setShowMobileMenu(false)
+            }
             className="flex shrink-0 items-center gap-2 sm:gap-3"
           >
             <img
@@ -322,6 +335,7 @@ export default function Navbar() {
             className="min-w-0 flex-1"
           >
             <div className="relative w-full">
+
               <Search
                 size={20}
                 className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500"
@@ -330,17 +344,21 @@ export default function Navbar() {
               <input
                 value={search}
                 onChange={(event) =>
-                  setSearch(event.target.value)
+                  setSearch(
+                    event.target.value
+                  )
                 }
                 placeholder="Buscar productos..."
                 className="h-10 w-full min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-3 text-sm text-white outline-none transition focus:border-red-600 sm:h-12 sm:pl-12 sm:pr-4"
               />
+
             </div>
           </form>
 
           {/* Acciones desktop */}
 
           <div className="hidden shrink-0 items-center gap-5 lg:flex">
+
             {/* Favoritos */}
 
             <Link
@@ -391,6 +409,7 @@ export default function Navbar() {
 
             {token ? (
               <div className="flex shrink-0 items-center gap-4">
+
                 <Link
                   to="/orders"
                   className="flex shrink-0 items-center gap-2 text-zinc-300 transition hover:text-red-500"
@@ -409,7 +428,8 @@ export default function Navbar() {
                   <User size={22} />
 
                   <span className="hidden xl:block max-w-32 truncate text-sm font-medium">
-                    {user?.firstName || "Mi cuenta"}
+                    {user?.firstName ||
+                      "Mi cuenta"}
                   </span>
                 </Link>
 
@@ -420,6 +440,7 @@ export default function Navbar() {
                 >
                   <LogOut size={21} />
                 </button>
+
               </div>
             ) : (
               <Link
@@ -430,13 +451,16 @@ export default function Navbar() {
                 <User className="cursor-pointer text-zinc-300 transition hover:text-red-600" />
               </Link>
             )}
+
           </div>
 
           {/* Menú móvil */}
 
           <button
             onClick={() =>
-              setShowMobileMenu(!showMobileMenu)
+              setShowMobileMenu(
+                !showMobileMenu
+              )
             }
             className="shrink-0 text-zinc-300 transition hover:text-red-500 lg:hidden"
             aria-label="Abrir menú"
@@ -453,21 +477,27 @@ export default function Navbar() {
               />
             )}
           </button>
+
         </div>
 
         {/* Menú desktop */}
 
         <div className="hidden w-full border-t border-zinc-800 lg:block">
+
           <div className="flex h-14 w-full items-center gap-8 px-6 text-sm">
+
             {/* Categorías */}
 
             <div
               ref={categoriesRef}
               className="relative"
             >
+
               <button
                 onClick={() =>
-                  setShowCategories(!showCategories)
+                  setShowCategories(
+                    !showCategories
+                  )
                 }
                 className="flex items-center gap-2 text-white transition hover:text-red-500"
               >
@@ -485,25 +515,32 @@ export default function Navbar() {
 
               {showCategories && (
                 <div className="absolute left-0 top-12 z-50 w-64 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+
                   {categories.length === 0 ? (
                     <div className="px-4 py-3 text-sm text-zinc-500">
                       No hay categorías.
                     </div>
                   ) : (
-                    categories.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() =>
-                          handleCategorySearch(category)
-                        }
-                        className="block w-full px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-red-500"
-                      >
-                        {category.name}
-                      </button>
-                    ))
+                    categories.map(
+                      (category) => (
+                        <button
+                          key={category.id}
+                          onClick={() =>
+                            handleCategorySearch(
+                              category
+                            )
+                          }
+                          className="block w-full px-4 py-3 text-left text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-red-500"
+                        >
+                          {category.name}
+                        </button>
+                      )
+                    )
                   )}
+
                 </div>
               )}
+
             </div>
 
             {/* Productos */}
@@ -523,17 +560,22 @@ export default function Navbar() {
             >
               Ofertas
             </Link>
+
           </div>
+
         </div>
 
         {/* Menú móvil */}
 
         {showMobileMenu && (
           <div className="max-h-[calc(100vh-4rem)] w-full overflow-y-auto border-t border-zinc-800 bg-zinc-950 lg:hidden">
+
             <div className="w-full px-4 py-4 sm:px-6">
+
               {/* Categorías */}
 
               <div ref={categoriesRef}>
+
                 <button
                   onClick={() =>
                     setShowMobileCategories(
@@ -542,7 +584,9 @@ export default function Navbar() {
                   }
                   className="flex w-full items-center justify-between border-b border-zinc-800 py-4 text-left text-white"
                 >
-                  <span>Categorías</span>
+                  <span>
+                    Categorías
+                  </span>
 
                   <ChevronDown
                     size={18}
@@ -556,25 +600,32 @@ export default function Navbar() {
 
                 {showMobileCategories && (
                   <div className="border-b border-zinc-800 py-2">
+
                     {categories.length === 0 ? (
                       <div className="px-2 py-3 text-sm text-zinc-500">
                         No hay categorías.
                       </div>
                     ) : (
-                      categories.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() =>
-                            handleCategorySearch(category)
-                          }
-                          className="block w-full px-2 py-3 text-left text-sm text-zinc-400 transition hover:text-red-500"
-                        >
-                          {category.name}
-                        </button>
-                      ))
+                      categories.map(
+                        (category) => (
+                          <button
+                            key={category.id}
+                            onClick={() =>
+                              handleCategorySearch(
+                                category
+                              )
+                            }
+                            className="block w-full px-2 py-3 text-left text-sm text-zinc-400 transition hover:text-red-500"
+                          >
+                            {category.name}
+                          </button>
+                        )
+                      )
                     )}
+
                   </div>
                 )}
+
               </div>
 
               {/* Productos */}
@@ -680,7 +731,8 @@ export default function Navbar() {
                     className="flex items-center gap-3 border-b border-zinc-800 py-4 text-zinc-300 transition hover:text-red-500"
                   >
                     <User size={20} />
-                    {user?.firstName || "Mi cuenta"}
+                    {user?.firstName ||
+                      "Mi cuenta"}
                   </Link>
 
                   <button
@@ -703,9 +755,12 @@ export default function Navbar() {
                   Iniciar sesión
                 </Link>
               )}
+
             </div>
+
           </div>
         )}
+
       </header>
     </>
   );
