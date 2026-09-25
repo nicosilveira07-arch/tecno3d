@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { MapPin, Plus, Store } from "lucide-react";
+import {
+  MapPin,
+  Plus,
+  Store,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -11,7 +15,9 @@ import {
   createAddress,
 } from "@/services/addresses.api";
 
-import { validateCoupon } from "@/services/coupons.api";
+import {
+  validateCoupon,
+} from "@/services/coupons.api";
 
 import {
   createCheckoutSession,
@@ -22,24 +28,19 @@ import {
 } from "@/services/orders.api";
 
 const PHONE_COUNTRIES = [
-  {  code: "+598", iso: "UY" },
-  {  code: "+54", iso: "AR" },
-  {  code: "+55", iso: "BR" },
-  {  code: "+595", iso: "PY" },
-  {  code: "+56", iso: "CL" },
-  {  code: "+591", iso: "BO" },
-  {  code: "+51", iso: "PE" },
-  {  code: "+57", iso: "CO" },
-  {  code: "+593", iso: "EC" },
+  { code: "+598", iso: "UYU" },
+  { code: "+54", iso: "AR" },
+  { code: "+55", iso: "BR" },
 ];
-
 
 export default function Checkout() {
   const navigate = useNavigate();
 
   const cart = useCart();
 
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] =
+    useState([]);
+
   const [selectedAddress, setSelectedAddress] =
     useState(null);
 
@@ -73,28 +74,33 @@ export default function Checkout() {
   const [couponError, setCouponError] =
     useState("");
 
-  const [addressForm, setAddressForm] = useState({
-    title: "",
-    street: "",
-    number: "",
-    city: "",
-    state: "",
-    country: "Uruguay",
-    zipCode: "",
-    phoneCountry: "+598",
-    phoneNumber: "",
-    isDefault: false,
-  });
+  const [addressForm, setAddressForm] =
+    useState({
+      title: "",
+      street: "",
+      number: "",
+      city: "",
+      state: "",
+      country: "Uruguay",
+      zipCode: "",
+      phoneCountry: "+598",
+      phoneNumber: "",
+      isDefault: false,
+    });
 
   const subtotal = cart.reduce(
     (sum, item) =>
-      sum + item.price * item.quantity,
+      sum +
+      item.price *
+        item.quantity,
     0
   );
 
   const discount = coupon
-    ? coupon.type === "PERCENTAGE"
-      ? subtotal * (coupon.value / 100)
+    ? coupon.type ===
+      "PERCENTAGE"
+      ? subtotal *
+        (coupon.value / 100)
       : coupon.value
     : 0;
 
@@ -104,56 +110,63 @@ export default function Checkout() {
   );
 
   useEffect(() => {
-    const loadAddresses = async () => {
-      const token =
-        localStorage.getItem("token");
-
-      if (!token) {
-        setLoadingAddresses(false);
-        return;
-      }
-
-      try {
-        const response =
-          await getAddresses();
-
-        const data =
-          response.data || [];
-
-        setAddresses(data);
-
-        const defaultAddress =
-          data.find(
-            (address) =>
-              address.isDefault
+    const loadAddresses =
+      async () => {
+        const token =
+          localStorage.getItem(
+            "token"
           );
 
-        if (defaultAddress) {
-          setSelectedAddress(
-            defaultAddress.id
+        if (!token) {
+          setLoadingAddresses(
+            false
           );
-        } else if (
-          data.length > 0
-        ) {
-          setSelectedAddress(
-            data[0].id
+          return;
+        }
+
+        try {
+          const response =
+            await getAddresses();
+
+          const data =
+            response.data || [];
+
+          setAddresses(data);
+
+          const defaultAddress =
+            data.find(
+              (address) =>
+                address.isDefault
+            );
+
+          if (defaultAddress) {
+            setSelectedAddress(
+              defaultAddress.id
+            );
+          } else if (
+            data.length > 0
+          ) {
+            setSelectedAddress(
+              data[0].id
+            );
+          }
+        } catch (error) {
+          console.error(
+            "ERROR CARGANDO DIRECCIONES:",
+            error
+          );
+
+          setError(
+            error.response?.data
+              ?.message ||
+              "No se pudieron cargar las direcciones."
+          );
+        } finally {
+          setLoadingAddresses(
+            false
           );
         }
-      } catch (error) {
-        console.error(
-          "ERROR CARGANDO DIRECCIONES:",
-          error
-        );
-
-        setError(
-          error.response?.data
-            ?.message ||
-            "No se pudieron cargar las direcciones."
-        );
-      } finally {
-        setLoadingAddresses(false);
-      }
-    };
+      };
 
     loadAddresses();
   }, []);
@@ -176,116 +189,133 @@ export default function Checkout() {
     );
   }
 
-  const handleAddressChange = (event) => {
-    const {
-      name,
-      value,
-      type,
-      checked,
-    } = event.target;
+  const handleAddressChange =
+    (event) => {
+      const {
+        name,
+        value,
+        type,
+        checked,
+      } = event.target;
 
-    setAddressForm(
-      (previous) => ({
-        ...previous,
-
-        [name]:
-          type === "checkbox"
-            ? checked
-            : value,
-      })
-    );
-  };
-
-  const handleCreateAddress = async (
-    event
-  ) => {
-    event.preventDefault();
-
-    try {
-      setSavingAddress(true);
-      setError("");
-
-      const phone =
-        `${addressForm.phoneCountry} ${addressForm.phoneNumber.trim()}`.trim();
-
-      const response =
-        await createAddress({
-          title:
-            addressForm.title,
-
-          street:
-            addressForm.street,
-
-          number:
-            addressForm.number,
-
-          city:
-            addressForm.city,
-
-          state:
-            addressForm.state,
-
-          country:
-            addressForm.country,
-
-          zipCode:
-            addressForm.zipCode,
-
-          phone,
-
-          isDefault:
-            addressForm.isDefault,
-        });
-
-      const newAddress =
-        response.data;
-
-      setAddresses(
-        (previous) => [
-          newAddress,
+      setAddressForm(
+        (previous) => ({
           ...previous,
-        ]
-      );
 
-      setSelectedAddress(
-        newAddress.id
+          [name]:
+            type === "checkbox"
+              ? checked
+              : value,
+        })
       );
+    };
 
-      setDeliveryMethod(
-        "address"
-      );
+  const handlePhoneNumberChange =
+    (event) => {
+      const numericValue =
+        event.target.value.replace(
+          /\D/g,
+          ""
+        );
 
-      setShowAddressForm(
-        false
+      setAddressForm(
+        (previous) => ({
+          ...previous,
+          phoneNumber:
+            numericValue,
+        })
       );
+    };
 
-      setAddressForm({
-        title: "",
-        street: "",
-        number: "",
-        city: "",
-        state: "",
-        country: "Uruguay",
-        zipCode: "",
-        phoneCountry: "+598",
-        phoneNumber: "",
-        isDefault: false,
-      });
-    } catch (error) {
-      console.error(
-        "ERROR CREANDO DIRECCIÓN:",
-        error
-      );
+  const handleCreateAddress =
+    async (event) => {
+      event.preventDefault();
 
-      setError(
-        error.response?.data
-          ?.message ||
-          "No se pudo guardar la dirección."
-      );
-    } finally {
-      setSavingAddress(false);
-    }
-  };
+      try {
+        setSavingAddress(true);
+        setError("");
+
+        const phone =
+          `${addressForm.phoneCountry} ${addressForm.phoneNumber.trim()}`.trim();
+
+        const response =
+          await createAddress({
+            title:
+              addressForm.title,
+
+            street:
+              addressForm.street,
+
+            number:
+              addressForm.number,
+
+            city:
+              addressForm.city,
+
+            state:
+              addressForm.state,
+
+            country:
+              addressForm.country,
+
+            zipCode:
+              addressForm.zipCode,
+
+            phone,
+
+            isDefault:
+              addressForm.isDefault,
+          });
+
+        const newAddress =
+          response.data;
+
+        setAddresses(
+          (previous) => [
+            newAddress,
+            ...previous,
+          ]
+        );
+
+        setSelectedAddress(
+          newAddress.id
+        );
+
+        setDeliveryMethod(
+          "address"
+        );
+
+        setShowAddressForm(
+          false
+        );
+
+        setAddressForm({
+          title: "",
+          street: "",
+          number: "",
+          city: "",
+          state: "",
+          country: "Uruguay",
+          zipCode: "",
+          phoneCountry: "+598",
+          phoneNumber: "",
+          isDefault: false,
+        });
+      } catch (error) {
+        console.error(
+          "ERROR CREANDO DIRECCIÓN:",
+          error
+        );
+
+        setError(
+          error.response?.data
+            ?.message ||
+            "No se pudo guardar la dirección."
+        );
+      } finally {
+        setSavingAddress(false);
+      }
+    };
 
   const handleApplyCoupon =
     async () => {
@@ -386,10 +416,6 @@ export default function Checkout() {
         setLoading(true);
         setError("");
 
-        // ==================================================
-        // CREAR CHECKOUT SESSION
-        // ==================================================
-
         const expiresAt =
           new Date(
             Date.now() +
@@ -462,10 +488,6 @@ export default function Checkout() {
           session
         );
 
-        // ==================================================
-        // INICIAR MERCADO PAGO
-        // ==================================================
-
         const paymentResponse =
           await createOrderPayment(
             session.id
@@ -485,24 +507,6 @@ export default function Checkout() {
             "Mercado Pago no devolvió la URL de pago."
           );
         }
-
-        // ==================================================
-        // REDIRECCIÓN A MERCADO PAGO
-        // ==================================================
-        //
-        // IMPORTANTE:
-        // NO limpiamos el carrito acá.
-        //
-        // El carrito se mantiene mientras el usuario
-        // está realizando el pago.
-        //
-        // Si cancela o vuelve atrás desde Mercado Pago,
-        // los productos y sus variantes siguen disponibles.
-        //
-        // La limpieza definitiva del carrito se hará
-        // únicamente después de confirmar correctamente
-        // el pago.
-        // ==================================================
 
         window.location.href =
           initPoint;
@@ -767,33 +771,33 @@ export default function Checkout() {
 
                           <select
                             name="phoneCountry"
-                            value={addressForm.phoneCountry}
-                            onChange={handleAddressChange}
+                            value={
+                              addressForm.phoneCountry
+                            }
+                            onChange={
+                              handleAddressChange
+                            }
                             required
                             className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                           >
-                            {PHONE_COUNTRIES.map((country) => {
-                              const flag = country.iso
-                                .toUpperCase()
-                                .split("")
-                                .map(
-                                  (char) =>
-                                    String.fromCodePoint(
-                                      127397 + char.charCodeAt(0)
-                                    )
-                                )
-                                .join("");
-                              
-                              return (
+                            {PHONE_COUNTRIES.map(
+                              (country) => (
                                 <option
                                   key={`${country.iso}-${country.code}`}
-                                  value={country.code}
+                                  value={
+                                    country.code
+                                  }
                                   className="bg-zinc-900 text-white"
                                 >
-                                  {flag} {country.iso} {country.code}
+                                  {
+                                    country.iso
+                                  }{" "}
+                                  {
+                                    country.code
+                                  }
                                 </option>
-                              );
-                            })}
+                              )
+                            )}
                           </select>
 
                           {/* TELÉFONO */}
@@ -805,12 +809,13 @@ export default function Checkout() {
                               addressForm.phoneNumber
                             }
                             onChange={
-                              handleAddressChange
+                              handlePhoneNumberChange
                             }
                             placeholder="981344545"
                             required
                             autoComplete="tel-national"
                             inputMode="numeric"
+                            pattern="[0-9]*"
                             className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                           />
 
@@ -1115,13 +1120,17 @@ export default function Checkout() {
                       {item.variantName && (
                         <p className="text-sm text-zinc-400">
                           Color:{" "}
-                          {item.variantName}
+                          {
+                            item.variantName
+                          }
                         </p>
                       )}
 
                       <p className="text-sm text-zinc-500">
                         Cantidad:{" "}
-                        {item.quantity}
+                        {
+                          item.quantity
+                        }
                       </p>
 
                     </div>
@@ -1309,3 +1318,4 @@ export default function Checkout() {
     </section>
   );
 }
+
