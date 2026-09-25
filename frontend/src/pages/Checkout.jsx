@@ -767,30 +767,33 @@ export default function Checkout() {
 
                           <select
                             name="phoneCountry"
-                            value={
-                              addressForm.phoneCountry
-                            }
-                            onChange={
-                              handleAddressChange
-                            }
+                            value={addressForm.phoneCountry}
+                            onChange={handleAddressChange}
                             required
                             className="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                           >
-                            {PHONE_COUNTRIES.map(
-                              (country) => (
+                            {PHONE_COUNTRIES.map((country) => {
+                              const flag = country.iso
+                                .toUpperCase()
+                                .split("")
+                                .map(
+                                  (char) =>
+                                    String.fromCodePoint(
+                                      127397 + char.charCodeAt(0)
+                                    )
+                                )
+                                .join("");
+                              
+                              return (
                                 <option
-                                  key={`${country.name}-${country.code}`}
-                                  value={
-                                    country.code
-                                  }
+                                  key={`${country.iso}-${country.code}`}
+                                  value={country.code}
                                   className="bg-zinc-900 text-white"
                                 >
-                                  {country.flag}{" "}
-                                  {country.name}{" "}
-                                  {country.code}
+                                  {flag} {country.iso} {country.code}
                                 </option>
-                              )
-                            )}
+                              );
+                            })}
                           </select>
 
                           {/* TELÉFONO */}
