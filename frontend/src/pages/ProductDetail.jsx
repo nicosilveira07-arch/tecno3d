@@ -64,12 +64,7 @@ export default function ProductDetail() {
   // ======================================================
   // VARIANTE SELECCIONADA
   // ======================================================
-  //
-  // null = producto base / "Sin color"
-  //
-  // Si el cliente selecciona una variante:
-  // selectedVariant = esa variante.
-  //
+
   const [selectedVariant, setSelectedVariant] =
     useState(null);
 
@@ -102,17 +97,6 @@ export default function ProductDetail() {
         setProduct(loadedProduct);
 
         setSelectedImageIndex(0);
-
-        // ==================================================
-        // IMPORTANTE:
-        // INICIAMOS EN EL PRODUCTO BASE
-        //
-        // null = "Sin color"
-        //
-        // Así se muestran primero las imágenes normales
-        // del producto.
-        // ==================================================
-
         setSelectedVariant(null);
       } catch (error) {
         console.error(
@@ -192,10 +176,8 @@ export default function ProductDetail() {
   // ======================================================
 
   const handleSelectBaseProduct = () => {
-    // null representa "Sin color"
     setSelectedVariant(null);
 
-    // Volvemos a la primera imagen normal
     setSelectedImageIndex(0);
 
     setAdded(false);
@@ -283,6 +265,32 @@ export default function ProductDetail() {
   })();
 
   // ======================================================
+  // OPTIMIZACIÓN DE IMÁGENES CLOUDINARY
+  // ======================================================
+
+  const getOptimizedImage = (
+    imageUrl,
+    width = 800
+  ) => {
+    if (
+      !imageUrl ||
+      !imageUrl.includes(
+        "res.cloudinary.com"
+      ) ||
+      !imageUrl.includes(
+        "/image/upload/"
+      )
+    ) {
+      return imageUrl;
+    }
+
+    return imageUrl.replace(
+      "/image/upload/",
+      `/image/upload/f_auto,q_auto,w_${width}/`
+    );
+  };
+
+  // ======================================================
   // IMAGEN SELECCIONADA
   // ======================================================
 
@@ -293,6 +301,12 @@ export default function ProductDetail() {
     galleryImages[0]?.url ||
     product?.image ||
     "";
+
+  const optimizedSelectedImage =
+    getOptimizedImage(
+      selectedImage,
+      800
+    );
 
   // ======================================================
   // STOCK ACTUAL
@@ -364,17 +378,6 @@ export default function ProductDetail() {
     if (!product || !hasStock) {
       return;
     }
-
-    // ==================================================
-    // PRODUCTO BASE:
-    // selectedVariant = null
-    //
-    // VARIANTE:
-    // selectedVariant = variante elegida
-    //
-    // El cart.store.js se encarga de guardar:
-    // productId + variantId
-    // ==================================================
 
     addToCart(
       product,
@@ -577,7 +580,6 @@ export default function ProductDetail() {
     return (
       <section className="min-h-[60vh] w-full overflow-x-hidden bg-zinc-950 px-4 py-20">
         <div className="w-full">
-
           <Link
             to="/products"
             className="mb-8 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-red-500"
@@ -587,14 +589,11 @@ export default function ProductDetail() {
           </Link>
 
           <div className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
-
             <p className="text-red-500">
               {error ||
                 "Producto no encontrado."}
             </p>
-
           </div>
-
         </div>
       </section>
     );
@@ -613,7 +612,6 @@ export default function ProductDetail() {
 
   return (
     <section className="min-h-screen w-full min-w-0 overflow-x-hidden bg-zinc-950 px-3 py-6 sm:px-4 sm:py-10">
-
       <div className="w-full min-w-0">
 
         {/* VOLVER */}
@@ -643,7 +641,6 @@ export default function ProductDetail() {
               {galleryImages.length >
                 1 && (
                 <div className="hidden w-20 shrink-0 flex-col gap-3 lg:flex">
-
                   {galleryImages.map(
                     (
                       image,
@@ -664,14 +661,17 @@ export default function ProductDetail() {
                             : "border-zinc-800 hover:border-zinc-600"
                         }`}
                       >
-
                         <img
-                          src={
-                            image.url
-                          }
+                          src={getOptimizedImage(
+                            image.url,
+                            200
+                          )}
                           alt={`${product.name} - imagen ${
                             index + 1
                           }`}
+                          width="200"
+                          height="200"
+                          loading="lazy"
                           className="block h-full w-full object-cover"
                         />
 
@@ -679,11 +679,9 @@ export default function ProductDetail() {
                           index && (
                           <div className="absolute inset-0 bg-red-600/10" />
                         )}
-
                       </button>
                     )
                   )}
-
                 </div>
               )}
 
@@ -694,18 +692,21 @@ export default function ProductDetail() {
                 {selectedImage ? (
                   <img
                     src={
-                      selectedImage
+                      optimizedSelectedImage
                     }
                     alt={
                       selectedVariant
                         ? `${product.name} - ${selectedVariant.name}`
                         : product.name
                     }
+                    width="800"
+                    height="800"
+                    loading="eager"
+                    fetchPriority="high"
                     className="block h-full w-full min-w-0 object-contain p-3 sm:p-6 lg:p-8"
                   />
                 ) : (
                   <div className="text-center">
-
                     <ShoppingCart
                       size={60}
                       className="mx-auto text-zinc-700"
@@ -714,7 +715,6 @@ export default function ProductDetail() {
                     <p className="mt-3 text-zinc-600">
                       Sin imagen
                     </p>
-
                   </div>
                 )}
 
@@ -777,7 +777,6 @@ export default function ProductDetail() {
             {galleryImages.length >
               1 && (
               <div className="mt-4 flex w-full min-w-0 gap-3 overflow-x-auto pb-2 lg:hidden">
-
                 {galleryImages.map(
                   (
                     image,
@@ -798,21 +797,22 @@ export default function ProductDetail() {
                           : "border-zinc-800"
                       }`}
                     >
-
                       <img
-                        src={
-                          image.url
-                        }
+                        src={getOptimizedImage(
+                          image.url,
+                          200
+                        )}
                         alt={`${product.name} - imagen ${
                           index + 1
                         }`}
+                        width="200"
+                        height="200"
+                        loading="lazy"
                         className="block h-full w-full object-cover"
                       />
-
                     </button>
                   )
                 )}
-
               </div>
             )}
 
@@ -837,7 +837,6 @@ export default function ProductDetail() {
 
               {product.category?.name && (
                 <span className="flex max-w-full items-center gap-1 rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
-
                   <Tag size={12} />
 
                   <span className="break-words">
@@ -847,7 +846,6 @@ export default function ProductDetail() {
                         .name
                     }
                   </span>
-
                 </span>
               )}
 
@@ -909,9 +907,7 @@ export default function ProductDetail() {
 
             </div>
 
-            {/* ==================================================
-                SELECTOR DE VARIANTES
-                ================================================== */}
+            {/* SELECTOR DE VARIANTES */}
 
             {product.hasVariants &&
               Array.isArray(
@@ -949,7 +945,6 @@ export default function ProductDetail() {
                           : "border-zinc-800 bg-zinc-900 hover:border-zinc-600"
                       }`}
                     >
-
                       <span
                         className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-500 bg-zinc-800"
                         title="Producto base"
@@ -974,7 +969,6 @@ export default function ProductDetail() {
                           ✓
                         </span>
                       )}
-
                     </button>
 
                     {/* VARIANTES */}
@@ -1009,7 +1003,6 @@ export default function ProductDetail() {
                                 : "border-zinc-800 bg-zinc-900 hover:border-zinc-600"
                             }`}
                           >
-
                             <span
                               className="h-7 w-7 shrink-0 rounded-full border-2 border-white/20 shadow-inner"
                               style={{
@@ -1042,7 +1035,6 @@ export default function ProductDetail() {
                                 ✓
                               </span>
                             )}
-
                           </button>
                         );
                       }
@@ -1170,7 +1162,6 @@ export default function ProductDetail() {
               }
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-4 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-zinc-700"
             >
-
               <ShoppingCart
                 size={20}
               />
@@ -1180,16 +1171,13 @@ export default function ProductDetail() {
                 : hasStock
                 ? "Agregar al carrito"
                 : "Sin stock"}
-
             </button>
 
           </div>
 
         </div>
 
-        {/* ==================================================
-            RESEÑAS
-            ================================================== */}
+        {/* RESEÑAS */}
 
         <div className="mt-12 w-full min-w-0 border-t border-zinc-800 pt-10 sm:mt-16 sm:pt-12">
 
@@ -1467,6 +1455,9 @@ export default function ProductDetail() {
                                     .firstName ||
                                   "Usuario"
                                 }
+                                width="40"
+                                height="40"
+                                loading="lazy"
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -1571,8 +1562,6 @@ export default function ProductDetail() {
         </div>
 
       </div>
-
     </section>
   );
 }
-

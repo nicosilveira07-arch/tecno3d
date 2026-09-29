@@ -62,6 +62,15 @@ export default function Cart() {
                     ? `${item.productId}-${item.variantId}`
                     : `${item.productId}-base`;
 
+                const optimizedImage =
+                  item.image?.includes("res.cloudinary.com") &&
+                  item.image.includes("/image/upload/")
+                    ? item.image.replace(
+                        "/image/upload/",
+                        "/image/upload/f_auto,q_auto,w_200/"
+                      )
+                    : item.image;
+
                 return (
                   <div
                     key={cartItemKey}
@@ -77,12 +86,15 @@ export default function Cart() {
                         {item.image ? (
 
                           <img
-                            src={item.image}
+                            src={optimizedImage}
                             alt={
                               item.variantName
                                 ? `${item.name} - ${item.variantName}`
                                 : item.name
                             }
+                            width="200"
+                            height="200"
+                            loading="lazy"
                             className="h-full w-full object-cover"
                           />
 
@@ -130,7 +142,6 @@ export default function Cart() {
                       </div>
 
                     </div>
-
 
                     {/* Controles */}
 
@@ -198,7 +209,6 @@ export default function Cart() {
 
                     </div>
 
-
                     {/* Subtotal */}
 
                     <p className="text-xl font-bold text-red-500">
@@ -211,7 +221,6 @@ export default function Cart() {
               })}
 
             </div>
-
 
             {/* Resumen */}
 
@@ -233,7 +242,6 @@ export default function Cart() {
 
               </div>
 
-
               <div className="mt-4 flex justify-between">
 
                 <span className="text-lg text-zinc-400">
@@ -245,7 +253,6 @@ export default function Cart() {
                 </span>
 
               </div>
-
 
               <button
                 onClick={() =>

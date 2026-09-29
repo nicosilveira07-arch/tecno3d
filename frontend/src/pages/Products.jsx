@@ -99,18 +99,18 @@ export default function Products() {
     productId
   ) => {
     event.stopPropagation();
-  
+
     if (!token) {
       navigate("/login");
       return;
     }
-  
+
     const isFavorite = favorites.includes(productId);
-  
+
     try {
       if (isFavorite) {
         await removeFavorite(productId);
-      
+
         setFavorites((current) =>
           current.filter(
             (id) => id !== productId
@@ -118,13 +118,12 @@ export default function Products() {
         );
       } else {
         await addFavorite(productId);
-      
+
         setFavorites((current) => [
           ...current,
           productId,
         ]);
-      
-        // AVISAR AL NAVBAR
+
         window.dispatchEvent(
           new CustomEvent("favorite-added")
         );
@@ -174,7 +173,7 @@ export default function Products() {
             Productos
           </h1>
 
-          <p className="mt-3 text-zinc-500">
+          <p className="mt-3 text-zinc-400">
             {search
               ? `Resultados para: "${search}"`
               : "Explorá nuestro catálogo de tecnología."}
@@ -335,7 +334,7 @@ export default function Products() {
                     <div className="mt-5">
 
                       {isOnSale && (
-                        <p className="text-sm text-zinc-500 line-through">
+                        <p className="text-sm text-zinc-400 line-through">
                           UYU{" "}
                           {Number(
                             product.price
@@ -407,4 +406,3 @@ export default function Products() {
     </section>
   );
 }
-

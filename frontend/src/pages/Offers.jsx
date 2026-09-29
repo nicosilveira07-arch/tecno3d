@@ -97,7 +97,6 @@ export default function Offers() {
           productId,
         ]);
 
-        // AVISAR AL NAVBAR QUE SE AGREGÓ UN FAVORITO
         window.dispatchEvent(
           new CustomEvent("favorite-added")
         );
@@ -144,7 +143,7 @@ export default function Offers() {
             Ofertas
           </h1>
 
-          <p className="mt-3 text-zinc-500">
+          <p className="mt-3 text-zinc-400">
             Aprovechá nuestros productos con descuentos especiales.
           </p>
         </div>
@@ -159,7 +158,7 @@ export default function Offers() {
           </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => {
+            {products.map((product, index) => {
               const hasStock = product.stock > 0;
 
               const isFavorite = favorites.includes(
@@ -170,6 +169,15 @@ export default function Offers() {
                 Number(product.offerPrice) > 0
                   ? Number(product.offerPrice)
                   : Number(product.price);
+
+              const optimizedImage =
+                product.image?.includes("res.cloudinary.com") &&
+                product.image.includes("/image/upload/")
+                  ? product.image.replace(
+                      "/image/upload/",
+                      "/image/upload/f_auto,q_auto,w_800/"
+                    )
+                  : product.image;
 
               return (
                 <article
@@ -184,8 +192,12 @@ export default function Offers() {
                   <div className="relative flex h-64 items-center justify-center overflow-hidden bg-zinc-950">
                     {product.image ? (
                       <img
-                        src={product.image}
+                        src={optimizedImage}
                         alt={product.name}
+                        width="800"
+                        height="800"
+                        loading={index === 0 ? "eager" : "lazy"}
+                        fetchPriority={index === 0 ? "high" : "auto"}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
@@ -274,7 +286,7 @@ export default function Offers() {
                     {/* PRECIO */}
 
                     <div className="mt-5">
-                      <p className="text-sm text-zinc-500 line-through">
+                      <p className="text-sm text-zinc-400 line-through">
                         UYU{" "}
                         {Number(
                           product.price

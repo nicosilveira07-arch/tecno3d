@@ -166,119 +166,136 @@ export default function AdminProducts() {
 
               <tbody>
 
-                {products.map((product) => (
+                {products.map((product) => {
 
-                  <tr
-                    key={product.id}
-                    className="border-b border-zinc-800 last:border-0"
-                  >
+                  const optimizedImage =
+                    product.image?.includes(
+                      "res.cloudinary.com"
+                    ) &&
+                    product.image.includes(
+                      "/image/upload/"
+                    )
+                      ? product.image.replace(
+                          "/image/upload/",
+                          "/image/upload/f_auto,q_auto,w_200/"
+                        )
+                      : product.image;
 
-                    {/* PRODUCTO */}
+                  return (
+                    <tr
+                      key={product.id}
+                      className="border-b border-zinc-800 last:border-0"
+                    >
 
-                    <td className="px-6 py-5">
+                      {/* PRODUCTO */}
 
-                      <div className="flex items-center gap-4">
+                      <td className="px-6 py-5">
 
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+                        <div className="flex items-center gap-4">
 
-                          {product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
-                              Sin imagen
-                            </div>
+                          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
+
+                            {product.image ? (
+                              <img
+                                src={optimizedImage}
+                                alt={product.name}
+                                width="200"
+                                height="200"
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
+                                Sin imagen
+                              </div>
+                            )}
+
+                          </div>
+
+                          <div>
+
+                            <p className="font-semibold text-white">
+                              {product.name}
+                            </p>
+
+                            <p className="text-xs text-zinc-500">
+                              {product.slug}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </td>
+
+                      {/* PRECIO */}
+
+                      <td className="px-6 py-5 text-sm font-semibold text-white">
+                        ${Number(product.price).toLocaleString(
+                          "es-UY"
+                        )}
+                      </td>
+
+                      {/* STOCK */}
+
+                      <td className="px-6 py-5 text-sm text-zinc-300">
+                        {product.stock}
+                      </td>
+
+                      {/* ESTADO */}
+
+                      <td className="px-6 py-5">
+
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                            product.status === "ACTIVE"
+                              ? "border-green-500/20 bg-green-500/10 text-green-400"
+                              : "border-zinc-700 bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {product.status}
+                        </span>
+
+                      </td>
+
+                      {/* ACCIONES */}
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex justify-end gap-2">
+
+                          {/* EDITAR */}
+
+                          <Link
+                            to={`/admin/products/${product.id}/edit`}
+                            title="Editar producto"
+                            className="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-400"
+                          >
+                            <Pencil size={17} />
+                          </Link>
+
+                          {/* ELIMINAR */}
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDelete(product.id)
+                              }
+                              title="Eliminar producto"
+                              className="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400"
+                            >
+                              <Trash2 size={17} />
+                            </button>
                           )}
 
                         </div>
 
-                        <div>
+                      </td>
 
-                          <p className="font-semibold text-white">
-                            {product.name}
-                          </p>
-
-                          <p className="text-xs text-zinc-500">
-                            {product.slug}
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    {/* PRECIO */}
-
-                    <td className="px-6 py-5 text-sm font-semibold text-white">
-                      ${Number(product.price).toLocaleString(
-                        "es-UY"
-                      )}
-                    </td>
-
-                    {/* STOCK */}
-
-                    <td className="px-6 py-5 text-sm text-zinc-300">
-                      {product.stock}
-                    </td>
-
-                    {/* ESTADO */}
-
-                    <td className="px-6 py-5">
-
-                      <span
-                        className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                          product.status === "ACTIVE"
-                            ? "border-green-500/20 bg-green-500/10 text-green-400"
-                            : "border-zinc-700 bg-zinc-800 text-zinc-400"
-                        }`}
-                      >
-                        {product.status}
-                      </span>
-
-                    </td>
-
-                    {/* ACCIONES */}
-
-                    <td className="px-6 py-5">
-
-                      <div className="flex justify-end gap-2">
-
-                        {/* EDITAR */}
-
-                        <Link
-                          to={`/admin/products/${product.id}/edit`}
-                          title="Editar producto"
-                          className="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-400"
-                        >
-                          <Pencil size={17} />
-                        </Link>
-
-                        {/* ELIMINAR */}
-
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleDelete(product.id)
-                            }
-                            title="Eliminar producto"
-                            className="rounded-lg border border-zinc-700 p-2 text-zinc-300 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400"
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        )}
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ))}
+                    </tr>
+                  );
+                })}
 
               </tbody>
 

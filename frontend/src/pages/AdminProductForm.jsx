@@ -22,6 +22,25 @@ const createEmptyVariant = () => ({
   images: [],
 });
 
+// ======================================================
+// OPTIMIZACIÓN DE IMÁGENES CLOUDINARY
+// ======================================================
+
+const getOptimizedImageUrl = (url, width = 200) => {
+  if (
+    !url ||
+    !url.includes("res.cloudinary.com") ||
+    !url.includes("/image/upload/")
+  ) {
+    return url;
+  }
+
+  return url.replace(
+    "/image/upload/",
+    `/image/upload/f_auto,q_auto,w_${width}/`
+  );
+};
+
 export default function AdminProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -1437,13 +1456,17 @@ export default function AdminProductForm() {
                                         >
 
                                           <img
-                                            src={
+                                            src={getOptimizedImageUrl(
                                               image.url
-                                            }
+                                            )}
                                             alt={`${variant.name || "Variante"} ${
                                               imageIndex +
                                               1
                                             }`}
+                                            width="200"
+                                            height="200"
+                                            loading="lazy"
+                                            decoding="async"
                                             className="h-28 w-full object-cover"
                                           />
 
@@ -1866,13 +1889,17 @@ export default function AdminProductForm() {
                         >
 
                           <img
-                            src={
+                            src={getOptimizedImageUrl(
                               image.url
-                            }
+                            )}
                             alt={`Imagen ${
                               index +
                               1
                             }`}
+                            width="200"
+                            height="200"
+                            loading="lazy"
+                            decoding="async"
                             className="h-28 w-full object-cover"
                           />
 
@@ -1985,4 +2012,3 @@ export default function AdminProductForm() {
     </div>
   );
 }
-

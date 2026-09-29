@@ -62,6 +62,32 @@ export default function AdminBanners() {
     }
   };
 
+  // ======================================================
+  // OPTIMIZACIÓN DE IMÁGENES CLOUDINARY
+  // ======================================================
+
+  const getOptimizedImage = (
+    imageUrl,
+    width = 800
+  ) => {
+    if (
+      !imageUrl ||
+      !imageUrl.includes(
+        "res.cloudinary.com"
+      ) ||
+      !imageUrl.includes(
+        "/image/upload/"
+      )
+    ) {
+      return imageUrl;
+    }
+
+    return imageUrl.replace(
+      "/image/upload/",
+      `/image/upload/f_auto,q_auto,w_${width}/`
+    );
+  };
+
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -315,6 +341,12 @@ export default function AdminBanners() {
     }
   };
 
+  const optimizedImagePreview =
+    getOptimizedImage(
+      imagePreview,
+      800
+    );
+
   return (
     <div>
       {/* ENCABEZADO */}
@@ -395,8 +427,11 @@ export default function AdminBanners() {
               <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-700 bg-zinc-950 transition hover:border-red-600">
                 {imagePreview ? (
                   <img
-                    src={imagePreview}
+                    src={optimizedImagePreview}
                     alt="Vista previa"
+                    width="800"
+                    height="450"
+                    loading="lazy"
                     className="h-48 w-full object-cover"
                   />
                 ) : (
@@ -576,8 +611,11 @@ export default function AdminBanners() {
           <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
             {imagePreview ? (
               <img
-                src={imagePreview}
+                src={optimizedImagePreview}
                 alt="Banner"
+                width="800"
+                height="450"
+                loading="lazy"
                 className="h-64 w-full object-cover"
               />
             ) : (
@@ -663,8 +701,14 @@ export default function AdminBanners() {
               >
                 <div className="relative">
                   <img
-                    src={banner.image}
+                    src={getOptimizedImage(
+                      banner.image,
+                      800
+                    )}
                     alt={banner.title}
+                    width="800"
+                    height="450"
+                    loading="lazy"
                     className="h-56 w-full object-cover"
                   />
 

@@ -113,14 +113,12 @@ export default function Login() {
   return (
     <section className="py-12">
       <div className="mx-auto max-w-md">
-
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
-
           <h1 className="mb-2 text-3xl font-black text-white">
             Iniciar sesión
           </h1>
 
-          <p className="mb-8 text-sm text-zinc-500">
+          <p className="mb-8 text-sm text-zinc-400">
             Ingresá a tu cuenta de TECNO 3D
           </p>
 
@@ -128,7 +126,6 @@ export default function Login() {
             onSubmit={handleSubmit}
             className="space-y-5"
           >
-
             <div>
               <label className="mb-2 block text-sm text-zinc-400">
                 Email
@@ -183,13 +180,12 @@ export default function Login() {
                 ? "Ingresando..."
                 : "Iniciar sesión"}
             </button>
-
           </form>
 
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-zinc-800" />
 
-            <span className="text-xs font-medium text-zinc-500">
+            <span className="text-xs font-medium text-zinc-400">
               O
             </span>
 
@@ -215,8 +211,7 @@ export default function Login() {
           </div>
 
           <div className="mt-6 text-center">
-
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               ¿Todavía no tenés una cuenta?
             </p>
 
@@ -226,11 +221,8 @@ export default function Login() {
             >
               Crear cuenta
             </Link>
-
           </div>
-
         </div>
-
       </div>
     </section>
   );

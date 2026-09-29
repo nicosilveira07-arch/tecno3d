@@ -41,7 +41,6 @@ export default function Hero() {
       try {
         const response = await getActiveBanners();
 
-
         const banners = response?.data || [];
 
         if (banners.length > 0) {
@@ -107,15 +106,22 @@ export default function Hero() {
     return (
       <section className="relative overflow-hidden">
         <div className="mx-auto flex min-h-[85vh] max-w-7xl items-center justify-center px-6">
-          <div className="text-sm text-zinc-500">
-            Cargando...
-          </div>
+          <div className="text-sm text-zinc-500">Cargando...</div>
         </div>
       </section>
     );
   }
 
   const slide = slides[currentSlide];
+
+  const optimizedImage =
+    slide.image?.includes("res.cloudinary.com") &&
+    slide.image.includes("/image/upload/")
+      ? slide.image.replace(
+          "/image/upload/",
+          "/image/upload/f_auto,q_auto,w_800/"
+        )
+      : slide.image;
 
   return (
     <section className="relative overflow-hidden">
@@ -204,11 +210,17 @@ export default function Hero() {
             >
               <div className="absolute h-72 w-72 rounded-full bg-red-600/10" />
 
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="relative z-10 w-full max-w-xl"
-              />
+              {optimizedImage && (
+                <img
+                  src={optimizedImage}
+                  alt={slide.title}
+                  width="800"
+                  height="800"
+                  loading={currentSlide === 0 ? "eager" : "lazy"}
+                  fetchPriority={currentSlide === 0 ? "high" : "auto"}
+                  className="relative z-10 w-full max-w-xl"
+                />
+              )}
             </motion.div>
           </motion.div>
         </AnimatePresence>

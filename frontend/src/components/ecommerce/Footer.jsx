@@ -49,6 +49,29 @@ export default function Footer() {
     ? `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`
     : null;
 
+  // ======================================================
+  // OPTIMIZACIÓN DE IMAGEN DEL LOGO
+  // ======================================================
+
+  const getOptimizedLogo = (imageUrl) => {
+    if (
+      !imageUrl ||
+      !imageUrl.includes("res.cloudinary.com") ||
+      !imageUrl.includes("/image/upload/")
+    ) {
+      return imageUrl;
+    }
+
+    return imageUrl.replace(
+      "/image/upload/",
+      "/image/upload/f_auto,q_auto,w_200/"
+    );
+  };
+
+  const optimizedLogo = getOptimizedLogo(
+    settings?.logo
+  );
+
   return (
     <footer className="border-t border-zinc-800 bg-black">
       <div className="mx-auto max-w-7xl px-6 py-10">
@@ -60,8 +83,12 @@ export default function Footer() {
           <div>
             {settings?.logo ? (
               <img
-                src={settings.logo}
+                src={optimizedLogo}
                 alt={storeName}
+                width="200"
+                height="56"
+                loading="lazy"
+                decoding="async"
                 className="h-14 w-auto object-contain"
               />
             ) : (
@@ -297,10 +324,6 @@ export default function Footer() {
                 </a>
               )}
 
-      
-
-              
-
             </div>
 
             <p className="mt-4 text-xs text-zinc-600">
@@ -320,4 +343,3 @@ export default function Footer() {
     </footer>
   );
 }
-

@@ -406,20 +406,14 @@ export default function Perfil() {
 
               <div className="relative mb-5">
 
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={fullName || "Usuario"}
-                    className="h-28 w-28 rounded-full border-4 border-zinc-800 object-cover"
+                {/* AVATAR PREDETERMINADO */}
+
+                <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-zinc-800 bg-zinc-950">
+                  <User
+                    size={52}
+                    className="text-zinc-600"
                   />
-                ) : (
-                  <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-zinc-800 bg-zinc-950">
-                    <User
-                      size={52}
-                      className="text-zinc-600"
-                    />
-                  </div>
-                )}
+                </div>
 
                 <div className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-zinc-900 bg-red-600">
                   <User
@@ -1193,4 +1187,3 @@ export default function Perfil() {
     </section>
   );
 }
-

@@ -112,16 +112,13 @@ export default function Register() {
 
   return (
     <section className="min-h-screen bg-zinc-950 px-6 py-16">
-
       <div className="mx-auto max-w-md">
-
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
-
           <h1 className="mb-2 text-3xl font-black text-white">
             Crear cuenta
           </h1>
 
-          <p className="mb-8 text-sm text-zinc-500">
+          <p className="mb-8 text-sm text-zinc-400">
             Registrate en TECNO 3D
           </p>
 
@@ -129,7 +126,6 @@ export default function Register() {
             onSubmit={handleSubmit}
             className="space-y-5"
           >
-
             <div>
               <label className="mb-2 block text-sm text-zinc-400">
                 Nombre
@@ -192,7 +188,6 @@ export default function Register() {
               </label>
 
               <div className="relative">
-
                 <input
                   type={
                     showPassword
@@ -215,7 +210,7 @@ export default function Register() {
                   onClick={() =>
                     setShowPassword(!showPassword)
                   }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                  className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-400 hover:text-white"
                   aria-label={
                     showPassword
                       ? "Ocultar contraseña"
@@ -228,7 +223,6 @@ export default function Register() {
                     <Eye size={20} />
                   )}
                 </button>
-
               </div>
             </div>
 
@@ -240,7 +234,6 @@ export default function Register() {
               </label>
 
               <div className="relative">
-
                 <input
                   type={
                     showConfirmPassword
@@ -267,7 +260,7 @@ export default function Register() {
                       !showConfirmPassword
                     )
                   }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                  className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-zinc-400 hover:text-white"
                   aria-label={
                     showConfirmPassword
                       ? "Ocultar confirmación"
@@ -280,7 +273,6 @@ export default function Register() {
                     <Eye size={20} />
                   )}
                 </button>
-
               </div>
             </div>
 
@@ -302,13 +294,12 @@ export default function Register() {
                 ? "Creando cuenta..."
                 : "Crear cuenta"}
             </button>
-
           </form>
 
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-zinc-800" />
 
-            <span className="text-xs font-medium text-zinc-500">
+            <span className="text-xs font-medium text-zinc-400">
               O
             </span>
 
@@ -333,7 +324,7 @@ export default function Register() {
             )}
           </div>
 
-          <p className="mt-6 text-center text-sm text-zinc-500">
+          <p className="mt-6 text-center text-sm text-zinc-400">
             ¿Ya tenés una cuenta?{" "}
             <Link
               to="/login"
@@ -342,11 +333,8 @@ export default function Register() {
               Iniciar sesión
             </Link>
           </p>
-
         </div>
-
       </div>
-
     </section>
   );
 }
