@@ -18,20 +18,28 @@ export default function Favorites() {
   const [addedProduct, setAddedProduct] = useState(null);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      setFavorites([]);
+      setLoading(false);
+      return;
+    }
+  
     const loadFavorites = async () => {
       try {
         const response = await getFavorites();
-
+      
         setFavorites(response.data || []);
       } catch (error) {
         console.error("ERROR CARGANDO FAVORITOS:", error);
-
+      
         setError("No se pudieron cargar tus favoritos.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     loadFavorites();
   }, []);
 
