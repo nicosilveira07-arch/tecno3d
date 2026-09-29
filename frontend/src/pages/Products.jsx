@@ -226,7 +226,15 @@ export default function Products() {
 
                     {product.image ? (
                       <img
-                        src={product.image}
+                        src={
+                          product.image?.includes("res.cloudinary.com") &&
+                          product.image.includes("/image/upload/")
+                            ? product.image.replace(
+                                "/image/upload/",
+                                "/image/upload/f_auto,q_auto,w_800/"
+                              )
+                            : product.image
+                        }
                         alt={product.name}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
