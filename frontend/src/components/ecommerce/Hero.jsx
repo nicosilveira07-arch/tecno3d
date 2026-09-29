@@ -26,7 +26,7 @@ const defaultSlides = [
     primaryLink: "/products",
     secondaryText: "Catálogo",
     secondaryLink: "/products",
-    image: "/hero.png",
+    image: null,
     type: "default",
   },
 ];
@@ -34,7 +34,6 @@ const defaultSlides = [
 export default function Hero() {
   const [slides, setSlides] = useState(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadBanners = async () => {
@@ -62,8 +61,6 @@ export default function Hero() {
         }
       } catch (error) {
         console.error("ERROR CARGANDO BANNERS:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -102,16 +99,6 @@ export default function Hero() {
     );
   };
 
-  if (loading) {
-    return (
-      <section className="relative overflow-hidden">
-        <div className="mx-auto flex min-h-[85vh] max-w-7xl items-center justify-center px-6">
-          <div className="text-sm text-zinc-500">Cargando...</div>
-        </div>
-      </section>
-    );
-  }
-
   const slide = slides[currentSlide];
 
   const optimizedImage =
@@ -119,7 +106,7 @@ export default function Hero() {
     slide.image.includes("/image/upload/")
       ? slide.image.replace(
           "/image/upload/",
-          "/image/upload/f_auto,q_auto,w_800/"
+          "/image/upload/f_auto,q_auto,w_700/"
         )
       : slide.image;
 
@@ -203,9 +190,8 @@ export default function Hero() {
             {/* IMAGEN */}
 
             <motion.div
-              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              initial={{ opacity: 1, x: 0, scale: 1 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ duration: 0.8 }}
               className="relative flex justify-center"
             >
               <div className="absolute h-72 w-72 rounded-full bg-red-600/10" />
@@ -217,7 +203,9 @@ export default function Hero() {
                   width="800"
                   height="800"
                   loading={currentSlide === 0 ? "eager" : "lazy"}
-                  fetchPriority={currentSlide === 0 ? "high" : "auto"}
+                  fetchPriority={
+                    currentSlide === 0 ? "high" : "auto"
+                  }
                   className="relative z-10 w-full max-w-xl"
                 />
               )}
