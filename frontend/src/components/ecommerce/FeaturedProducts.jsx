@@ -96,40 +96,39 @@ export default function FeaturedProducts() {
     productId
   ) => {
     event.stopPropagation();
-  
+
     const token = localStorage.getItem("token");
-  
+
     if (!token) {
       navigate("/login");
       return;
     }
-  
+
     const isFavorite =
       favorites.has(productId);
-  
+
     try {
       if (isFavorite) {
         await removeFavorite(productId);
-      
+
         setFavorites((previous) => {
           const updated = new Set(previous);
-        
+
           updated.delete(productId);
-        
+
           return updated;
         });
       } else {
         await addFavorite(productId);
-      
+
         setFavorites((previous) => {
           const updated = new Set(previous);
-        
+
           updated.add(productId);
-        
+
           return updated;
         });
-      
-        // AVISAR AL NAVBAR QUE SE AGREGÓ UN FAVORITO
+
         window.dispatchEvent(
           new CustomEvent("favorite-added")
         );
@@ -164,7 +163,6 @@ export default function FeaturedProducts() {
   return (
     <section>
       <div>
-
         {/* ENCABEZADO */}
 
         <div className="mb-10 flex items-center justify-between">
@@ -186,7 +184,7 @@ export default function FeaturedProducts() {
         {/* CARGANDO */}
 
         {loading && (
-          <p className="text-zinc-500">
+          <p className="text-zinc-400">
             Cargando productos...
           </p>
         )}
@@ -204,7 +202,7 @@ export default function FeaturedProducts() {
         {!loading &&
           !error &&
           products.length === 0 && (
-            <p className="text-zinc-500">
+            <p className="text-zinc-400">
               Todavía no hay productos.
             </p>
           )}
@@ -215,8 +213,7 @@ export default function FeaturedProducts() {
           !error &&
           products.length > 0 && (
             <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-
-              {products.map((product) => {
+              {products.map((product, productIndex) => {
                 const stockText =
                   product.stock > 5
                     ? "Disponible"
@@ -275,6 +272,19 @@ export default function FeaturedProducts() {
                       )
                     : null;
 
+                const optimizedImage =
+                  product.image?.includes(
+                    "res.cloudinary.com"
+                  ) &&
+                  product.image.includes(
+                    "/image/upload/"
+                  )
+                    ? product.image.replace(
+                        "/image/upload/",
+                        "/image/upload/f_auto,q_auto,w_800/"
+                      )
+                    : product.image;
+
                 return (
                   <div
                     key={product.id}
@@ -285,19 +295,29 @@ export default function FeaturedProducts() {
                     }
                     className="group cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 transition duration-300 hover:-translate-y-2 hover:border-red-600"
                   >
-
                     {/* IMAGEN */}
 
                     <div className="relative">
-
                       {product.image ? (
                         <img
-                          src={product.image}
+                          src={optimizedImage}
                           alt={product.name}
+                          width="800"
+                          height="800"
+                          loading={
+                            productIndex === 0
+                              ? "eager"
+                              : "lazy"
+                          }
+                          fetchPriority={
+                            productIndex === 0
+                              ? "high"
+                              : "auto"
+                          }
                           className="h-70 w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-72 w-full items-center justify-center bg-zinc-950 text-zinc-600">
+                        <div className="flex h-72 w-full items-center justify-center bg-zinc-950 text-zinc-500">
                           Sin imagen
                         </div>
                       )}
@@ -342,13 +362,11 @@ export default function FeaturedProducts() {
                           }
                         />
                       </button>
-
                     </div>
 
                     {/* INFORMACIÓN */}
 
                     <div className="p-6">
-
                       {/* MARCA */}
 
                       {product.brand?.name && (
@@ -365,7 +383,6 @@ export default function FeaturedProducts() {
 
                       {reviewCount > 0 ? (
                         <div className="mb-3 flex items-center gap-2">
-
                           <div className="flex">
                             {Array.from({
                               length: 5,
@@ -391,17 +408,15 @@ export default function FeaturedProducts() {
                             )}
                           </div>
 
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-zinc-400">
                             {averageRating.toFixed(
                               1
                             )}{" "}
                             ({reviewCount})
                           </span>
-
                         </div>
                       ) : (
                         <div className="mb-3 flex items-center gap-2">
-
                           <div className="flex">
                             {Array.from({
                               length: 5,
@@ -416,10 +431,9 @@ export default function FeaturedProducts() {
                             )}
                           </div>
 
-                          <span className="text-xs text-zinc-600">
+                          <span className="text-xs text-zinc-400">
                             Sin reseñas
                           </span>
-
                         </div>
                       )}
 
@@ -427,8 +441,7 @@ export default function FeaturedProducts() {
 
                       {hasOffer ? (
                         <div>
-
-                          <div className="text-sm font-semibold text-zinc-500 line-through">
+                          <div className="text-sm font-semibold text-zinc-400 line-through">
                             UYU{" "}
                             {Number(
                               product.price
@@ -447,7 +460,6 @@ export default function FeaturedProducts() {
                           <span className="mt-2 inline-block rounded-md bg-red-950/50 px-2 py-1 text-xs font-bold text-red-400">
                             OFERTA
                           </span>
-
                         </div>
                       ) : (
                         <div className="text-3xl font-black text-red-500">
@@ -498,15 +510,12 @@ export default function FeaturedProducts() {
                           ? "Agregar al carrito"
                           : "Sin stock"}
                       </button>
-
                     </div>
                   </div>
                 );
               })}
-
             </div>
           )}
-
       </div>
     </section>
   );
