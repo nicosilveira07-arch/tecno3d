@@ -53,7 +53,7 @@ export default function Brands() {
         </h2>
 
         {loading && (
-          <p className="text-center text-zinc-500">
+          <p className="text-center text-zinc-400">
             Cargando marcas...
           </p>
         )}
@@ -67,7 +67,7 @@ export default function Brands() {
         {!loading &&
           !error &&
           brands.length === 0 && (
-            <p className="text-center text-zinc-500">
+            <p className="text-center text-zinc-400">
               Todavía no hay marcas destacadas.
             </p>
           )}

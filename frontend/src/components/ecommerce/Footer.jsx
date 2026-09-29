@@ -97,7 +97,7 @@ export default function Footer() {
               </h2>
             )}
 
-            <p className="mt-3 text-sm leading-6 text-zinc-500">
+            <p className="mt-3 text-sm leading-6 text-zinc-400">
               {description}
             </p>
           </div>
@@ -109,7 +109,7 @@ export default function Footer() {
               Local
             </h3>
 
-            <div className="mt-4 space-y-3 text-sm text-zinc-500">
+            <div className="mt-4 space-y-3 text-sm text-zinc-400">
 
               {(settings?.address ||
                 settings?.city ||
@@ -160,7 +160,7 @@ export default function Footer() {
               {settings?.phone && (
                 <a
                   href={`tel:${settings.phone}`}
-                  className="flex items-center gap-3 text-zinc-500 transition hover:text-white"
+                  className="flex items-center gap-3 text-zinc-400 transition hover:text-white"
                 >
                   <Phone
                     size={18}
@@ -174,7 +174,7 @@ export default function Footer() {
               {settings?.email && (
                 <a
                   href={`mailto:${settings.email}`}
-                  className="flex items-center gap-3 text-zinc-500 transition hover:text-white"
+                  className="flex items-center gap-3 text-zinc-400 transition hover:text-white"
                 >
                   <Mail
                     size={18}
@@ -326,7 +326,7 @@ export default function Footer() {
 
             </div>
 
-            <p className="mt-4 text-xs text-zinc-600">
+            <p className="mt-4 text-xs text-zinc-400">
               Contactanos por nuestras redes o WhatsApp.
             </p>
           </div>
@@ -335,7 +335,7 @@ export default function Footer() {
 
         {/* COPYRIGHT */}
 
-        <div className="mt-10 border-t border-zinc-800 pt-6 text-sm text-zinc-600">
+        <div className="mt-10 border-t border-zinc-800 pt-6 text-sm text-zinc-400">
           © 2026 {storeName}. Todos los derechos reservados MKXDNSM.
         </div>
 
