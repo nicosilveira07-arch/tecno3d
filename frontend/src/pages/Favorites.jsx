@@ -90,7 +90,7 @@ export default function Favorites() {
               Mis favoritos
             </h1>
 
-            <p className="mt-1 text-zinc-500">
+            <p className="mt-1 text-zinc-400">
               Productos que guardaste para más tarde.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function Favorites() {
         {/* CARGANDO */}
 
         {loading && (
-          <p className="text-zinc-500">
+          <p className="text-zinc-400">
             Cargando favoritos...
           </p>
         )}
@@ -127,7 +127,7 @@ export default function Favorites() {
                 Todavía no tenés favoritos
               </h2>
 
-              <p className="mt-2 text-zinc-500">
+              <p className="mt-2 text-zinc-400">
                 Guardá productos con el corazón para
                 encontrarlos fácilmente acá.
               </p>
@@ -356,4 +356,3 @@ export default function Favorites() {
     </section>
   );
 }
-
