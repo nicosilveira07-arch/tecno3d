@@ -43,6 +43,26 @@ export default function Hero() {
         const banners = response?.data || [];
 
         if (banners.length > 0) {
+          const firstBannerImage =
+            banners[0]?.image?.includes("res.cloudinary.com") &&
+            banners[0]?.image.includes("/image/upload/")
+              ? banners[0].image.replace(
+                  "/image/upload/",
+                  "/image/upload/f_auto,q_auto,w_700/"
+                )
+              : banners[0]?.image;
+
+          if (firstBannerImage) {
+            const preload = document.createElement("link");
+
+            preload.rel = "preload";
+            preload.as = "image";
+            preload.href = firstBannerImage;
+            preload.fetchPriority = "high";
+
+            document.head.appendChild(preload);
+          }
+
           const formattedBanners = banners.map((banner) => ({
             id: banner.id,
             badge: "OFERTA ESPECIAL",
