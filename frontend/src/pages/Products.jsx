@@ -236,6 +236,10 @@ export default function Products() {
                             : product.image
                         }
                         alt={product.name}
+                        width="800"
+                        height="800"
+                        loading={products[0]?.id === product.id ? "eager" : "lazy"}
+                        fetchPriority={products[0]?.id === product.id ? "high" : "auto"}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
