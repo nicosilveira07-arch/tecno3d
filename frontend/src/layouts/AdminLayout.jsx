@@ -160,7 +160,7 @@ export default function AdminLayout() {
               className="flex min-w-0 items-center gap-3"
             >
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="Tecno3D"
                 className="h-12 w-auto sm:h-14"
               />

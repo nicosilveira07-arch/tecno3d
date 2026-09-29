@@ -312,8 +312,10 @@ export default function Navbar() {
             className="flex shrink-0 items-center gap-2 sm:gap-3"
           >
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="Tecno3D"
+              width="56"
+              height="56"
               className="h-9 w-auto sm:h-12 lg:h-14"
             />
 
