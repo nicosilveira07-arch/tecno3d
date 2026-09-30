@@ -79,24 +79,15 @@ const getCategoryIcon = (name) => {
     return MateIcon;
   }
 
-  if (
-    value.includes("pc gamer") ||
-    value === "pc"
-  ) {
+  if (value.includes("pc gamer") || value === "pc") {
     return Cpu;
   }
 
-  if (
-    value.includes("notebook") ||
-    value.includes("laptop")
-  ) {
+  if (value.includes("notebook") || value.includes("laptop")) {
     return Laptop;
   }
 
-  if (
-    value.includes("monitor") ||
-    value.includes("pantalla")
-  ) {
+  if (value.includes("monitor") || value.includes("pantalla")) {
     return Monitor;
   }
 
@@ -171,14 +162,9 @@ export default function Categories() {
 
         setCategories(featuredCategories);
       } catch (error) {
-        console.error(
-          "ERROR CARGANDO CATEGORÍAS:",
-          error
-        );
+        console.error("ERROR CARGANDO CATEGORÍAS:", error);
 
-        setError(
-          "No se pudieron cargar las categorías."
-        );
+        setError("No se pudieron cargar las categorías.");
       } finally {
         setLoading(false);
       }
@@ -188,9 +174,8 @@ export default function Categories() {
   }, []);
 
   return (
-    <section>
+    <section className="min-h-[390px]">
       <div className="mx-auto max-w-7xl px-6 py-16">
-
         <h2 className="mb-10 text-3xl font-bold text-white">
           Categorías
         </h2>
@@ -219,10 +204,8 @@ export default function Categories() {
           !error &&
           categories.length > 0 && (
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
-
               {categories.map((category) => {
-                const Icon =
-                  getCategoryIcon(category.name);
+                const Icon = getCategoryIcon(category.name);
 
                 return (
                   <Link
@@ -241,10 +224,8 @@ export default function Categories() {
                   </Link>
                 );
               })}
-
             </div>
           )}
-
       </div>
     </section>
   );
