@@ -34,24 +34,66 @@ export default function Products() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
+    
     async function loadProducts() {
       try {
         setLoading(true);
         setError("");
-
-        const result = await getProducts({
-          search,
-          categoryId,
-          brandId,
-        });
-
-        setProducts(result.data || []);
+      
+        let page = 1;
+        let allProducts = [];
+        let totalPages = null;
+      
+        while (totalPages === null || page <= totalPages) {
+          const result = await getProducts({
+            page,
+            limit: 100,
+            search,
+            categoryId,
+            brandId,
+          });
+        
+          const pageProducts = Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+              ? result.data
+              : [];
+        
+          allProducts = [...allProducts, ...pageProducts];
+        
+          const pagination =
+            result?.meta ??
+            result?.pagination ??
+            result;
+        
+          const reportedTotalPages = Number(
+            pagination?.totalPages ??
+            pagination?.totalPagesCount
+          );
+        
+          if (
+            Number.isFinite(reportedTotalPages) &&
+            reportedTotalPages > 0
+          ) {
+            totalPages = reportedTotalPages;
+          } else if (pageProducts.length < 100) {
+            break;
+          }
+        
+          if (pageProducts.length === 0) {
+            break;
+          }
+        
+          page += 1;
+        }
+      
+        setProducts(allProducts);
       } catch (error) {
         console.error(
           "ERROR CARGANDO PRODUCTOS:",
           error
         );
-
+      
         setError(
           error.response?.data?.message ||
             "No se pudieron cargar los productos."
@@ -60,6 +102,7 @@ export default function Products() {
         setLoading(false);
       }
     }
+
 
     loadProducts();
   }, [search, categoryId, brandId]);
