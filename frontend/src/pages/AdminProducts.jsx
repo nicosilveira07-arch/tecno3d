@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -10,6 +11,8 @@ import {
   getProducts,
   deleteProduct,
 } from "@/services/products.api";
+
+const PAGE_SIZE = 100;
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -27,9 +30,55 @@ export default function AdminProducts() {
       setLoading(true);
       setError("");
 
-      const response = await getProducts();
+      let page = 1;
+      let allProducts = [];
+      let totalPages = null;
 
-      setProducts(response.data || []);
+      while (totalPages === null || page <= totalPages) {
+        const response = await getProducts({
+          page,
+          limit: PAGE_SIZE,
+        });
+
+        // Admite respuestas con productos en data o directamente en un array.
+        const pageProducts = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+        allProducts = [...allProducts, ...pageProducts];
+
+        // Admite paginación dentro de meta o directamente en la respuesta.
+        const pagination =
+          response?.meta ??
+          response?.pagination ??
+          response;
+
+        const reportedTotalPages = Number(
+          pagination?.totalPages ??
+          pagination?.totalPagesCount
+        );
+
+        if (
+          Number.isFinite(reportedTotalPages) &&
+          reportedTotalPages > 0
+        ) {
+          totalPages = reportedTotalPages;
+        } else if (pageProducts.length < PAGE_SIZE) {
+          // Si no hay metadatos, termina al recibir una página incompleta.
+          break;
+        }
+
+        // Evita un bucle infinito si el backend informa datos incorrectos.
+        if (pageProducts.length === 0) {
+          break;
+        }
+
+        page += 1;
+      }
+
+      setProducts(allProducts);
     } catch (error) {
       console.error(
         "ERROR CARGANDO PRODUCTOS:",
@@ -83,13 +132,9 @@ export default function AdminProducts() {
 
   return (
     <div className="space-y-6">
-
       {/* ENCABEZADO */}
-
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
         <div>
-
           <p className="mb-2 text-sm font-semibold text-red-500">
             Administración
           </p>
@@ -98,6 +143,11 @@ export default function AdminProducts() {
             Productos
           </h1>
 
+          {!loading && (
+            <p className="mt-2 text-sm text-zinc-400">
+              {products.length} productos registrados
+            </p>
+          )}
         </div>
 
         <Link
@@ -105,14 +155,11 @@ export default function AdminProducts() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700"
         >
           <Plus size={18} />
-
           Agregar producto
         </Link>
-
       </div>
 
       {/* ERROR */}
-
       {error && (
         <div className="rounded-xl border border-red-800 bg-red-950/40 p-4 text-sm text-red-400">
           {error}
@@ -120,9 +167,7 @@ export default function AdminProducts() {
       )}
 
       {/* TABLA */}
-
       <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-
         {loading ? (
           <div className="p-8 text-center text-zinc-400">
             Cargando productos...
@@ -133,13 +178,9 @@ export default function AdminProducts() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-
             <table className="w-full text-left">
-
               <thead className="border-b border-zinc-800 bg-zinc-950">
-
                 <tr>
-
                   <th className="px-6 py-4 text-sm font-semibold text-zinc-400">
                     Producto
                   </th>
@@ -159,15 +200,11 @@ export default function AdminProducts() {
                   <th className="px-6 py-4 text-right text-sm font-semibold text-zinc-400">
                     Acciones
                   </th>
-
                 </tr>
-
               </thead>
 
               <tbody>
-
                 {products.map((product) => {
-
                   const optimizedImage =
                     product.image?.includes(
                       "res.cloudinary.com"
@@ -186,15 +223,10 @@ export default function AdminProducts() {
                       key={product.id}
                       className="border-b border-zinc-800 last:border-0"
                     >
-
                       {/* PRODUCTO */}
-
                       <td className="px-6 py-5">
-
                         <div className="flex items-center gap-4">
-
                           <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
-
                             {product.image ? (
                               <img
                                 src={optimizedImage}
@@ -209,11 +241,9 @@ export default function AdminProducts() {
                                 Sin imagen
                               </div>
                             )}
-
                           </div>
 
                           <div>
-
                             <p className="font-semibold text-white">
                               {product.name}
                             </p>
@@ -221,15 +251,11 @@ export default function AdminProducts() {
                             <p className="text-xs text-zinc-500">
                               {product.slug}
                             </p>
-
                           </div>
-
                         </div>
-
                       </td>
 
                       {/* PRECIO */}
-
                       <td className="px-6 py-5 text-sm font-semibold text-white">
                         ${Number(product.price).toLocaleString(
                           "es-UY"
@@ -237,15 +263,12 @@ export default function AdminProducts() {
                       </td>
 
                       {/* STOCK */}
-
                       <td className="px-6 py-5 text-sm text-zinc-300">
                         {product.stock}
                       </td>
 
                       {/* ESTADO */}
-
                       <td className="px-6 py-5">
-
                         <span
                           className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                             product.status === "ACTIVE"
@@ -255,17 +278,11 @@ export default function AdminProducts() {
                         >
                           {product.status}
                         </span>
-
                       </td>
 
                       {/* ACCIONES */}
-
                       <td className="px-6 py-5">
-
                         <div className="flex justify-end gap-2">
-
-                          {/* EDITAR */}
-
                           <Link
                             to={`/admin/products/${product.id}/edit`}
                             title="Editar producto"
@@ -273,8 +290,6 @@ export default function AdminProducts() {
                           >
                             <Pencil size={17} />
                           </Link>
-
-                          {/* ELIMINAR */}
 
                           {isAdmin && (
                             <button
@@ -288,25 +303,16 @@ export default function AdminProducts() {
                               <Trash2 size={17} />
                             </button>
                           )}
-
                         </div>
-
                       </td>
-
                     </tr>
                   );
                 })}
-
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 }
-
