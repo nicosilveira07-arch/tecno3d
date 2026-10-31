@@ -130,6 +130,8 @@ model Product {
   offerActive          Boolean               @default(false)
   offerPercentage      Int?
   offerPrice           Float?
+  baseStock Int      @default(0)
+  colorHex  String?
   hasVariants          Boolean               @default(false)
   cartItems            CartItem[]
   checkoutSessionItems CheckoutSessionItem[]

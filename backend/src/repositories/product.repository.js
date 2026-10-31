@@ -137,7 +137,8 @@ const getUniqueSlug = async (tx, baseSlug) => {
  */
 const getVariantsStock = (variants = []) => {
   return variants.reduce(
-    (total, variant) => total + variant.stock,
+    (total, variant) =>
+      total + Number(variant.stock || 0),
     0
   );
 };
@@ -201,18 +202,22 @@ const createProduct = async (data) => {
   const hasVariants =
     productData.hasVariants === true;
 
-  /*
-   * Si el producto utiliza variantes,
-   * el stock principal se calcula automáticamente
-   * a partir del stock de todas las variantes.
-   *
-   * Si no utiliza variantes, se mantiene
-   * exactamente el stock enviado actualmente.
-   */
-  if (hasVariants) {
-    productData.stock =
-      getVariantsStock(variants);
-  }
+  // El stock clásico es independiente de las variantes.
+  // Compatibilidad: si no llega baseStock, usamos stock
+  // cuando el producto no tiene variantes.
+  const baseStock = Number(
+    productData.baseStock ??
+      (hasVariants ? 0 : productData.stock ?? 0)
+  );
+
+  productData.baseStock = baseStock;
+
+  const variantsStock = hasVariants
+    ? getVariantsStock(variants)
+    : 0;
+
+  // Stock general = clásico + variantes.
+  productData.stock = baseStock + variantsStock;
 
   const mainImage =
     productData.image ||
@@ -430,19 +435,6 @@ const updateProduct = async (id, data) => {
     ...productData
   } = data;
 
-  /*
-   * Si vienen variantes en la actualización
-   * y el producto está configurado para utilizarlas,
-   * recalculamos el stock total.
-   */
-  if (
-    productData.hasVariants === true &&
-    variants !== undefined
-  ) {
-    productData.stock =
-      getVariantsStock(variants);
-  }
-
   if (images !== undefined) {
     productData.image =
       images.length > 0
@@ -451,6 +443,64 @@ const updateProduct = async (id, data) => {
   }
 
   return await prisma.$transaction(async (tx) => {
+    // Recuperamos el stock clásico y la configuración actual.
+    const existingProduct =
+      await tx.product.findUnique({
+        where: {
+          id,
+        },
+
+        select: {
+          baseStock: true,
+          hasVariants: true,
+        },
+      });
+
+    if (!existingProduct) {
+      throw new Error("Producto no encontrado.");
+    }
+
+    const hasVariants =
+      productData.hasVariants ??
+      existingProduct.hasVariants;
+
+    const baseStock = Number(
+      productData.baseStock ??
+        existingProduct.baseStock
+    );
+
+    // Si llegan variantes, calculamos su stock desde el formulario.
+    // Si no llegan, conservamos el stock de las variantes existentes.
+    let variantsStock = 0;
+
+    if (hasVariants) {
+      if (variants !== undefined) {
+        variantsStock = getVariantsStock(variants);
+      } else {
+        const currentVariantsStock =
+          await tx.productVariant.aggregate({
+            where: {
+              productId: id,
+            },
+
+            _sum: {
+              stock: true,
+            },
+          });
+
+        variantsStock =
+          currentVariantsStock._sum.stock ?? 0;
+      }
+    }
+
+    productData.stock =
+      baseStock + variantsStock;
+
+    // Guardamos el stock clásico si fue enviado.
+    if (productData.baseStock !== undefined) {
+      productData.baseStock = baseStock;
+    }
+
     const product = await tx.product.update({
       where: {
         id,
@@ -480,10 +530,6 @@ const updateProduct = async (id, data) => {
     /*
      * Las variantes solamente se reemplazan cuando
      * el frontend envía explícitamente el array.
-     *
-     * Esto permite que una actualización parcial
-     * de un producto existente no elimine variantes
-     * accidentalmente.
      */
     if (variants !== undefined) {
       await tx.productVariant.deleteMany({

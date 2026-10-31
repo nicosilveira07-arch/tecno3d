@@ -313,17 +313,15 @@ export default function ProductDetail() {
   // ======================================================
 
   const currentStock =
-    product?.hasVariants &&
-    selectedVariant
-      ? Number(
-          selectedVariant.stock || 0
-        )
+    product?.hasVariants && selectedVariant
+      ? Number(selectedVariant.stock ?? 0)
       : Number(
-          product?.stock || 0
+          product?.baseStock ??
+          product?.stock ??
+          0
         );
-
-  const hasStock =
-    currentStock > 0;
+      
+  const hasStock = currentStock > 0;
 
   // ======================================================
   // GALERÍA - ANTERIOR
@@ -988,19 +986,20 @@ export default function ProductDetail() {
 
                         return (
                           <button
-                            key={
-                              variant.id
-                            }
+                            key={variant.id}
+                            disabled={!variantHasStock}
                             type="button"
                             onClick={() =>
-                              handleSelectVariant(
-                                variant
-                              )
+                              handleSelectVariant(variant)
                             }
                             className={`group relative flex items-center gap-3 rounded-xl border px-4 py-3 transition ${
                               isSelected
                                 ? "border-red-600 bg-red-950/30"
                                 : "border-zinc-800 bg-zinc-900 hover:border-zinc-600"
+                            } ${
+                              !variantHasStock
+                                ? "cursor-not-allowed opacity-50"
+                                : ""
                             }`}
                           >
                             <span

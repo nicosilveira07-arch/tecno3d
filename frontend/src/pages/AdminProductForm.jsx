@@ -16,7 +16,7 @@ import { getBrands } from "@/services/brands.api";
 
 const createEmptyVariant = () => ({
   name: "",
-  colorHex: "#000000",
+  colorHex: "",
   stock: "0",
   sku: "",
   images: [],
@@ -56,7 +56,8 @@ export default function AdminProductForm() {
     offerPercentage: "",
     offerActive: false,
 
-    stock: "",
+    baseStock: "0",
+    colorHex: "",
     hasVariants: false,
     variants: [],
 
@@ -141,7 +142,12 @@ export default function AdminProductForm() {
 
             offerActive: Boolean(product.offerActive),
 
-            stock: product.stock?.toString() || "",
+            baseStock: (
+              product.baseStock ??
+              (product.hasVariants ? 0 : product.stock ?? 0)
+            ).toString(),
+
+            colorHex: product.colorHex || "",
 
             hasVariants: Boolean(product.hasVariants),
 
@@ -150,7 +156,7 @@ export default function AdminProductForm() {
                 name: variant.name || "",
 
                 colorHex:
-                  variant.colorHex || "#000000",
+                  variant.colorHex || "",
 
                 stock:
                   variant.stock?.toString() || "0",
@@ -710,6 +716,10 @@ export default function AdminProductForm() {
         0
       );
     }, [form.variants]);
+  
+  const totalStock =
+    Number(form.baseStock || 0) +
+    totalVariantStock;
 
   // ======================================================
   // SUBMIT
@@ -848,10 +858,6 @@ export default function AdminProductForm() {
         }
       }
 
-      const finalStock =
-        form.hasVariants
-          ? totalVariantStock
-          : Number(form.stock);
 
       const data = {
         name: form.name,
@@ -885,7 +891,11 @@ export default function AdminProductForm() {
             form.offerActive
           ),
 
-        stock: finalStock,
+        baseStock: Number(form.baseStock || 0),
+
+        colorHex: form.colorHex.trim() || null,
+
+        stock: totalStock,
 
         hasVariants:
           Boolean(
@@ -1092,41 +1102,98 @@ export default function AdminProductForm() {
             />
           </div>
 
-          {/* STOCK + VARIANTES */}
-
-          <div>
-            {!form.hasVariants && (
-              <>
-                <label className="mb-2 block text-sm text-zinc-400">
-                  Stock disponible
-                </label>
-
-                <input
-                  type="number"
-                  name="stock"
-                  value={form.stock}
-                  onChange={
-                    handleChange
-                  }
-                  min="0"
-                  required
-                  placeholder="Ej: 10"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
-                />
-              </>
-            )}
-
-            {form.hasVariants && (
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-sm text-zinc-500">
-                  Stock total de variantes
-                </p>
-
-                <p className="mt-1 text-2xl font-black text-green-400">
-                  {totalVariantStock}
-                </p>
+          {/* STOCK DEL PRODUCTO CLÁSICO */}
+          <div className="md:col-span-2">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+              <h3 className="text-lg font-bold text-white">
+                Producto clásico
+              </h3>
+                      
+              <p className="mt-1 text-sm text-zinc-500">
+                Presentación independiente de las variantes. Puede tener
+                un color asignado o venderse sin color.
+              </p>
+                      
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Stock del producto clásico
+                  </label>
+                      
+                  <input
+                    type="number"
+                    name="baseStock"
+                    value={form.baseStock}
+                    onChange={handleChange}
+                    min="0"
+                    required
+                    placeholder="Ej: 5"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+                  />
+                </div>
+                      
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Color del producto clásico (opcional)
+                  </label>
+                      
+                  <input
+                    type="color"
+                    value={form.colorHex || "#000000"}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        colorHex: event.target.value,
+                      }))
+                    }
+                    className="h-12 w-20 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-1"
+                  />
+                  
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        colorHex: "",
+                      }))
+                    }
+                    className="ml-3 text-sm text-zinc-400 hover:text-white"
+                  >
+                    Quitar color
+                  </button>
+          
+                  {/^#[0-9A-Fa-f]{6}$/.test(form.colorHex) && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className="h-5 w-5 rounded-full border border-zinc-600"
+                        style={{ backgroundColor: form.colorHex }}
+                      />
+                      <span className="text-xs text-zinc-400">
+                        {form.colorHex}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+                
+          {/* STOCK TOTAL */}
+          <div className="md:col-span-2">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+              <p className="text-sm text-zinc-500">
+                Stock total disponible
+              </p>
+                
+              <p className="mt-1 text-2xl font-black text-green-400">
+                {totalStock}
+              </p>
+                
+              <p className="mt-1 text-xs text-zinc-600">
+                Stock clásico ({Number(form.baseStock || 0)}) +
+                stock de variantes ({totalVariantStock}).
+              </p>
+            </div>
           </div>
 
           {/* VARIANTES */}
@@ -1256,56 +1323,51 @@ export default function AdminProductForm() {
                             </div>
 
                             {/* COLOR VISUAL */}
-
                             <div>
                               <label className="mb-2 block text-sm text-zinc-400">
-                                Color visual
+                                Color visual (opcional)
                               </label>
 
-                              <div className="flex gap-3">
-
+                              <div className="flex items-center gap-3">
                                 <input
                                   type="color"
-                                  value={
-                                    variant.colorHex ||
-                                    "#000000"
-                                  }
-                                  onChange={(
-                                    event
-                                  ) =>
+                                  value={variant.colorHex || "#000000"}
+                                  onChange={(event) =>
                                     handleVariantChange(
                                       index,
                                       "colorHex",
-                                      event
-                                        .target
-                                        .value
+                                      event.target.value
                                     )
                                   }
-                                  className="h-12 w-16 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950"
+                                  className="h-12 w-20 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950 p-1"
                                 />
-
-                                <input
-                                  type="text"
-                                  value={
-                                    variant.colorHex ||
-                                    ""
-                                  }
-                                  onChange={(
-                                    event
-                                  ) =>
+                              
+                                <button
+                                  type="button"
+                                  onClick={() =>
                                     handleVariantChange(
                                       index,
                                       "colorHex",
-                                      event
-                                        .target
-                                        .value
+                                      ""
                                     )
                                   }
-                                  placeholder="#000000"
-                                  className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
-                                />
-
+                                  className="text-sm text-zinc-400 hover:text-white"
+                                >
+                                  Quitar color
+                                </button>
                               </div>
+
+                              {/^#[0-9A-Fa-f]{6}$/.test(variant.colorHex) && (
+                                <div className="mt-2 flex items-center gap-2">
+                                  <span
+                                    className="h-5 w-5 rounded-full border border-zinc-600"
+                                    style={{ backgroundColor: variant.colorHex }}
+                                  />
+                                  <span className="text-xs text-zinc-400">
+                                    {variant.colorHex}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             {/* STOCK */}
@@ -1533,15 +1595,13 @@ export default function AdminProductForm() {
                         </span>
 
                         <span className="text-xl font-black text-green-400">
-                          {
-                            totalVariantStock
-                          }
+                          {totalStock}
                         </span>
 
                       </div>
 
                       <p className="mt-1 text-xs text-zinc-600">
-                        El stock general se calcula automáticamente sumando los stocks de los colores.
+                        Stock clásico + stock de todas las variantes.
                       </p>
 
                     </div>

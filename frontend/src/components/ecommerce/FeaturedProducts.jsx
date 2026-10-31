@@ -213,7 +213,7 @@ export default function FeaturedProducts() {
           !error &&
           products.length > 0 && (
             <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-              {products.map((product, productIndex) => {
+              {products.map((product) => {
                 const stockText =
                   product.stock > 5
                     ? "Disponible"
@@ -304,16 +304,8 @@ export default function FeaturedProducts() {
                           alt={product.name}
                           width="800"
                           height="800"
-                          loading={
-                            productIndex === 0
-                              ? "eager"
-                              : "lazy"
-                          }
-                          fetchPriority={
-                            productIndex === 0
-                              ? "high"
-                              : "auto"
-                          }
+                          loading="lazy"
+                          fetchPriority="low"
                           className="h-70 w-full object-cover"
                         />
                       ) : (
@@ -520,4 +512,3 @@ export default function FeaturedProducts() {
     </section>
   );
 }
-
