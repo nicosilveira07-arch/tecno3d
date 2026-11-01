@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 const productImageSchema = z.object({
@@ -99,6 +98,13 @@ const productSchema = z.object({
       /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
       "El color debe tener un formato hexadecimal válido."
     )
+    .nullable()
+    .optional(),
+
+  colorName: z
+    .string()
+    .trim()
+    .max(40, "El nombre del color no puede superar los 40 caracteres.")
     .nullable()
     .optional(),
 

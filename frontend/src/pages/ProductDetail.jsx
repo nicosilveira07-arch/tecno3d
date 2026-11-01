@@ -320,7 +320,7 @@ export default function ProductDetail() {
           product?.stock ??
           0
         );
-      
+
   const hasStock = currentStock > 0;
 
   // ======================================================
@@ -931,38 +931,39 @@ export default function ProductDetail() {
 
                     {/* PRODUCTO BASE / SIN COLOR */}
 
+
                     <button
                       type="button"
-                      onClick={
-                        handleSelectBaseProduct
-                      }
+                      onClick={handleSelectBaseProduct}
                       className={`group relative flex items-center gap-3 rounded-xl border px-4 py-3 transition ${
-                        selectedVariant ===
-                        null
+                        selectedVariant === null
                           ? "border-red-600 bg-red-950/30"
                           : "border-zinc-800 bg-zinc-900 hover:border-zinc-600"
                       }`}
                     >
                       <span
-                        className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-500 bg-zinc-800"
-                        title="Producto base"
+                        className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-500 shadow-inner"
+                        style={{
+                          backgroundColor: product.colorHex || "#27272a",
+                        }}
+                        title={product.colorHex ? "Color del producto base" : "Sin color"}
                       >
-                        <span className="absolute h-[2px] w-8 rotate-45 bg-zinc-300" />
+                        {!product.colorHex && (
+                          <span className="absolute h-[2px] w-8 rotate-45 bg-zinc-300" />
+                        )}
                       </span>
 
                       <span
                         className={`text-sm font-semibold ${
-                          selectedVariant ===
-                          null
+                          selectedVariant === null
                             ? "text-white"
                             : "text-zinc-400 group-hover:text-white"
                         }`}
                       >
-                        Sin color
+                        {product.colorName?.trim() || (!product.colorHex ? "Sin color" : "")}
                       </span>
 
-                      {selectedVariant ===
-                        null && (
+                      {selectedVariant === null && (
                         <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white">
                           ✓
                         </span>

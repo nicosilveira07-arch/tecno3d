@@ -58,6 +58,7 @@ export default function AdminProductForm() {
 
     baseStock: "0",
     colorHex: "",
+    colorName: "",
     hasVariants: false,
     variants: [],
 
@@ -148,6 +149,7 @@ export default function AdminProductForm() {
             ).toString(),
 
             colorHex: product.colorHex || "",
+            colorName: product.colorName || "",
 
             hasVariants: Boolean(product.hasVariants),
 
@@ -716,7 +718,7 @@ export default function AdminProductForm() {
         0
       );
     }, [form.variants]);
-  
+
   const totalStock =
     Number(form.baseStock || 0) +
     totalVariantStock;
@@ -894,6 +896,7 @@ export default function AdminProductForm() {
         baseStock: Number(form.baseStock || 0),
 
         colorHex: form.colorHex.trim() || null,
+        colorName: form.colorName.trim() || null,
 
         stock: totalStock,
 
@@ -1055,7 +1058,7 @@ export default function AdminProductForm() {
               }
               required
               placeholder="Ej: PC Gamer"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
 
@@ -1080,7 +1083,8 @@ export default function AdminProductForm() {
             </p>
           </div>
 
-          {/* PRECIO */}
+
+          {/* PRECIO Y STOCK */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-400">
@@ -1091,52 +1095,72 @@ export default function AdminProductForm() {
               type="number"
               name="price"
               value={form.price}
-              onChange={
-                handleChange
-              }
+              onChange={handleChange}
               min="0"
               step="0.01"
               required
               placeholder="Ej: 25000"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
             />
           </div>
 
-          {/* STOCK DEL PRODUCTO CLÁSICO */}
+          {/* STOCK DEL PRODUCTO */}
+
+          <div>
+            <label className="mb-2 block text-sm text-zinc-400">
+              Stock
+            </label>
+
+            <input
+              type="number"
+              name="baseStock"
+              value={form.baseStock}
+              onChange={handleChange}
+              min="0"
+              required
+              placeholder="Ej: 5"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
+            />
+          </div>
+
+
+
+          {/* PRODUCTO CLÁSICO */}
+
           <div className="md:col-span-2">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
               <h3 className="text-lg font-bold text-white">
-                Producto clásico
+                Color del Producto
               </h3>
-                      
-              <p className="mt-1 text-sm text-zinc-500">
-                Presentación independiente de las variantes. Puede tener
-                un color asignado o venderse sin color.
-              </p>
-                      
+
+
               <div className="mt-5 grid gap-4 md:grid-cols-2">
+
+                {/* NOMBRE DEL COLOR */}
+
                 <div>
                   <label className="mb-2 block text-sm text-zinc-400">
-                    Stock del producto clásico
+                    Nombre del color (opcional)
                   </label>
-                      
+
                   <input
-                    type="number"
-                    name="baseStock"
-                    value={form.baseStock}
+                    type="text"
+                    name="colorName"
+                    value={form.colorName}
                     onChange={handleChange}
-                    min="0"
-                    required
-                    placeholder="Ej: 5"
+                    maxLength={40}
+                    placeholder="Ej: Negro, Blanco, Azul"
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                   />
                 </div>
-                      
+
+                {/* COLOR VISUAL */}
+
                 <div>
                   <label className="mb-2 block text-sm text-zinc-400">
                     Color del producto clásico (opcional)
                   </label>
-                      
+
                   <input
                     type="color"
                     value={form.colorHex || "#000000"}
@@ -1148,7 +1172,7 @@ export default function AdminProductForm() {
                     }
                     className="h-12 w-20 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-1"
                   />
-                  
+
                   <button
                     type="button"
                     onClick={() =>
@@ -1161,40 +1185,27 @@ export default function AdminProductForm() {
                   >
                     Quitar color
                   </button>
-          
+
                   {/^#[0-9A-Fa-f]{6}$/.test(form.colorHex) && (
                     <div className="mt-2 flex items-center gap-2">
                       <span
                         className="h-5 w-5 rounded-full border border-zinc-600"
                         style={{ backgroundColor: form.colorHex }}
                       />
+
                       <span className="text-xs text-zinc-400">
                         {form.colorHex}
                       </span>
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
           </div>
-                
-          {/* STOCK TOTAL */}
-          <div className="md:col-span-2">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-              <p className="text-sm text-zinc-500">
-                Stock total disponible
-              </p>
-                
-              <p className="mt-1 text-2xl font-black text-green-400">
-                {totalStock}
-              </p>
-                
-              <p className="mt-1 text-xs text-zinc-600">
-                Stock clásico ({Number(form.baseStock || 0)}) +
-                stock de variantes ({totalVariantStock}).
-              </p>
-            </div>
-          </div>
+
+
+
 
           {/* VARIANTES */}
 
@@ -1318,7 +1329,7 @@ export default function AdminProductForm() {
                                   )
                                 }
                                 placeholder="Ej: Azul"
-                                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
+                                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                               />
                             </div>
 
@@ -1341,7 +1352,7 @@ export default function AdminProductForm() {
                                   }
                                   className="h-12 w-20 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950 p-1"
                                 />
-                              
+
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -1395,7 +1406,7 @@ export default function AdminProductForm() {
                                   )
                                 }
                                 placeholder="Ej: 10"
-                                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
+                                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                               />
                             </div>
 
@@ -1424,7 +1435,7 @@ export default function AdminProductForm() {
                                   )
                                 }
                                 placeholder="Ej: MATERA-AZUL"
-                                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
+                                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-red-600"
                               />
 
                             </div>
@@ -2011,13 +2022,10 @@ export default function AdminProductForm() {
 
             <textarea
               name="description"
-              value={
-                form.description
-              }
-              onChange={
-                handleChange
-              }
+              value={form.description}
+              onChange={handleChange}
               required
+              minLength={10}
               rows={5}
               placeholder="Describí las características principales del producto..."
               className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-red-600"
