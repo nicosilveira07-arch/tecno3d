@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 const productImageSchema = z.object({
@@ -84,6 +85,23 @@ const productSchema = z.object({
     .int("El stock debe ser un número entero.")
     .nonnegative("El stock no puede ser negativo."),
 
+  // Stock independiente de las variantes.
+  baseStock: z
+    .number()
+    .int("El stock base debe ser un número entero.")
+    .nonnegative("El stock base no puede ser negativo.")
+    .optional(),
+
+  // Color hexadecimal del producto.
+  colorHex: z
+    .string()
+    .regex(
+      /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+      "El color debe tener un formato hexadecimal válido."
+    )
+    .nullable()
+    .optional(),
+
   image: z
     .string()
     .nullable()
@@ -116,4 +134,3 @@ const productSchema = z.object({
 export {
   productSchema,
 };
-

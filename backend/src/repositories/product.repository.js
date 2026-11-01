@@ -428,6 +428,7 @@ const getProductById = async (id) => {
   });
 };
 
+
 const updateProduct = async (id, data) => {
   const {
     images,
@@ -435,15 +436,8 @@ const updateProduct = async (id, data) => {
     ...productData
   } = data;
 
-  if (images !== undefined) {
-    productData.image =
-      images.length > 0
-        ? images[0].url
-        : null;
-  }
 
   return await prisma.$transaction(async (tx) => {
-    // Recuperamos el stock clásico y la configuración actual.
     const existingProduct =
       await tx.product.findUnique({
         where: {
@@ -460,17 +454,18 @@ const updateProduct = async (id, data) => {
       throw new Error("Producto no encontrado.");
     }
 
+    // Conservamos la configuración actual si no fue enviada.
     const hasVariants =
       productData.hasVariants ??
       existingProduct.hasVariants;
 
+    // El stock base se actualiza únicamente cuando llega
+    // un nuevo valor; de lo contrario, conserva el existente.
     const baseStock = Number(
       productData.baseStock ??
         existingProduct.baseStock
     );
 
-    // Si llegan variantes, calculamos su stock desde el formulario.
-    // Si no llegan, conservamos el stock de las variantes existentes.
     let variantsStock = 0;
 
     if (hasVariants) {
@@ -493,10 +488,10 @@ const updateProduct = async (id, data) => {
       }
     }
 
-    productData.stock =
-      baseStock + variantsStock;
+    // Stock total = stock base + stock de variantes.
+    productData.stock = baseStock + variantsStock;
 
-    // Guardamos el stock clásico si fue enviado.
+    // Persistimos el stock base normalizado.
     if (productData.baseStock !== undefined) {
       productData.baseStock = baseStock;
     }
@@ -509,6 +504,7 @@ const updateProduct = async (id, data) => {
       data: productData,
     });
 
+    // Actualización de imágenes principales.
     if (images !== undefined) {
       await tx.productImage.deleteMany({
         where: {
@@ -527,10 +523,8 @@ const updateProduct = async (id, data) => {
       }
     }
 
-    /*
-     * Las variantes solamente se reemplazan cuando
-     * el frontend envía explícitamente el array.
-     */
+    // Reemplazamos las variantes solamente si
+    // el frontend envió explícitamente el array.
     if (variants !== undefined) {
       await tx.productVariant.deleteMany({
         where: {
@@ -570,6 +564,7 @@ const updateProduct = async (id, data) => {
     });
   });
 };
+
 
 const deleteProduct = async (id) => {
   return await prisma.product.delete({
