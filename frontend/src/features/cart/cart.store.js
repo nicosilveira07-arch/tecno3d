@@ -107,6 +107,29 @@ function getSnapshot() {
   return cart;
 }
 
+function productHasActiveOffer(product) {
+  if (!product) {
+    return false;
+  }
+
+  const originalPrice = Number(
+    product.price
+  );
+
+  const offerPrice =
+    product.offerActive &&
+    product.offerPrice != null
+      ? Number(product.offerPrice)
+      : null;
+
+  return (
+    offerPrice != null &&
+    Number.isFinite(offerPrice) &&
+    offerPrice > 0 &&
+    offerPrice < originalPrice
+  );
+}
+
 // ======================================================
 // NORMALIZAR CARRITO DEL BACKEND
 // ======================================================
@@ -132,6 +155,11 @@ function normalizeBackendCart(
         item.variant ||
         null;
 
+      const hasOffer =
+        productHasActiveOffer(
+          product
+        );
+
       return {
         productId:
           item.productId,
@@ -152,12 +180,17 @@ function normalizeBackendCart(
           product?.name ||
           "Producto",
 
-        price:
-          Number(
-            product?.price ??
-              item.price ??
-              0
-          ),
+        hasOffer,
+
+        price: hasOffer
+          ? Number(
+              product.offerPrice
+            )
+          : Number(
+              product?.price ??
+                item.price ??
+                0
+            ),
 
         image:
           variant?.images?.[0]
@@ -360,13 +393,15 @@ export async function addToCart(
         )
       : null;
 
-  const effectivePrice =
+  const hasOffer =
     offerPrice != null &&
+    Number.isFinite(offerPrice) &&
     offerPrice > 0 &&
-    offerPrice <
-      originalPrice
-      ? offerPrice
-      : originalPrice;
+    offerPrice < originalPrice;
+
+  const effectivePrice = hasOffer
+    ? offerPrice
+    : originalPrice;
 
   // ==================================================
   // BUSCAR PRODUCTO + MISMA VARIANTE
@@ -402,6 +437,8 @@ export async function addToCart(
 
                 price:
                   effectivePrice,
+
+                hasOffer,
               }
             : item
       );
@@ -427,6 +464,8 @@ export async function addToCart(
 
         price:
           effectivePrice,
+
+        hasOffer,
 
         image:
           variant?.images?.[0]

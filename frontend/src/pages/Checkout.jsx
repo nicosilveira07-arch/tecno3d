@@ -96,13 +96,38 @@ export default function Checkout() {
     0
   );
 
-  const discount = coupon
+  const canApplyCoupon = cart.some(
+    (item) => !item.hasOffer
+  );
+
+  const hasDiscountedProducts =
+    cart.some(
+      (item) => item.hasOffer
+    );
+
+  const couponEligibleSubtotal =
+    cart.reduce(
+      (sum, item) =>
+        item.hasOffer
+          ? sum
+          : sum +
+            item.price *
+              item.quantity,
+      0
+    );
+
+  const rawDiscount = coupon
     ? coupon.type ===
       "PERCENTAGE"
-      ? subtotal *
+      ? couponEligibleSubtotal *
         (coupon.value / 100)
       : coupon.value
     : 0;
+
+  const discount = Math.min(
+    rawDiscount,
+    couponEligibleSubtotal
+  );
 
   const finalTotal = Math.max(
     subtotal - discount,
@@ -170,6 +195,14 @@ export default function Checkout() {
 
     loadAddresses();
   }, []);
+
+  useEffect(() => {
+    if (!canApplyCoupon) {
+      setCoupon(null);
+      setCouponCode("");
+      setCouponError("");
+    }
+  }, [canApplyCoupon]);
 
   if (cart.length === 0) {
     return (
@@ -433,8 +466,10 @@ export default function Checkout() {
               discount,
 
               couponId:
-                coupon?.id ||
-                null,
+                canApplyCoupon
+                  ? coupon?.id ||
+                    null
+                  : null,
 
               deliveryMethod:
                 deliveryMethod ===
@@ -1152,11 +1187,18 @@ export default function Checkout() {
 
             {/* CUPÓN */}
 
+            {canApplyCoupon && (
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
               <p className="mb-3 text-sm font-semibold text-white">
                 Cupón de descuento
               </p>
+
+              {hasDiscountedProducts && (
+                <p className="mb-3 text-xs text-zinc-400">
+                  El cupón solo se aplica a productos sin descuento.
+                </p>
+              )}
 
               {!coupon ? (
                 <div className="flex gap-2">
@@ -1240,6 +1282,7 @@ export default function Checkout() {
               )}
 
             </div>
+            )}
 
             {/* TOTALES */}
 
