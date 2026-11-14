@@ -18,6 +18,32 @@ import {
   getProductByIdForOrder,
 } from "../repositories/product.repository.js";
 
+import {
+  findCouponByIdRepository,
+} from "../repositories/coupon.repository.js";
+
+const productHasActiveOffer = (
+  product
+) => {
+  const originalPrice = Number(
+    product?.price
+  );
+
+  const offerPrice =
+    product?.offerActive &&
+    product.offerPrice !== null &&
+    product.offerPrice !== undefined
+      ? Number(product.offerPrice)
+      : null;
+
+  return (
+    offerPrice !== null &&
+    Number.isFinite(offerPrice) &&
+    offerPrice > 0 &&
+    offerPrice < originalPrice
+  );
+};
+
 const deleteExpiredCheckoutSession =
   async (
     sessionId,
@@ -79,6 +105,11 @@ const prepareCheckoutItems = async (
     const price =
       Number(item.price);
 
+    const hasOffer =
+      productHasActiveOffer(
+        product
+      );
+
     if (
       !Number.isInteger(quantity) ||
       quantity <= 0
@@ -128,6 +159,8 @@ const prepareCheckoutItems = async (
 
           price,
 
+          hasOffer,
+
           productName:
             product.name,
 
@@ -152,6 +185,8 @@ const prepareCheckoutItems = async (
         quantity,
 
         price,
+
+        hasOffer,
 
         productName:
           product.name,
@@ -184,6 +219,8 @@ const prepareCheckoutItems = async (
 
       price,
 
+      hasOffer,
+
       productName:
         product.name,
 
@@ -211,7 +248,6 @@ const createCheckoutSessionService = async (
   const {
     userId,
     total,
-    discount = 0,
     couponId = null,
     deliveryMethod = "SHIPPING",
     addressId = null,
@@ -367,6 +403,101 @@ const createCheckoutSessionService = async (
     );
 
   // ======================================================
+  // CUPÓN SOLO EN PRODUCTOS SIN DESCUENTO
+  // ======================================================
+
+  const subtotal =
+    preparedItems.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.price) *
+          Number(item.quantity),
+      0
+    );
+
+  const couponEligibleSubtotal =
+    preparedItems.reduce(
+      (sum, item) =>
+        item.hasOffer
+          ? sum
+          : sum +
+            Number(item.price) *
+              Number(item.quantity),
+      0
+    );
+
+  let resolvedDiscount = 0;
+  let resolvedCouponId = null;
+
+  if (
+    couponId &&
+    String(couponId).trim()
+  ) {
+    if (couponEligibleSubtotal <= 0) {
+      throw new Error(
+        "Los productos con descuento no admiten cupones."
+      );
+    }
+
+    const coupon =
+      await findCouponByIdRepository(
+        couponId
+      );
+
+    if (!coupon) {
+      throw new Error(
+        "El cupón no existe."
+      );
+    }
+
+    if (!coupon.active) {
+      throw new Error(
+        "El cupón está inactivo."
+      );
+    }
+
+    if (
+      coupon.expiresAt &&
+      coupon.expiresAt <= new Date()
+    ) {
+      throw new Error(
+        "El cupón está vencido."
+      );
+    }
+
+    if (
+      coupon.maxUses !== null &&
+      coupon.usedCount >= coupon.maxUses
+    ) {
+      throw new Error(
+        "El cupón alcanzó el máximo de usos."
+      );
+    }
+
+    if (coupon.type === "PERCENTAGE") {
+      resolvedDiscount =
+        couponEligibleSubtotal *
+        (coupon.value / 100);
+    }
+
+    if (coupon.type === "FIXED") {
+      resolvedDiscount = coupon.value;
+    }
+
+    resolvedDiscount = Math.min(
+      resolvedDiscount,
+      couponEligibleSubtotal
+    );
+
+    resolvedCouponId = coupon.id;
+  }
+
+  const resolvedTotal = Math.max(
+    subtotal - resolvedDiscount,
+    0
+  );
+
+  // ======================================================
   // BUSCAR SESIÓN ACTIVA EXISTENTE
   // ======================================================
 
@@ -393,12 +524,13 @@ const createCheckoutSessionService = async (
       activeSession.id,
       {
         total:
-          Number(total),
+          resolvedTotal,
 
         discount:
-          Number(discount),
+          resolvedDiscount,
 
-        couponId,
+        couponId:
+          resolvedCouponId,
 
         deliveryMethod,
 
@@ -446,12 +578,13 @@ const createCheckoutSessionService = async (
     userId,
 
     total:
-      Number(total),
+      resolvedTotal,
 
     discount:
-      Number(discount),
+      resolvedDiscount,
 
-    couponId,
+    couponId:
+      resolvedCouponId,
 
     deliveryMethod,
 

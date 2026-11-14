@@ -52,6 +52,7 @@ const createOrderService = async (data) => {
   }
 
   let subtotal = 0;
+  let couponEligibleSubtotal = 0;
 
   const orderItems = [];
 
@@ -149,15 +150,23 @@ const createOrderService = async (data) => {
         ? Number(product.offerPrice)
         : null;
 
-    const effectivePrice =
+    const hasOffer =
       offerPrice !== null &&
+      Number.isFinite(offerPrice) &&
       offerPrice > 0 &&
-      offerPrice < originalPrice
-        ? offerPrice
-        : originalPrice;
+      offerPrice < originalPrice;
+
+    const effectivePrice = hasOffer
+      ? offerPrice
+      : originalPrice;
 
     subtotal +=
       effectivePrice * quantity;
+
+    if (!hasOffer) {
+      couponEligibleSubtotal +=
+        effectivePrice * quantity;
+    }
 
     orderItems.push({
       productId: product.id,
@@ -217,20 +226,27 @@ const createOrderService = async (data) => {
       );
     }
 
+    if (couponEligibleSubtotal <= 0) {
+      throw new Error(
+        "Los productos con descuento no admiten cupones."
+      );
+    }
+
     if (coupon.type === "PERCENTAGE") {
       discount =
-        subtotal * (coupon.value / 100);
+        couponEligibleSubtotal *
+        (coupon.value / 100);
     }
 
     if (coupon.type === "FIXED") {
       discount = coupon.value;
     }
 
-    // Nunca permitir descuento mayor al subtotal
+    // El cupón solo descuenta productos sin oferta.
 
     discount = Math.min(
       discount,
-      subtotal
+      couponEligibleSubtotal
     );
   }
 
