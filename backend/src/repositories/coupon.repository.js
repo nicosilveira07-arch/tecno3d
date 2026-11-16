@@ -47,15 +47,56 @@ const deleteCouponRepository = async (id) => {
   });
 };
 
-const incrementCouponUsageRepository = async (id) => {
-  return prisma.coupon.update({
+const incrementCouponUsageRepository = async (
+  id,
+  db = prisma
+) => {
+  const coupon = await db.coupon.findUnique({
     where: {
       id,
+    },
+  });
+
+  if (!coupon) {
+    throw new Error("El cupón no existe.");
+  }
+
+  if (coupon.maxUses === null) {
+    return db.coupon.update({
+      where: {
+        id,
+      },
+      data: {
+        usedCount: {
+          increment: 1,
+        },
+      },
+    });
+  }
+
+  const updated = await db.coupon.updateMany({
+    where: {
+      id,
+      usedCount: {
+        lt: coupon.maxUses,
+      },
     },
     data: {
       usedCount: {
         increment: 1,
       },
+    },
+  });
+
+  if (updated.count === 0) {
+    throw new Error(
+      "El cupón alcanzó el máximo de usos."
+    );
+  }
+
+  return db.coupon.findUnique({
+    where: {
+      id,
     },
   });
 };

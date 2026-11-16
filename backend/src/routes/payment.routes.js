@@ -7,6 +7,7 @@ import {
 } from "../controllers/payment.controller.js";
 
 import { authenticate } from "../middlewares/auth.middleware.js";
+import { allowRoles } from "../middlewares/role.middleware.js";
 
 
 const router = Router();
@@ -23,12 +24,14 @@ router.get(
 
 router.post(
   "/",
+  allowRoles("ADMIN", "EMPLOYEE"),
   createPaymentController
 );
 
 
 router.patch(
   "/:id",
+  allowRoles("ADMIN", "EMPLOYEE"),
   updatePaymentController
 );
 

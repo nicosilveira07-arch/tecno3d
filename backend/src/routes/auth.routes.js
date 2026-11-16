@@ -12,11 +12,15 @@ import { authenticate } from "../middlewares/auth.middleware.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
 
-import { loginRateLimit } from "../middlewares/authRateLimit.middleware.js";
+import { loginRateLimit, registerRateLimit, googleLoginRateLimit } from "../middlewares/authRateLimit.middleware.js";
 
 const router = Router();
 
-router.post("/register", registerController);
+router.post(
+  "/register",
+  registerRateLimit,
+  registerController
+);
 
 router.post(
   "/login",
@@ -26,6 +30,7 @@ router.post(
 
 router.post(
   "/google",
+  googleLoginRateLimit,
   googleLoginController
 );
 

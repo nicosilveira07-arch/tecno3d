@@ -8,7 +8,8 @@ import {
 export async function getPaymentController(req, res) {
   try {
     const payment = await getPaymentService(
-      req.params.orderId
+      req.params.orderId,
+      req.user
     );
 
     return res.json({

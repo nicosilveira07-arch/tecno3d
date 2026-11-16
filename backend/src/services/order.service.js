@@ -309,9 +309,12 @@ const createOrderService = async (data) => {
             couponChanged &&
             oldCouponId
           ) {
-            await tx.coupon.update({
+            await tx.coupon.updateMany({
               where: {
                 id: oldCouponId,
+                usedCount: {
+                  gt: 0,
+                },
               },
               data: {
                 usedCount: {
@@ -321,23 +324,14 @@ const createOrderService = async (data) => {
             });
           }
 
-          // Si se coloca un cupón nuevo,
-          // registrar su uso solamente una vez.
-
           if (
             couponChanged &&
             newCouponId
           ) {
-            await tx.coupon.update({
-              where: {
-                id: newCouponId,
-              },
-              data: {
-                usedCount: {
-                  increment: 1,
-                },
-              },
-            });
+            await incrementCouponUsageRepository(
+              newCouponId,
+              tx
+            );
           }
 
           // Eliminar los productos anteriores
