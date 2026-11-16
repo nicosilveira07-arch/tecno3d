@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 
-export function authenticate(req, res, next) {
+import { findById } from "../repositories/user.repository.js";
+
+export async function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
 
@@ -13,9 +15,25 @@ export function authenticate(req, res, next) {
 
     const [, token] = authHeader.split(" ");
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    req.user = decoded;
+    const user = await findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Su sesión ha expirado",
+      });
+    }
+
+    req.user = {
+      id: user.id,
+      role: user.role,
+      email: user.email,
+    };
 
     next();
   } catch (error) {

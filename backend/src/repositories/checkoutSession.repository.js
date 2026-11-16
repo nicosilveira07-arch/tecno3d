@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import { incrementCouponUsageRepository } from "./coupon.repository.js";
 
 const createCheckoutSession = async (
   data
@@ -859,18 +860,10 @@ const completeCheckoutSessionAsOrder =
         if (
           session.couponId
         ) {
-          await tx.coupon.update({
-            where: {
-              id:
-                session.couponId,
-            },
-
-            data: {
-              usedCount: {
-                increment: 1,
-              },
-            },
-          });
+          await incrementCouponUsageRepository(
+            session.couponId,
+            tx
+          );
         }
 
         // ==================================================

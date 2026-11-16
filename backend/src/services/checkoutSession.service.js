@@ -102,13 +102,14 @@ const prepareCheckoutItems = async (
     const quantity =
       Number(item.quantity);
 
-    const price =
-      Number(item.price);
-
     const hasOffer =
       productHasActiveOffer(
         product
       );
+
+    const price = hasOffer
+      ? Number(product.offerPrice)
+      : Number(product.price);
 
     if (
       !Number.isInteger(quantity) ||
@@ -721,9 +722,56 @@ const updateCheckoutSessionService = async (
     );
   }
 
+  const updateData = {};
+
+  if (data.deliveryMethod !== undefined) {
+    if (
+      !["SHIPPING", "PICKUP"].includes(
+        data.deliveryMethod
+      )
+    ) {
+      throw new Error(
+        "Método de entrega inválido."
+      );
+    }
+
+    updateData.deliveryMethod =
+      data.deliveryMethod;
+  }
+
+  if (data.addressId !== undefined) {
+    if (!data.addressId) {
+      updateData.addressId = null;
+    } else {
+      const address =
+        await findById(
+          data.addressId
+        );
+
+      if (
+        !address ||
+        address.userId !== userId
+      ) {
+        throw new Error(
+          "La dirección de envío no pertenece al usuario."
+        );
+      }
+
+      updateData.addressId =
+        data.addressId;
+    }
+  }
+
+  if (
+    Object.keys(updateData).length ===
+    0
+  ) {
+    return session;
+  }
+
   return await updateCheckoutSession(
     session.id,
-    data
+    updateData
   );
 };
 
@@ -767,25 +815,37 @@ const markCheckoutSessionPaymentPendingService =
       );
     }
 
+    const allowedMethods = [
+      "MERCADO_PAGO",
+      "PAYPAL",
+      "CASH",
+      "BANK_TRANSFER",
+    ];
+
+    const paymentMethod =
+      allowedMethods.includes(
+        paymentData?.paymentMethod
+      )
+        ? paymentData.paymentMethod
+        : "MERCADO_PAGO";
+
+    const preferenceId =
+      typeof paymentData?.paymentPreferenceId ===
+        "string" &&
+      paymentData.paymentPreferenceId.trim()
+        ? paymentData.paymentPreferenceId.trim()
+        : null;
+
     return await updateCheckoutSessionStatus(
       id,
       "PAYMENT_PENDING",
       {
-        paymentStatus:
-          paymentData?.paymentStatus ||
-          "PENDING",
+        paymentStatus: "PENDING",
 
-        paymentMethod:
-          paymentData?.paymentMethod ||
-          null,
+        paymentMethod,
 
         paymentPreferenceId:
-          paymentData?.paymentPreferenceId ||
-          null,
-
-        paymentTransactionId:
-          paymentData?.paymentTransactionId ||
-          null,
+          preferenceId,
       }
     );
   };

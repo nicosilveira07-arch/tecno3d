@@ -266,6 +266,42 @@ export async function processMercadoPagoWebhookService(data) {
   // =========================================================
 
   if (paymentMP.status === "approved") {
+    const paidAmount = Number(
+      paymentMP.transaction_amount
+    );
+
+    const expectedAmount = Number(
+      session.total
+    );
+
+    const sameAmount =
+      Number.isFinite(paidAmount) &&
+      Number.isFinite(expectedAmount) &&
+      Math.round(paidAmount * 100) ===
+        Math.round(expectedAmount * 100);
+
+    if (
+      paymentMP.currency_id &&
+      paymentMP.currency_id !== "UYU"
+    ) {
+      console.error(
+        "PAGO RECHAZADO: la moneda no es UYU.",
+        paymentMP.currency_id
+      );
+
+      return true;
+    }
+
+    if (!sameAmount) {
+      console.error(
+        "PAGO RECHAZADO: el monto no coincide con la sesión.",
+        paidAmount,
+        expectedAmount
+      );
+
+      return true;
+    }
+
     console.log(
       "=========================================="
     );
