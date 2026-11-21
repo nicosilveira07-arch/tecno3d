@@ -8,6 +8,10 @@ import {
   incrementCouponUsageRepository,
 } from "../repositories/coupon.repository.js";
 
+import {
+  assertCouponIsUsable,
+} from "../utils/couponDiscount.js";
+
 const generateCouponCode = () => {
   const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -126,7 +130,10 @@ const getCouponByIdService = async (id) => {
   return coupon;
 };
 
-const validateCouponService = async (code) => {
+const validateCouponService = async (
+  code,
+  userId = null
+) => {
   if (!code || !code.trim()) {
     throw new Error("Ingresá un código de cupón.");
   }
@@ -144,23 +151,21 @@ const validateCouponService = async (code) => {
     throw new Error("El cupón no existe.");
   }
 
-  if (!coupon.active) {
-    throw new Error("El cupón está inactivo.");
-  }
+  assertCouponIsUsable(coupon);
 
   if (
-    coupon.expiresAt &&
-    coupon.expiresAt <= new Date()
-  ) {
-    throw new Error("El cupón está vencido.");
-  }
-
-  if (
-    coupon.maxUses !== null &&
-    coupon.usedCount >= coupon.maxUses
+    coupon.userId &&
+    userId &&
+    coupon.userId !== userId
   ) {
     throw new Error(
-      "El cupón alcanzó el máximo de usos.",
+      "Este cupón no está asignado a tu cuenta."
+    );
+  }
+
+  if (coupon.userId && !userId) {
+    throw new Error(
+      "Debés iniciar sesión para usar este cupón."
     );
   }
 

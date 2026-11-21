@@ -35,7 +35,9 @@ const AdminBrands = lazy(() => import("@/pages/AdminBrands"));
 const Favorites = lazy(() => import("@/pages/Favorites"));
 const AdminBanners = lazy(() => import("@/pages/AdminBanners"));
 const Offers = lazy(() => import("@/pages/Offers"));
+const RequestQuote = lazy(() => import("@/pages/RequestQuote"));
 const AdminSettings = lazy(() => import("@/pages/AdminSettings"));
+const AdminQuotes = lazy(() => import("@/pages/AdminQuotes"));
 
 function AdminPlaceholder({ title }) {
   return (
@@ -89,6 +91,11 @@ export default function AppRouter() {
           <Route
             path="/offers"
             element={<Offers />}
+          />
+
+          <Route
+            path="/cotizar"
+            element={<RequestQuote />}
           />
 
           <Route
@@ -199,6 +206,11 @@ export default function AppRouter() {
             <Route
               path="/admin/coupons"
               element={<AdminCoupons />}
+            />
+
+            <Route
+              path="/admin/quotes"
+              element={<AdminQuotes />}
             />
 
             {/* REPORTES */}

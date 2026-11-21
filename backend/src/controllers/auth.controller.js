@@ -6,6 +6,10 @@ import {
 } from "../services/auth.service.js";
 
 import {
+  getWelcomeCouponForUser,
+} from "../services/welcomeCoupon.service.js";
+
+import {
   registerSchema,
   loginSchema,
   changePasswordSchema,
@@ -89,6 +93,28 @@ export function meController(req, res) {
     success: true,
     data: req.user,
   });
+}
+
+export async function welcomeCouponController(
+  req,
+  res
+) {
+  try {
+    const coupon =
+      await getWelcomeCouponForUser(
+        req.user.id
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: coupon,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 }
 
 // Cambiar contraseña

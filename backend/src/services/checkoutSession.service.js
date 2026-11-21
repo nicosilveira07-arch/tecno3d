@@ -22,6 +22,10 @@ import {
   findCouponByIdRepository,
 } from "../repositories/coupon.repository.js";
 
+import {
+  resolveCouponDiscount,
+} from "../utils/couponDiscount.js";
+
 const productHasActiveOffer = (
   product
 ) => {
@@ -263,6 +267,15 @@ const createCheckoutSessionService = async (
   }
 
   if (
+    data.quoteId !== undefined &&
+    data.quoteId !== null
+  ) {
+    throw new Error(
+      "Las cotizaciones solo se pagan desde el flujo de cotización."
+    );
+  }
+
+  if (
     !Array.isArray(items) ||
     items.length === 0
   ) {
@@ -434,63 +447,20 @@ const createCheckoutSessionService = async (
     couponId &&
     String(couponId).trim()
   ) {
-    if (couponEligibleSubtotal <= 0) {
-      throw new Error(
-        "Los productos con descuento no admiten cupones."
-      );
-    }
-
     const coupon =
       await findCouponByIdRepository(
         couponId
       );
 
-    if (!coupon) {
-      throw new Error(
-        "El cupón no existe."
-      );
-    }
+    const resolved = resolveCouponDiscount({
+      subtotal,
+      couponEligibleSubtotal,
+      coupon,
+      userId,
+    });
 
-    if (!coupon.active) {
-      throw new Error(
-        "El cupón está inactivo."
-      );
-    }
-
-    if (
-      coupon.expiresAt &&
-      coupon.expiresAt <= new Date()
-    ) {
-      throw new Error(
-        "El cupón está vencido."
-      );
-    }
-
-    if (
-      coupon.maxUses !== null &&
-      coupon.usedCount >= coupon.maxUses
-    ) {
-      throw new Error(
-        "El cupón alcanzó el máximo de usos."
-      );
-    }
-
-    if (coupon.type === "PERCENTAGE") {
-      resolvedDiscount =
-        couponEligibleSubtotal *
-        (coupon.value / 100);
-    }
-
-    if (coupon.type === "FIXED") {
-      resolvedDiscount = coupon.value;
-    }
-
-    resolvedDiscount = Math.min(
-      resolvedDiscount,
-      couponEligibleSubtotal
-    );
-
-    resolvedCouponId = coupon.id;
+    resolvedDiscount = resolved.discount;
+    resolvedCouponId = resolved.couponId;
   }
 
   const resolvedTotal = Math.max(

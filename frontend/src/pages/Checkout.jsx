@@ -4,7 +4,10 @@ import {
   Plus,
   Store,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import {
   useCart,
@@ -20,7 +23,17 @@ import {
 } from "@/services/coupons.api";
 
 import {
+  getWelcomeCoupon,
+} from "@/services/auth.api";
+
+import {
+  getCouponDiscountAmount,
+} from "@/features/coupons/coupon.utils";
+
+import {
   createCheckoutSession,
+  getCheckoutSession,
+  updateCheckoutSession,
 } from "@/services/checkoutSession.api";
 
 import {
@@ -35,8 +48,22 @@ const PHONE_COUNTRIES = [
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const cart = useCart();
+
+  const quoteSessionParam =
+    searchParams.get("quoteSession");
+
+  const [quoteSession, setQuoteSession] =
+    useState(null);
+
+  const [quoteSessionLoading, setQuoteSessionLoading] =
+    useState(Boolean(quoteSessionParam));
+
+  const isQuoteCheckout = Boolean(
+    quoteSession?.quoteId
+  );
 
   const [addresses, setAddresses] =
     useState([]);
@@ -88,51 +115,126 @@ export default function Checkout() {
       isDefault: false,
     });
 
-  const subtotal = cart.reduce(
-    (sum, item) =>
-      sum +
-      item.price *
-        item.quantity,
-    0
-  );
+  const checkoutLines = isQuoteCheckout
+    ? (quoteSession?.items || []).map(
+        (item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price: Number(item.price),
+          name: item.productName,
+          hasOffer: false,
+        })
+      )
+    : cart;
 
-  const canApplyCoupon = cart.some(
-    (item) => !item.hasOffer
-  );
+  const subtotal = isQuoteCheckout
+    ? Number(quoteSession?.total || 0)
+    : checkoutLines.reduce(
+        (sum, item) =>
+          sum +
+          item.price *
+            item.quantity,
+        0
+      );
 
   const hasDiscountedProducts =
-    cart.some(
+    !isQuoteCheckout &&
+    checkoutLines.some(
       (item) => item.hasOffer
     );
 
-  const couponEligibleSubtotal =
-    cart.reduce(
-      (sum, item) =>
-        item.hasOffer
-          ? sum
-          : sum +
-            item.price *
-              item.quantity,
-      0
+  const onlyOfferItems =
+    !isQuoteCheckout &&
+    checkoutLines.length > 0 &&
+    !checkoutLines.some(
+      (item) => !item.hasOffer
     );
 
-  const rawDiscount = coupon
-    ? coupon.type ===
-      "PERCENTAGE"
-      ? couponEligibleSubtotal *
-        (coupon.value / 100)
-      : coupon.value
-    : 0;
-
-  const discount = Math.min(
-    rawDiscount,
-    couponEligibleSubtotal
+  const welcomeCouponLocked = Boolean(
+    onlyOfferItems &&
+      coupon?.applyToOfferItems
   );
 
-  const finalTotal = Math.max(
-    subtotal - discount,
-    0
-  );
+  const couponEligibleSubtotal =
+    isQuoteCheckout
+      ? 0
+      : checkoutLines.reduce(
+          (sum, item) =>
+            item.hasOffer
+              ? sum
+              : sum +
+                item.price *
+                  item.quantity,
+          0
+        );
+
+  const discount = isQuoteCheckout
+    ? 0
+    : getCouponDiscountAmount({
+        subtotal,
+        couponEligibleSubtotal,
+        coupon,
+      });
+
+  const finalTotal = isQuoteCheckout
+    ? subtotal
+    : Math.max(
+        subtotal - discount,
+        0
+      );
+
+  useEffect(() => {
+    const loadQuoteSession = async () => {
+      if (!quoteSessionParam) {
+        setQuoteSession(null);
+        setQuoteSessionLoading(false);
+        return;
+      }
+
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        navigate(
+          `/login?next=/checkout?quoteSession=${quoteSessionParam}`
+        );
+        return;
+      }
+
+      try {
+        setQuoteSessionLoading(true);
+
+        const response =
+          await getCheckoutSession(
+            quoteSessionParam
+          );
+
+        const session = response.data;
+
+        if (!session?.quoteId) {
+          throw new Error(
+            "Esta sesión no corresponde a una cotización."
+          );
+        }
+
+        setQuoteSession(session);
+      } catch (quoteError) {
+        console.error(quoteError);
+        setError(
+          quoteError.response?.data
+            ?.message ||
+            quoteError.message ||
+            "No se pudo cargar la cotización."
+        );
+        setQuoteSession(null);
+      } finally {
+        setQuoteSessionLoading(false);
+      }
+    };
+
+    loadQuoteSession();
+  }, [quoteSessionParam, navigate]);
 
   useEffect(() => {
     const loadAddresses =
@@ -197,14 +299,94 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    if (!canApplyCoupon) {
+    if (
+      checkoutLines.length === 0 &&
+      !isQuoteCheckout
+    ) {
+      setCoupon(null);
+      setCouponCode("");
+      setCouponError("");
+      return;
+    }
+
+    if (
+      coupon &&
+      !coupon.applyToOfferItems &&
+      onlyOfferItems
+    ) {
       setCoupon(null);
       setCouponCode("");
       setCouponError("");
     }
-  }, [canApplyCoupon]);
+  }, [
+    checkoutLines.length,
+    onlyOfferItems,
+    coupon,
+    isQuoteCheckout,
+  ]);
 
-  if (cart.length === 0) {
+  useEffect(() => {
+    const applyWelcomeWithOffers =
+      async () => {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        if (!token) {
+          return;
+        }
+
+        if (!onlyOfferItems) {
+          return;
+        }
+
+        if (coupon?.applyToOfferItems) {
+          return;
+        }
+
+        try {
+          const response =
+            await getWelcomeCoupon();
+          const welcome =
+            response?.data;
+
+          if (!welcome?.code) {
+            return;
+          }
+
+          setCouponCode(welcome.code);
+          setCoupon(welcome);
+          setCouponError("");
+        } catch (error) {
+          console.error(
+            "ERROR CARGANDO CUPÓN DE BIENVENIDA:",
+            error
+          );
+        }
+      };
+
+    applyWelcomeWithOffers();
+  }, [
+    onlyOfferItems,
+    checkoutLines.length,
+    isQuoteCheckout,
+  ]);
+
+  if (quoteSessionLoading) {
+    return (
+      <section className="min-h-screen bg-zinc-950 px-6 py-10">
+        <div className="mx-auto max-w-7xl text-center text-zinc-400">
+          Cargando checkout de cotización...
+        </div>
+      </section>
+    );
+  }
+
+  if (
+    checkoutLines.length === 0 &&
+    !isQuoteCheckout
+  ) {
     return (
       <section className="min-h-screen bg-zinc-950 px-6 py-10">
         <div className="mx-auto max-w-7xl">
@@ -394,6 +576,10 @@ export default function Checkout() {
 
   const handleRemoveCoupon =
     () => {
+      if (welcomeCouponLocked) {
+        return;
+      }
+
       setCoupon(null);
       setCouponCode("");
       setCouponError("");
@@ -449,83 +635,105 @@ export default function Checkout() {
         setLoading(true);
         setError("");
 
-        const expiresAt =
-          new Date(
-            Date.now() +
-              30 *
-                60 *
-                1000
-          ).toISOString();
+        let sessionId;
 
-        const sessionResponse =
-          await createCheckoutSession(
+        if (isQuoteCheckout) {
+          if (!quoteSession?.id) {
+            throw new Error(
+              "Sesión de cotización no disponible."
+            );
+          }
+
+          const delivery =
+            deliveryMethod === "pickup"
+              ? "PICKUP"
+              : "SHIPPING";
+
+          await updateCheckoutSession(
+            quoteSession.id,
             {
-              total:
-                finalTotal,
-
-              discount,
-
-              couponId:
-                canApplyCoupon
-                  ? coupon?.id ||
-                    null
-                  : null,
-
-              deliveryMethod:
-                deliveryMethod ===
-                "pickup"
-                  ? "PICKUP"
-                  : "SHIPPING",
-
+              deliveryMethod: delivery,
               addressId:
-                deliveryMethod ===
-                "pickup"
+                delivery === "PICKUP"
                   ? null
                   : selectedAddress,
-
-              expiresAt,
-
-              items: cart.map(
-                (item) => ({
-                  productId:
-                    item.productId,
-
-                  variantId:
-                    item.variantId ||
-                    null,
-
-                  quantity:
-                    item.quantity,
-
-                  price:
-                    Number(
-                      item.price
-                    ),
-
-                  productName:
-                    item.name,
-                })
-              ),
             }
           );
 
-        const session =
-          sessionResponse.data;
+          sessionId = quoteSession.id;
+        } else {
+          const expiresAt =
+            new Date(
+              Date.now() +
+                30 *
+                  60 *
+                  1000
+            ).toISOString();
 
-        if (!session?.id) {
-          throw new Error(
-            "No se pudo crear la sesión de checkout."
-          );
+          const sessionResponse =
+            await createCheckoutSession(
+              {
+                total:
+                  finalTotal,
+
+                discount,
+
+                couponId:
+                  coupon?.id || null,
+
+                deliveryMethod:
+                  deliveryMethod ===
+                  "pickup"
+                    ? "PICKUP"
+                    : "SHIPPING",
+
+                addressId:
+                  deliveryMethod ===
+                  "pickup"
+                    ? null
+                    : selectedAddress,
+
+                expiresAt,
+
+                items: checkoutLines.map(
+                  (item) => ({
+                    productId:
+                      item.productId,
+
+                    variantId:
+                      item.variantId ||
+                      null,
+
+                    quantity:
+                      item.quantity,
+
+                    price:
+                      Number(
+                        item.price
+                      ),
+
+                    productName:
+                      item.name,
+                  })
+                ),
+              }
+            );
+
+          const session =
+            sessionResponse.data;
+
+          if (!session?.id) {
+            throw new Error(
+              "No se pudo crear la sesión de checkout."
+            );
+          }
+
+          sessionId = session.id;
         }
-
-        console.log(
-          "CHECKOUT SESSION CREADA:",
-          session
-        );
 
         const paymentResponse =
           await createOrderPayment(
-            session.id
+            sessionId
           );
 
         console.log(
@@ -1138,11 +1346,15 @@ export default function Checkout() {
 
             <div className="space-y-4">
 
-              {cart.map(
+              {checkoutLines.map(
                 (item) => (
 
                   <div
-                    key={`${item.productId}-${item.variantId || "base"}`}
+                    key={
+                      isQuoteCheckout
+                        ? item.name
+                        : `${item.productId}-${item.variantId || "base"}`
+                    }
                     className="flex justify-between gap-4 border-b border-zinc-800 pb-4"
                   >
 
@@ -1187,16 +1399,39 @@ export default function Checkout() {
 
             {/* CUPÓN */}
 
-            {canApplyCoupon && (
+            {!isQuoteCheckout &&
+            checkoutLines.length > 0 && (
             <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950 p-4">
 
               <p className="mb-3 text-sm font-semibold text-white">
                 Cupón de descuento
               </p>
 
-              {hasDiscountedProducts && (
+              {welcomeCouponLocked ? (
+                <p className="mb-3 text-xs text-green-400/90">
+                  Cupón de bienvenida aplicado automáticamente
+                  porque todos los productos están en oferta.
+                </p>
+              ) : coupon?.applyToOfferItems ? (
+                <p className="mb-3 text-xs text-green-400/90">
+                  Tu cupón de bienvenida aplica al total,
+                  incluyendo productos en oferta.
+                </p>
+              ) : (
+                hasDiscountedProducts &&
+                !onlyOfferItems && (
+                  <p className="mb-3 text-xs text-zinc-400">
+                    El cupón solo se aplica a productos sin descuento.
+                  </p>
+                )
+              )}
+
+              {onlyOfferItems &&
+              !coupon?.applyToOfferItems && (
                 <p className="mb-3 text-xs text-zinc-400">
-                  El cupón solo se aplica a productos sin descuento.
+                  Para este carrito necesitás un cupón que
+                  incluya ofertas (por ejemplo el de
+                  bienvenida al registrarte).
                 </p>
               )}
 
@@ -1262,15 +1497,17 @@ export default function Checkout() {
 
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={
-                      handleRemoveCoupon
-                    }
-                    className="text-xs font-semibold text-zinc-400 transition hover:text-white"
-                  >
-                    Quitar
-                  </button>
+                  {!welcomeCouponLocked && (
+                    <button
+                      type="button"
+                      onClick={
+                        handleRemoveCoupon
+                      }
+                      className="text-xs font-semibold text-zinc-400 transition hover:text-white"
+                    >
+                      Quitar
+                    </button>
+                  )}
 
                 </div>
               )}

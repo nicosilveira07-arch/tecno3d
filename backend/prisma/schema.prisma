@@ -27,10 +27,12 @@ model User {
   addresses                  Address[]
   cart                       Cart?
   checkoutSessions           CheckoutSession[]
+  quoteRequests              QuoteRequest[]
   favorites                  Favorite[]
   orders                     Order[]
   products                   Product[]
   reviews                    Review[]
+  coupons                    Coupon[]
   createdBy                  User?             @relation("UserCreatedUsers", fields: [createdById], references: [id])
   createdUsers               User[]            @relation("UserCreatedUsers")
 }
@@ -202,8 +204,10 @@ model CheckoutSession {
   paymentInstructionsUrl  String?
   paymentReferenceId      String?
   paymentVerificationCode String?
+  quoteId                 String?               @unique
   address                 Address?              @relation(fields: [addressId], references: [id])
   coupon                  Coupon?               @relation(fields: [couponId], references: [id])
+  quote                   QuoteRequest?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   items                   CheckoutSessionItem[]
 
@@ -277,18 +281,23 @@ model Payment {
 }
 
 model Coupon {
-  id               String            @id @default(cuid())
-  code             String            @unique
-  type             CouponType
-  value            Float
-  maxUses          Int?
-  usedCount        Int               @default(0)
-  expiresAt        DateTime?
-  active           Boolean           @default(true)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  checkoutSessions CheckoutSession[]
-  orders           Order[]
+  id                  String            @id @default(cuid())
+  code                String            @unique
+  type                CouponType
+  value               Float
+  maxUses             Int?
+  usedCount           Int               @default(0)
+  expiresAt           DateTime?
+  active              Boolean           @default(true)
+  applyToOfferItems   Boolean           @default(false)
+  userId              String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  checkoutSessions    CheckoutSession[]
+  orders              Order[]
+  user                User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Review {
@@ -394,4 +403,47 @@ enum CheckoutSessionStatus {
   PAYMENT_PENDING
   COMPLETED
   FAILED
+}
+
+enum QuoteRequestStatus {
+  PENDING
+  QUOTED
+  ACCEPTED
+  PAID
+  REJECTED_BY_CUSTOMER
+}
+
+model QuoteRequest {
+  id            String             @id @default(cuid())
+  userId        String
+  description   String             @default("")
+  quantity      Int
+  widthMm       Int
+  heightMm      Int
+  contactPhone  String
+  quotedPrice   Float?
+  adminMessage  String?
+  status        QuoteRequestStatus @default(PENDING)
+  quotedAt      DateTime?
+  rejectedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkoutSession CheckoutSession?
+  images        QuoteRequestImage[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model QuoteRequestImage {
+  id             String       @id @default(cuid())
+  quoteRequestId String
+  imageUrl       String
+  imagePublicId  String
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+
+  @@index([quoteRequestId, sortOrder])
 }

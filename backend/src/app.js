@@ -23,6 +23,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import bannerRoutes from "./routes/banner.routes.js";
 import couponRoutes from "./routes/coupon.routes.js";
 import storeSettingsRoutes from "./routes/storeSettings.routes.js";
+import quoteRoutes from "./routes/quote.routes.js";
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use("/api/banners", bannerRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/settings", storeSettingsRoutes);
+app.use("/api/quotes", quoteRoutes);
 
 app.use((req, res) => {
 res.status(404).json({

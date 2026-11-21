@@ -19,6 +19,10 @@ import {
   incrementCouponUsageRepository,
 } from "../repositories/coupon.repository.js";
 
+import {
+  resolveCouponDiscount,
+} from "../utils/couponDiscount.js";
+
 import { sendEmail } from "./email.service.js";
 
 const FRONTEND_URL = "https://www.tecno3d.net";
@@ -226,28 +230,14 @@ const createOrderService = async (data) => {
       );
     }
 
-    if (couponEligibleSubtotal <= 0) {
-      throw new Error(
-        "Los productos con descuento no admiten cupones."
-      );
-    }
+    const resolved = resolveCouponDiscount({
+      subtotal,
+      couponEligibleSubtotal,
+      coupon,
+      userId,
+    });
 
-    if (coupon.type === "PERCENTAGE") {
-      discount =
-        couponEligibleSubtotal *
-        (coupon.value / 100);
-    }
-
-    if (coupon.type === "FIXED") {
-      discount = coupon.value;
-    }
-
-    // El cupón solo descuenta productos sin oferta.
-
-    discount = Math.min(
-      discount,
-      couponEligibleSubtotal
-    );
+    discount = resolved.discount;
   }
 
   // TOTAL FINAL

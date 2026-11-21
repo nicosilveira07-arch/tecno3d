@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
 import {
@@ -9,8 +13,15 @@ import {
 
 import { loadUserCart } from "@/features/cart/cart.store";
 
+import { storeWelcomeCoupon } from "@/components/promo/WelcomeCouponModal";
+import { notifyAuthChange } from "@/components/promo/FirstPurchaseFloat";
+
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const nextPath =
+    searchParams.get("next") || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +30,11 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleLoginSuccess = (response) => {
-    const { token, user } = response.data;
+    const {
+      token,
+      user,
+      welcomeCoupon,
+    } = response.data;
 
     localStorage.setItem(
       "token",
@@ -31,6 +46,11 @@ export default function Login() {
       JSON.stringify(user)
     );
 
+    if (welcomeCoupon) {
+      storeWelcomeCoupon(welcomeCoupon);
+    }
+
+    notifyAuthChange();
     loadUserCart();
 
     if (
@@ -41,7 +61,13 @@ export default function Login() {
       return;
     }
 
-    navigate("/");
+  const safeNext =
+    nextPath.startsWith("/") &&
+    !nextPath.startsWith("//")
+      ? nextPath
+      : "/";
+
+    navigate(safeNext);
   };
 
   const handleSubmit = async (event) => {

@@ -890,21 +890,6 @@ export default function ProductDetail() {
 
             </div>
 
-            {/* DESCRIPCIÓN */}
-
-            <div className="mt-8 min-w-0">
-
-              <h2 className="mb-3 text-lg font-bold text-white">
-                Descripción
-              </h2>
-
-              <p className="whitespace-pre-line break-words leading-7 text-zinc-400">
-                {product.description ||
-                  "Este producto no tiene una descripción disponible."}
-              </p>
-
-            </div>
-
             {/* SELECTOR DE VARIANTES */}
 
             {product.hasVariants &&
@@ -1172,6 +1157,21 @@ export default function ProductDetail() {
                 ? "Agregar al carrito"
                 : "Sin stock"}
             </button>
+
+            {/* DESCRIPCIÓN */}
+
+            <div className="mt-8 min-w-0 border-t border-zinc-800 pt-8">
+
+              <h2 className="mb-3 text-lg font-bold text-white">
+                Descripción
+              </h2>
+
+              <p className="whitespace-pre-line break-words leading-7 text-zinc-400">
+                {product.description ||
+                  "Este producto no tiene una descripción disponible."}
+              </p>
+
+            </div>
 
           </div>
 
