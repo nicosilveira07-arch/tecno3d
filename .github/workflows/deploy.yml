@@ -28,7 +28,7 @@ jobs:
             --comment "Deploy TECNO3D from GitHub Actions" \
             --parameters 'commands=[
               "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d && git config --global --add safe.directory /home/ec2-user/tecno3d && git fetch origin master && git checkout master && git reset --hard origin/master'\''",
-              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 startOrReload ecosystem.config.cjs --update-env && pm2 save'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 delete tecno3d-api 2>/dev/null || true; fuser -k 5000/tcp 2>/dev/null || true; pm2 start ecosystem.config.cjs && pm2 save'\''",
               "sudo -u ec2-user -H bash -c '\''set -e; CODE=$(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/api/quotes/admin/summary); test \"$CODE\" = \"401\"'\''",
               "sudo rm -rf /home/ec2-user/tecno3d/frontend/dist && sudo -u ec2-user mkdir -p /home/ec2-user/tecno3d/frontend/dist",
               "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/frontend && npm install && npm run build'\''",
@@ -64,4 +64,13 @@ jobs:
           fi
 
           echo "Deploy TECNO 3D completado correctamente."
+
+      - name: Verificar API publica (cotizaciones)
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" https://www.tecno3d.net/api/quotes/admin/summary)
+          echo "HTTP cotizaciones admin summary: $CODE"
+          if [ "$CODE" != "401" ]; then
+            echo "ERROR: La API publica no expone /api/quotes (esperado 401 sin token, obtuvo $CODE)."
+            exit 1
+          fi
 
