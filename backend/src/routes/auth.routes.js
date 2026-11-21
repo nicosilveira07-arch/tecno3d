@@ -6,6 +6,7 @@ import {
   googleLoginController,
   meController,
   changePasswordController,
+  welcomeCouponController,
 } from "../controllers/auth.controller.js";
 
 import { authenticate } from "../middlewares/auth.middleware.js";
@@ -39,6 +40,13 @@ router.get(
   authenticate,
   allowRoles("ADMIN", "EMPLOYEE", "CUSTOMER"),
   meController
+);
+
+router.get(
+  "/welcome-coupon",
+  authenticate,
+  allowRoles("CUSTOMER"),
+  welcomeCouponController
 );
 
 router.patch(

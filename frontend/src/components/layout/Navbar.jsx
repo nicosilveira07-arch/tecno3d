@@ -563,6 +563,13 @@ export default function Navbar() {
               Ofertas
             </Link>
 
+            <Link
+              to="/cotizar"
+              className="text-zinc-300 transition hover:text-red-500"
+            >
+              Cotizar producto
+            </Link>
+
           </div>
 
         </div>
@@ -652,6 +659,16 @@ export default function Navbar() {
                 className="block border-b border-zinc-800 py-4 font-semibold text-red-500 transition hover:text-red-400"
               >
                 Ofertas
+              </Link>
+
+              <Link
+                to="/cotizar"
+                onClick={() =>
+                  setShowMobileMenu(false)
+                }
+                className="block border-b border-zinc-800 py-4 text-zinc-300 transition hover:text-red-500"
+              >
+                Cotizar producto
               </Link>
 
               {/* Favoritos */}

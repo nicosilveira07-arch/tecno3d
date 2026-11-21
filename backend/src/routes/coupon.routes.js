@@ -40,6 +40,8 @@ router.get(
 
 router.post(
   "/validate",
+  authenticate,
+  allowRoles("ADMIN", "EMPLOYEE", "CUSTOMER"),
   validateCouponController
 );
 

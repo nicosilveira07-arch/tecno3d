@@ -11,6 +11,7 @@ import {
   Image,
   Menu,
   X,
+  FileQuestion,
 } from "lucide-react";
 
 import {
@@ -20,13 +21,61 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  getQuoteAdminSummary,
+} from "@/services/quotes.api";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] =
     useState(false);
+
+  const [pendingQuotes, setPendingQuotes] =
+    useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSummary = async () => {
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        const response =
+          await getQuoteAdminSummary();
+
+        if (!cancelled) {
+          setPendingQuotes(
+            response.data?.pendingCount || 0
+          );
+        }
+      } catch {
+        // Ignorar errores de sondeo
+      }
+    };
+
+    loadSummary();
+
+    const interval = setInterval(
+      loadSummary,
+      60_000
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   const user = JSON.parse(
     localStorage.getItem("user") || "null"
@@ -56,6 +105,13 @@ export default function AdminLayout() {
       path: "/admin/orders",
       icon: ShoppingCart,
       roles: ["ADMIN", "EMPLOYEE"],
+    },
+    {
+      label: "Cotizaciones",
+      path: "/admin/quotes",
+      icon: FileQuestion,
+      roles: ["ADMIN", "EMPLOYEE"],
+      badgeKey: "pendingQuotes",
     },
     {
       label: "Usuarios",
@@ -260,6 +316,16 @@ export default function AdminLayout() {
                 <span className="truncate">
                   {item.label}
                 </span>
+
+                {item.badgeKey ===
+                  "pendingQuotes" &&
+                  pendingQuotes > 0 && (
+                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-zinc-950">
+                      {pendingQuotes > 99
+                        ? "99+"
+                        : pendingQuotes}
+                    </span>
+                  )}
               </NavLink>
             );
           })}

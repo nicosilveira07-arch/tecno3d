@@ -73,7 +73,10 @@ const validateCouponController = async (
     const { code } = req.body;
 
     const coupon =
-      await validateCouponService(code);
+      await validateCouponService(
+        code,
+        req.user?.id
+      );
 
     res.json({
       success: true,

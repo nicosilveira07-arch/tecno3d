@@ -54,6 +54,26 @@ const getCheckoutSessionById = async (
 
       coupon: true,
 
+      quote: {
+        select: {
+          id: true,
+          description: true,
+          widthMm: true,
+          heightMm: true,
+          quotedPrice: true,
+          status: true,
+          images: {
+            orderBy: {
+              sortOrder: "asc",
+            },
+            take: 1,
+            select: {
+              imageUrl: true,
+            },
+          },
+        },
+      },
+
       user: true,
     },
   });
@@ -628,7 +648,10 @@ const completeCheckoutSessionAsOrder =
         // ==================================================
         // VALIDAR STOCK
         // ==================================================
+        // Cotizaciones personalizadas no usan catálogo ni stock.
+        // ==================================================
 
+        if (!session.quoteId) {
         for (
           const item of session.items
         ) {
@@ -754,6 +777,7 @@ const completeCheckoutSessionAsOrder =
             );
           }
         }
+        }
 
         // ==================================================
         // CREAR ORDER REAL
@@ -870,6 +894,7 @@ const completeCheckoutSessionAsOrder =
         // DESCONTAR STOCK
         // ==================================================
 
+        if (!session.quoteId) {
         for (
           const item of session.items
         ) {
@@ -950,6 +975,18 @@ const completeCheckoutSessionAsOrder =
               `No se pudo actualizar el stock de ${item.productName}.`
             );
           }
+        }
+        }
+
+        if (session.quoteId) {
+          await tx.quoteRequest.update({
+            where: {
+              id: session.quoteId,
+            },
+            data: {
+              status: "PAID",
+            },
+          });
         }
 
         // ==================================================

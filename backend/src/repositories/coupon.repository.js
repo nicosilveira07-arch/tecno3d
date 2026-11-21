@@ -47,6 +47,20 @@ const deleteCouponRepository = async (id) => {
   });
 };
 
+const findWelcomeCouponByUserIdRepository = async (
+  userId
+) => {
+  return prisma.coupon.findFirst({
+    where: {
+      userId,
+      applyToOfferItems: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+};
+
 const incrementCouponUsageRepository = async (
   id,
   db = prisma
@@ -109,4 +123,5 @@ export {
   updateCouponRepository,
   deleteCouponRepository,
   incrementCouponUsageRepository,
+  findWelcomeCouponByUserIdRepository,
 };

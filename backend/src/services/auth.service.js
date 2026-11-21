@@ -15,6 +15,10 @@ import {
   updateUserPassword,
 } from "../repositories/user.repository.js";
 
+import {
+  ensureWelcomeCouponForCustomer,
+} from "./welcomeCoupon.service.js";
+
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 );
@@ -37,6 +41,9 @@ export async function register(userData) {
     role: "CUSTOMER",
   });
 
+  const welcomeCoupon =
+    await ensureWelcomeCouponForCustomer(user);
+
   const token = jwt.sign(
     {
       id: user.id,
@@ -53,6 +60,15 @@ export async function register(userData) {
   return {
     token,
     user: userWithoutPassword,
+    welcomeCoupon: {
+      id: welcomeCoupon.id,
+      code: welcomeCoupon.code,
+      type: welcomeCoupon.type,
+      value: welcomeCoupon.value,
+      applyToOfferItems:
+        welcomeCoupon.applyToOfferItems,
+      expiresAt: welcomeCoupon.expiresAt,
+    },
   };
 }
 
@@ -182,6 +198,8 @@ export async function googleLogin(credential) {
   // 3. Buscar si ya existe una cuenta con ese email
   user = await findByEmail(email);
 
+  let isNewUser = false;
+
   // 4. Si existe, vincularla con Google
   if (user) {
     user = await updateUserGoogleId(
@@ -190,6 +208,8 @@ export async function googleLogin(credential) {
     );
   } else {
     // 5. Crear nuevo usuario CUSTOMER
+    isNewUser = true;
+
     const temporaryPassword = crypto.randomBytes(32).toString("hex");
 
     const hashedPassword = await bcrypt.hash(
@@ -208,6 +228,18 @@ export async function googleLogin(credential) {
     });
   }
 
+  let welcomeCoupon = null;
+
+  if (isNewUser) {
+    welcomeCoupon =
+      await ensureWelcomeCouponForCustomer(user);
+  } else if (user.role === "CUSTOMER") {
+    welcomeCoupon =
+      await ensureWelcomeCouponForCustomer(
+        user
+      );
+  }
+
   // 6. Generar nuestro JWT
   const token = jwt.sign(
     {
@@ -222,10 +254,24 @@ export async function googleLogin(credential) {
 
   const { password: _, ...userWithoutPassword } = user;
 
-  return {
+  const response = {
     token,
     user: userWithoutPassword,
   };
+
+  if (welcomeCoupon) {
+    response.welcomeCoupon = {
+      id: welcomeCoupon.id,
+      code: welcomeCoupon.code,
+      type: welcomeCoupon.type,
+      value: welcomeCoupon.value,
+      applyToOfferItems:
+        welcomeCoupon.applyToOfferItems,
+      expiresAt: welcomeCoupon.expiresAt,
+    };
+  }
+
+  return response;
 }
 
 // CAMBIAR CONTRASEÑA

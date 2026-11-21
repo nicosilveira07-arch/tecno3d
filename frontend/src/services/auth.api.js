@@ -35,6 +35,14 @@ export async function getMe() {
   return response.data;
 }
 
+export async function getWelcomeCoupon() {
+  const response = await api.get(
+    "/auth/welcome-coupon"
+  );
+
+  return response.data;
+}
+
 // CAMBIAR CONTRASEÑA
 
 export async function changePassword(data) {

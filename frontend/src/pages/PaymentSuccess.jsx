@@ -1,13 +1,24 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   clearCart,
 } from "@/features/cart/cart.store";
 
 export default function PaymentSuccess() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     clearCart();
-  }, []);
+
+    const redirectTimer = setTimeout(() => {
+      navigate("/orders", { replace: true });
+    }, 1500);
+
+    return () => {
+      clearTimeout(redirectTimer);
+    };
+  }, [navigate]);
 
   return (
     <section className="min-h-[70vh] flex items-center justify-center px-6 py-16">
@@ -31,12 +42,21 @@ export default function PaymentSuccess() {
           Tu pedido fue confirmado y comenzará a procesarse.
         </p>
 
-        <a
-          href="/orders"
-          className="mt-8 inline-block rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700"
+        <p className="mt-4 text-sm text-zinc-500">
+          Te llevamos a Mis pedidos…
+        </p>
+
+        <button
+          type="button"
+          onClick={() =>
+            navigate("/orders", {
+              replace: true,
+            })
+          }
+          className="mt-6 inline-block rounded-xl bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700"
         >
-          Ver mis pedidos
-        </a>
+          Ir a mis pedidos
+        </button>
 
       </div>
     </section>

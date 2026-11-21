@@ -1,5 +1,9 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -8,8 +12,17 @@ import {
   loginWithGoogle,
 } from "@/services/auth.api";
 
+import {
+  storeWelcomeCoupon,
+} from "@/components/promo/WelcomeCouponModal";
+
+import {
+  notifyAuthChange,
+} from "@/components/promo/FirstPurchaseFloat";
+
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -23,6 +36,31 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const presetEmail = searchParams.get("email");
+
+    if (presetEmail) {
+      setEmail(presetEmail);
+    }
+  }, [searchParams]);
+
+  const persistAuth = (response) => {
+    const { token, user, welcomeCoupon } =
+      response.data;
+
+    localStorage.setItem("token", token);
+    localStorage.setItem(
+      "user",
+      JSON.stringify(user)
+    );
+
+    if (welcomeCoupon) {
+      storeWelcomeCoupon(welcomeCoupon);
+    }
+
+    notifyAuthChange();
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -43,13 +81,7 @@ export default function Register() {
         password,
       });
 
-      const { token, user } = response.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
+      persistAuth(response);
 
       navigate("/");
     } catch (error) {
@@ -79,13 +111,7 @@ export default function Register() {
         credentialResponse.credential
       );
 
-      const { token, user } = response.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
+      persistAuth(response);
 
       navigate("/");
     } catch (error) {
@@ -118,8 +144,16 @@ export default function Register() {
             Crear cuenta
           </h1>
 
-          <p className="mb-8 text-sm text-zinc-400">
+          <p className="mb-2 text-sm text-zinc-400">
             Registrate en TECNO 3D
+          </p>
+
+          <p className="mb-8 rounded-xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+            <span className="font-bold text-red-400">
+              5% OFF
+            </span>{" "}
+            en tu primera compra, también en productos en
+            oferta. Te enviamos el código a tu email.
           </p>
 
           <form
