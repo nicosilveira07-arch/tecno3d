@@ -28,7 +28,9 @@ jobs:
             --comment "Deploy TECNO3D from GitHub Actions" \
             --parameters 'commands=[
               "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d && git config --global --add safe.directory /home/ec2-user/tecno3d && git fetch origin master && git checkout master && git reset --hard origin/master'\''",
-              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy && pm2 delete tecno3d-api 2>/dev/null || true; fuser -k 5000/tcp 2>/dev/null || true; pm2 start ecosystem.config.cjs && pm2 save'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && npm install && npx prisma generate && npx prisma migrate deploy'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && node scripts/verify-quotes-schema.mjs'\''",
+              "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/backend && (pm2 delete tecno3d-api 2>/dev/null || true); (fuser -k 5000/tcp 2>/dev/null || true); pm2 start ecosystem.config.cjs && pm2 save'\''",
               "sudo -u ec2-user -H bash -c '\''set -e; CODE=$(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/api/quotes/admin/summary); test \"$CODE\" = \"401\"'\''",
               "sudo rm -rf /home/ec2-user/tecno3d/frontend/dist && sudo -u ec2-user mkdir -p /home/ec2-user/tecno3d/frontend/dist",
               "sudo -u ec2-user -H bash -c '\''set -e; cd /home/ec2-user/tecno3d/frontend && npm install && npm run build'\''",

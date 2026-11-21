@@ -37,10 +37,36 @@ const errorMiddleware = (err, req, res, next) => {
     });
   }
 
+  if (err.message === "Estado de filtro inválido.") {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  const prismaCode =
+    typeof err.code === "string" ? err.code : "";
+
+  if (
+    prismaCode.startsWith("P") ||
+    (typeof err.message === "string" &&
+      err.message.includes("Invalid `prisma"))
+  ) {
+    console.error(
+      "Error de base de datos:",
+      prismaCode || err.message
+    );
+
+    return res.status(503).json({
+      success: false,
+      message:
+        "Cotizaciones no disponibles: la base de datos no está actualizada. Contactá al equipo técnico.",
+    });
+  }
+
   if (
     typeof err.message === "string" &&
-    err.message.length > 0 &&
-  !err.message.includes("Invalid `prisma")
+    err.message.length > 0
   ) {
     const clientError =
       err.message === "Solo se permiten archivos de imagen." ||
